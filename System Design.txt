@@ -64,7 +64,7 @@ Notification
     sender (ManyToOne → User)
     post (optional reference)
 
-Story (optional advanced feature)
+Story
     id
     imageUrl
     createdAt

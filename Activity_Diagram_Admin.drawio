@@ -55,50 +55,50 @@
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-4" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="360" y="380" as="sourcePoint" />
+            <mxPoint x="280" y="380" as="sourcePoint" />
             <mxPoint x="423" y="380" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-6" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="422" y="380" as="sourcePoint" />
-            <mxPoint x="485" y="380" as="targetPoint" />
+            <mxPoint x="580" y="380" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Ban User" vertex="1">
-          <mxGeometry height="30" width="115" x="310" y="410" as="geometry" />
+          <mxGeometry height="30" width="115" x="220" y="410" as="geometry" />
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Delete Post" vertex="1">
-          <mxGeometry height="30" width="115" x="430" y="409" as="geometry" />
+          <mxGeometry height="30" width="115" x="367.5" y="410" as="geometry" />
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-11" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points" />
-            <mxPoint x="359.5" y="380" as="sourcePoint" />
-            <mxPoint x="359.5" y="410" as="targetPoint" />
+            <mxPoint x="280.5" y="380" as="sourcePoint" />
+            <mxPoint x="280.5" y="410" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-13" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points" />
-            <mxPoint x="485.5" y="380" as="sourcePoint" />
-            <mxPoint x="485.5" y="410" as="targetPoint" />
+            <mxPoint x="579.5" y="380" as="sourcePoint" />
+            <mxPoint x="579.5" y="410" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-14" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points">
-              <mxPoint x="360" y="460" />
+              <mxPoint x="280" y="460" />
               <mxPoint x="410" y="460" />
             </Array>
-            <mxPoint x="361.5" y="439" as="sourcePoint" />
+            <mxPoint x="280" y="440" as="sourcePoint" />
             <mxPoint x="410" y="490" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="wc9tj6uX1GSjnkzgZ-io-16" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;" value="">
+        <mxCell id="wc9tj6uX1GSjnkzgZ-io-16" edge="1" parent="1" source="dHrnrY-OIrgPH4dWHy-g-1" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points">
-              <mxPoint x="484" y="460" />
+              <mxPoint x="578" y="460" />
               <mxPoint x="440" y="460" />
             </Array>
             <mxPoint x="483.5" y="439" as="sourcePoint" />
@@ -137,6 +137,23 @@
         </mxCell>
         <mxCell id="wc9tj6uX1GSjnkzgZ-io-23" parent="1" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#CC0000;" value="" vertex="1">
           <mxGeometry height="50" width="50" x="400" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="dHrnrY-OIrgPH4dWHy-g-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Delete Story" vertex="1">
+          <mxGeometry height="30" width="115" x="520" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="dHrnrY-OIrgPH4dWHy-g-2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423.5" y="380" as="sourcePoint" />
+            <mxPoint x="423.5" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dHrnrY-OIrgPH4dWHy-g-3" edge="1" parent="1" source="wc9tj6uX1GSjnkzgZ-io-9" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="426" y="459" as="sourcePoint" />
+            <mxPoint x="426" y="489" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
