@@ -1,0 +1,270 @@
+Frontend → React.js + Tailwind CSS
+Backend → Spring Boot + Hibernate (JPA)
+Database → MySQL
+Storage → local folder
+
+Full Stack Expansion Plan
+1 Backend Architecture (Spring Boot + Hibernate)
+    Core Entities (Database Design)
+
+===============================
+FINAL SOCIAL MEDIA APP ENTITIES
+===============================
+
+1. User
+--------
+id : Long
+
+name : String
+username : String (unique)
+
+email : String (unique)
+password : String
+
+bio : String
+profileImageUrl : String
+
+provider : AuthProvider
+providerId : String
+
+role : Role
+accountStatus : AccountStatus
+
+isActive : Boolean
+isEmailVerified : Boolean
+
+resetToken : String
+resetTokenExpiry : LocalDateTime
+
+createdAt : LocalDateTime
+updatedAt : LocalDateTime
+lastLoginAt : LocalDateTime
+
+
+2. Post
+--------
+id : Long
+caption : String
+
+likeCount : Long
+commentCount : Long
+
+createdAt : LocalDateTime
+updatedAt : LocalDateTime
+
+user : User
+mediaList : List<Media>
+hashtags : List<Hashtag>
+
+
+3. Media
+---------
+id : Long
+
+url : String
+publicId : String
+
+type : MediaType
+
+createdAt : LocalDateTime
+
+post : Post
+
+
+4. Comment
+-----------
+id : Long
+
+content : String
+
+createdAt : LocalDateTime
+updatedAt : LocalDateTime
+
+user : User
+post : Post
+
+parentComment : Comment
+
+
+5. Like
+--------
+id : Long
+
+createdAt : LocalDateTime
+
+user : User
+post : Post
+
+UNIQUE(user_id, post_id)
+
+
+6. Follow
+----------
+id : Long
+
+createdAt : LocalDateTime
+
+follower : User
+following : User
+
+UNIQUE(follower_id, following_id)
+
+
+7. Notification
+----------------
+id : Long
+
+type : NotificationType
+
+isRead : Boolean
+
+createdAt : LocalDateTime
+
+receiver : User
+sender : User
+
+post : Post
+
+
+8. Story
+---------
+id : Long
+
+imageUrl : String
+
+createdAt : LocalDateTime
+expiresAt : LocalDateTime
+
+user : User
+
+
+9. ChatRoom
+------------
+id : Long
+
+createdAt : LocalDateTime
+
+participants : List<User>
+
+
+10. Message
+------------
+id : Long
+
+content : String
+
+isSeen : Boolean
+
+createdAt : LocalDateTime
+
+sender : User
+chatRoom : ChatRoom
+
+
+11. Hashtag
+------------
+id : Long
+
+name : String (unique)
+
+posts : List<Post>
+
+
+12. SavedPost
+--------------
+id : Long
+
+createdAt : LocalDateTime
+
+user : User
+post : Post
+
+UNIQUE(user_id, post_id)
+
+
+13. RefreshToken
+-----------------
+id : Long
+
+token : String
+
+expiryDate : LocalDateTime
+
+revoked : Boolean
+
+createdAt : LocalDateTime
+
+user : User
+
+
+====================
+ENUMS
+====================
+
+Role
+-----
+USER
+ADMIN
+
+
+AccountStatus
+--------------
+ACTIVE
+SUSPENDED
+BANNED
+
+
+AuthProvider
+--------------
+LOCAL
+GOOGLE
+GITHUB
+
+MediaType
+-----------
+IMAGE
+VIDEO
+
+
+NotificationType
+-----------------
+LIKE
+COMMENT
+FOLLOW
+MESSAGE
+
+
+====================
+RELATIONSHIPS
+====================
+
+User -> Post               = OneToMany
+User -> Comment            = OneToMany
+User -> Like               = OneToMany
+User -> Follow             = OneToMany
+
+Post -> Media              = OneToMany
+Post -> Comment            = OneToMany
+Post -> Like               = OneToMany
+
+Post <-> Hashtag           = ManyToMany
+
+ChatRoom <-> User          = ManyToMany
+ChatRoom -> Message        = OneToMany
+
+Comment -> Comment         = Self Reference
+
+
+====================
+IMPORTANT INDEXES
+====================
+
+username
+email
+createdAt
+post.user_id
+comment.post_id
+like.post_id
+follow.follower_id
+follow.following_id
+notification.receiver_id
