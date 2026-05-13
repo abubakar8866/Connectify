@@ -1,12 +1,15 @@
 package com.abubakar.connectify.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.AuthProvider;
 import com.abubakar.connectify.enums.Role;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -59,11 +62,39 @@ public class User implements UserDetails {
 
     private LocalDateTime resetTokenExpiry;
 
+    private Long followersCount = 0L;
+
+    private Long followingCount = 0L;
+
+    // USERS WHO FOLLOW THIS USER
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "following",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Follow> followers = new ArrayList<>();
+
+    // USERS THIS USER FOLLOWS
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "follower",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Follow> following = new ArrayList<>();
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
     private LocalDateTime lastLoginAt;
+
+    @OneToMany(mappedBy = "user")
+    private List<Post> posts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<SavedPost> savedPosts = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

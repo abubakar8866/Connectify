@@ -1,25 +1,33 @@
-2026-05-11 10:45:05[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 10:45:05[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 13352 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 10:45:05[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 10:45:05[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 11 ms. Found 0 JPA repository interfaces.
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 10:45:06[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 0 ms. Found 0 Redis repository interfaces.
-2026-05-11 10:45:07[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 10:45:07[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 10:45:07[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 10:45:07[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 10:45:07[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 1376 ms
-2026-05-11 10:45:07[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 10:45:07[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 10:45:07[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 10:45:08[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 10:45:08[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2ae5580
-2026-05-11 10:45:08[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 10:45:08[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
+2026-05-13 12:05:50[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
+2026-05-13 12:05:50[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 16024 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
+2026-05-13 12:05:50[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-13 12:05:50[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 164 ms. Found 8 JPA repository interfaces.
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.CommentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.FollowRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.HashtagRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.LikeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MediaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.PostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.SavedPostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 12:05:51[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 13 ms. Found 0 Redis repository interfaces.
+2026-05-13 12:05:52[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
+2026-05-13 12:05:52[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-13 12:05:52[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
+2026-05-13 12:05:52[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-13 12:05:52[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2206 ms
+2026-05-13 12:05:52[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-13 12:05:52[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-13 12:05:53[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-13 12:05:53[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
+2026-05-13 12:05:53[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@361c4981
+2026-05-13 12:05:53[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
+2026-05-13 12:05:53[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
 	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
 	Database driver: MySQL Connector/J
 	Database dialect: MySQLDialect
@@ -31,40 +39,55 @@
 	Pool: DataSourceConnectionProvider
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-05-11 10:45:08[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 10:45:08[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 10:45:08[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 10:45:10[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 10:45:10[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 10:45:10[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 4.545 seconds (process running for 5.101)
-2026-05-11 10:45:39[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 10:45:39[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 10:45:39[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 10:45:39[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 10:45:39[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 13:11:10[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 13:11:10[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 2616 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 13:11:10[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 13:11:10[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 118 ms. Found 1 JPA repository interface.
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 13:11:11[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
-2026-05-11 13:11:12[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 13:11:12[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 13:11:12[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 13:11:12[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 13:11:12[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 1768 ms
-2026-05-11 13:11:12[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 13:11:12[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 13:11:13[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 13:11:13[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 13:11:13[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3e0e0ba7
-2026-05-11 13:11:13[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 13:11:13[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
+2026-05-13 12:05:54[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-13 12:05:55[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-13 12:05:55[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-13 12:05:56[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
+2026-05-13 12:05:56[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-13 12:05:56[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-13 12:05:56[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-13 12:05:57[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
+2026-05-13 12:05:57[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
+2026-05-13 12:05:57[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 8.025 seconds (process running for 8.652)
+2026-05-13 12:06:00[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-13 12:06:00[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
+2026-05-13 12:06:00[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-13 12:06:00[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
+2026-05-13 12:06:00[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
+2026-05-13 16:38:52[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
+2026-05-13 16:38:52[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 10296 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
+2026-05-13 16:38:52[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-13 16:38:52[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
+2026-05-13 16:38:53[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-13 16:38:53[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 197 ms. Found 12 JPA repository interfaces.
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.CommentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.FollowRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.HashtagRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.LikeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MediaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.PostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.SavedPostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReactionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReplyRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryViewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-13 16:38:54[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 12 ms. Found 0 Redis repository interfaces.
+2026-05-13 16:38:55[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
+2026-05-13 16:38:55[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-13 16:38:55[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
+2026-05-13 16:38:55[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-13 16:38:55[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2277 ms
+2026-05-13 16:38:55[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-13 16:38:55[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-13 16:38:55[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-13 16:38:55[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
+2026-05-13 16:38:56[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@6c2e7591
+2026-05-13 16:38:56[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
+2026-05-13 16:38:56[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
 	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
 	Database driver: MySQL Connector/J
 	Database dialect: MySQLDialect
@@ -76,296 +99,21 @@
 	Pool: DataSourceConnectionProvider
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-05-11 13:11:14[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 13:11:14[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 13:11:14[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 13:11:15[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 13:11:15[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 13:11:15[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 13:11:15[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 13:11:16[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 13:11:16[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 13:11:16[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 6.277 seconds (process running for 6.836)
-2026-05-11 13:11:21[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 13:11:21[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 13:11:21[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 13:11:21[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 13:11:21[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 15:14:03[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 15:14:03[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 4144 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 15:14:03[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 15:14:03[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 147 ms. Found 1 JPA repository interface.
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 15:14:04[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
-2026-05-11 15:14:05[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 15:14:05[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:14:05[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 15:14:05[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 15:14:05[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 1891 ms
-2026-05-11 15:14:05[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 15:14:05[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 15:14:06[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 15:14:06[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 15:14:06[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@279ab15e
-2026-05-11 15:14:06[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 15:14:06[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
-	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
-	Database driver: MySQL Connector/J
-	Database dialect: MySQLDialect
-	Database version: 8.0.43
-	Default catalog/schema: connectifyApp/undefined
-	Autocommit mode: undefined/unknown
-	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
-	JDBC fetch size: none
-	Pool: DataSourceConnectionProvider
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-05-11 15:14:07[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 15:14:07[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:14:07[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 15:14:08[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 15:14:08[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 15:14:08[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 15:14:08[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 15:14:09[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:14:09[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 15:14:09[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 6.546 seconds (process running for 7.157)
-2026-05-11 15:26:22[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 15:26:22[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 15:26:22[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:26:22[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 15:26:22[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 15:31:19[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 15:31:19[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 19668 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 15:31:19[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 15:31:19[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 111 ms. Found 1 JPA repository interface.
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 15:31:20[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 11 ms. Found 0 Redis repository interfaces.
-2026-05-11 15:31:21[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 15:31:21[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:31:21[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 15:31:21[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 15:31:21[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 1923 ms
-2026-05-11 15:31:21[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 15:31:21[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 15:31:22[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 15:31:22[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 15:31:22[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50008974
-2026-05-11 15:31:22[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 15:31:22[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
-	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
-	Database driver: MySQL Connector/J
-	Database dialect: MySQLDialect
-	Database version: 8.0.43
-	Default catalog/schema: connectifyApp/undefined
-	Autocommit mode: undefined/unknown
-	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
-	JDBC fetch size: none
-	Pool: DataSourceConnectionProvider
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-05-11 15:31:23[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 15:31:23[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:31:23[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 15:31:23[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 15:31:23[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 15:31:23[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 15:31:24[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 15:31:25[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:31:25[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 15:31:25[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 5.862 seconds (process running for 6.42)
-2026-05-11 15:31:54[INFO]org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]-Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-05-11 15:31:54[INFO]org.springframework.web.servlet.DispatcherServlet-Initializing Servlet 'dispatcherServlet'
-2026-05-11 15:31:54[INFO]org.springframework.web.servlet.DispatcherServlet-Completed initialization in 1 ms
-2026-05-11 15:31:54[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:31:54[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:31:54[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:31:54[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:31:54[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:32:26[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 15:32:26[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 15:32:27[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:32:27[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 15:32:27[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 15:33:11[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 15:33:11[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 16168 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 15:33:11[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 15:33:11[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 113 ms. Found 1 JPA repository interface.
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 15:33:12[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
-2026-05-11 15:33:13[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 15:33:13[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:33:13[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 15:33:13[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 15:33:13[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2052 ms
-2026-05-11 15:33:13[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 15:33:14[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 15:33:14[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 15:33:14[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 15:33:14[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50008974
-2026-05-11 15:33:14[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 15:33:14[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
-	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
-	Database driver: MySQL Connector/J
-	Database dialect: MySQLDialect
-	Database version: 8.0.43
-	Default catalog/schema: connectifyApp/undefined
-	Autocommit mode: undefined/unknown
-	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
-	JDBC fetch size: none
-	Pool: DataSourceConnectionProvider
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-05-11 15:33:15[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 15:33:15[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:33:15[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 15:33:15[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 15:33:15[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 15:33:15[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 15:33:16[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 15:33:17[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:33:17[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 15:33:17[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 6.053 seconds (process running for 6.619)
-2026-05-11 15:33:34[INFO]org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]-Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-05-11 15:33:34[INFO]org.springframework.web.servlet.DispatcherServlet-Initializing Servlet 'dispatcherServlet'
-2026-05-11 15:33:34[INFO]org.springframework.web.servlet.DispatcherServlet-Completed initialization in 5 ms
-2026-05-11 15:33:34[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:33:34[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:33:34[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:33:34[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:33:34[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:34:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:34:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:34:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:34:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:34:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:02[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 15:35:02[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 15:35:02[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:35:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 15:35:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 15:35:23[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 15:35:23[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 17812 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 15:35:23[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 15:35:23[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 111 ms. Found 1 JPA repository interface.
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 15:35:24[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 12 ms. Found 0 Redis repository interfaces.
-2026-05-11 15:35:25[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 15:35:25[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:35:25[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 15:35:25[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 15:35:25[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2118 ms
-2026-05-11 15:35:26[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 15:35:26[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 15:35:27[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 15:35:27[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 15:35:28[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50008974
-2026-05-11 15:35:28[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 15:35:29[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
-	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
-	Database driver: MySQL Connector/J
-	Database dialect: MySQLDialect
-	Database version: 8.0.43
-	Default catalog/schema: connectifyApp/undefined
-	Autocommit mode: undefined/unknown
-	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
-	JDBC fetch size: none
-	Pool: DataSourceConnectionProvider
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-05-11 15:35:30[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 15:35:30[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:35:30[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 15:35:31[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 15:35:31[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 15:35:31[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 15:35:31[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 15:35:32[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 15:35:32[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 15:35:32[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 9.447 seconds (process running for 10.075)
-2026-05-11 15:35:36[INFO]org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/]-Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-05-11 15:35:36[INFO]org.springframework.web.servlet.DispatcherServlet-Initializing Servlet 'dispatcherServlet'
-2026-05-11 15:35:36[INFO]org.springframework.web.servlet.DispatcherServlet-Completed initialization in 2 ms
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:35:36[WARN]com.abubakar.connectify.security.JwtFilter-Authorization header missing or invalid
-2026-05-11 15:42:20[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 15:42:20[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 15:42:20[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 15:42:20[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 15:42:20[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
-2026-05-11 16:16:37[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
-2026-05-11 16:16:37[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 20960 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
-2026-05-11 16:16:37[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
-2026-05-11 16:16:37[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
-2026-05-11 16:16:37[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 16:16:37[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-05-11 16:16:38[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 107 ms. Found 1 JPA repository interface.
-2026-05-11 16:16:38[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
-2026-05-11 16:16:38[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-05-11 16:16:38[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-05-11 16:16:38[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 6 ms. Found 0 Redis repository interfaces.
-2026-05-11 16:16:38[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
-2026-05-11 16:16:38[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
-2026-05-11 16:16:38[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
-2026-05-11 16:16:38[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
-2026-05-11 16:16:38[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 1731 ms
-2026-05-11 16:16:39[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-05-11 16:16:39[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
-2026-05-11 16:16:39[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-05-11 16:16:39[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
-2026-05-11 16:16:39[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1ddc8fc
-2026-05-11 16:16:39[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
-2026-05-11 16:16:39[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
-	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
-	Database driver: MySQL Connector/J
-	Database dialect: MySQLDialect
-	Database version: 8.0.43
-	Default catalog/schema: connectifyApp/undefined
-	Autocommit mode: undefined/unknown
-	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
-	JDBC fetch size: none
-	Pool: DataSourceConnectionProvider
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-05-11 16:16:40[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-05-11 16:16:40[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 16:16:40[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-05-11 16:16:40[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
-2026-05-11 16:16:40[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
-2026-05-11 16:16:40[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
-2026-05-11 16:16:41[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-05-11 16:16:41[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
-2026-05-11 16:16:41[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
-2026-05-11 16:16:41[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 5.022 seconds (process running for 5.524)
-2026-05-11 16:16:44[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
-2026-05-11 16:16:44[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
-2026-05-11 16:16:44[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
-2026-05-11 16:16:44[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
-2026-05-11 16:16:44[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
+2026-05-13 16:38:57[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-13 16:38:58[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-13 16:38:58[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-13 16:38:59[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
+2026-05-13 16:38:59[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-13 16:38:59[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-13 16:39:00[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-13 16:39:01[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
+2026-05-13 16:39:01[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
+2026-05-13 16:39:01[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 8.74 seconds (process running for 9.402)
+2026-05-13 16:39:01[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Running story cleanup job
+2026-05-13 16:39:01[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Expired stories found: 0
+2026-05-13 16:39:01[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Story cleanup completed
+2026-05-13 16:39:17[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-13 16:39:17[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
+2026-05-13 16:39:17[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-13 16:39:17[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
+2026-05-13 16:39:17[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.

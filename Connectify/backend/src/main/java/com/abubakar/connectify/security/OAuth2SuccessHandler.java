@@ -1,6 +1,7 @@
 package com.abubakar.connectify.security;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -83,11 +84,31 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
 		if (user == null) {
 			user = new User();
+
 			user.setEmail(email);
+
 			user.setName(name);
+
+			// Generate username automatically
+			String username;
+
+			if (email != null && email.contains("@")) {
+				username = email.substring(0, email.indexOf("@"));
+			} else {
+				username = "user_" + providerId;
+			}
+
+			// avoid duplicate username
+			username = username + "_" + UUID.randomUUID().toString().substring(0, 5);
+
+			user.setUname(username);
+
 			user.setProvider(provider);
+
 			user.setProviderId(providerId);
+
 			user.setRole(Role.USER);
+
 			user.setPassword("");
 
 			user = userRepo.save(user);
@@ -95,7 +116,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
 		// Upload image to local folder
 		if (picture != null && (user.getProfileImageUrl() == null || user.getProfileImageUrl().isBlank())) {
-			String fileName = fileService.uploadFromUrl(picture, user.getId(), user.getProfileImageUrl(), "user");
+			String fileName = fileService.uploadFromUrl(picture, user.getId(), user.getProfileImageUrl(), "users");
 			if (fileName != null) {
 				user.setProfileImageUrl(fileName);
 			}

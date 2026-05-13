@@ -258,14 +258,27 @@ public class FileServiceImpl implements FileService {
 	        }
 	
 	        // Extract extension safely
-	        String path = url.getPath();
-	        int index = path.lastIndexOf(".");
-	        if (index <= 0) {
-	            logger.warn("Invalid extension in URL: {}", imageUrl);
-	            return null;
-	        }
-	
-	        String extension = path.substring(index);	
+			// Detect extension from content type
+			String extension;
+
+			switch (contentType) {
+
+				case "image/png" -> extension = ".png";
+
+				case "image/jpeg",
+					 "image/jpg" -> extension = ".jpg";
+
+				case "image/webp" -> extension = ".webp";
+
+				default -> {
+					logger.warn(
+							"Unsupported image type: {}",
+							contentType
+					);
+					return null;
+				}
+			}
+
 	        String fileName = entityId + "_" + UUID.randomUUID() + extension;
 	
 	        try (InputStream in = connection.getInputStream()) {

@@ -66,7 +66,6 @@ public class AuthServiceImpl implements AuthService {
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
 	// ================= REGISTER =================
-
 	@Override
 	@Transactional
 	public AuthResponse register(RegisterRequest request) {
@@ -127,7 +126,6 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= LOGIN =================
-
 	@Override
 	public AuthResponse login(LoginRequest request) {
 
@@ -171,6 +169,7 @@ public class AuthServiceImpl implements AuthService {
 		}
 	}
 
+	// ================= GET CURRENT USER =================
 	@Override
 	public UserResponse getCurrentUser() {
 
@@ -196,7 +195,6 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= UPDATE PROFILE IMAGE =================
-
 	@Override
 	@Transactional
 	public UserResponse updateProfile(
@@ -290,7 +288,6 @@ public class AuthServiceImpl implements AuthService {
 
 
 	// ================= FORGOT PASSWORD =================
-
 	@Override
 	@Transactional
 	public void forgotPassword(String email) {
@@ -335,7 +332,6 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= RESET PASSWORD =================
-
 	@Override
 	@Transactional
 	public void resetPassword(
@@ -379,7 +375,6 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= CREATING ADMIN =================
-
 	@Override
 	@Transactional
 	public AuthResponse createAdmin(RegisterRequest request) {
@@ -454,7 +449,6 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= SEND RESET EMAIL =================
-
 	private void sendResetEmail(
 			String toEmail,
 			String resetUrl
@@ -498,13 +492,13 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	// ================= ENTITY TO RESPONSE =================
-
 	private UserResponse mapToResponse(User user) {
 
 		return modelMapper.map(
 				user,
 				UserResponse.class
 		);
+
 	}
 
 }

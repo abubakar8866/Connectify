@@ -6,9 +6,15 @@ import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.AuthProvider;
 
 import com.abubakar.connectify.enums.Role;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserResponse {
 
     private Long id;

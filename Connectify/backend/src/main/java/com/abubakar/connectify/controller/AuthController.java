@@ -32,7 +32,6 @@ public class AuthController {
             LoggerFactory.getLogger(AuthController.class);
 
     // ================= REGISTER =================
-
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request
@@ -58,7 +57,6 @@ public class AuthController {
     }
 
     // ================= LOGIN =================
-
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request
@@ -81,7 +79,6 @@ public class AuthController {
     }
 
     // ================= CURRENT USER =================
-
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser() {
 
@@ -94,7 +91,6 @@ public class AuthController {
     }
 
     // ================= UPDATE User =================
-
     @PutMapping(
             value = "/update-profile/{userId}",
             consumes = "multipart/form-data"
@@ -111,7 +107,6 @@ public class AuthController {
     }
 
     // ================= FORGOT PASSWORD =================
-
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
@@ -133,7 +128,6 @@ public class AuthController {
     }
 
     // ================= RESET PASSWORD =================
-
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
             @RequestParam String token,
@@ -156,7 +150,6 @@ public class AuthController {
     }
 
     // ================= CREATE ADMIN =================
-
     @PostMapping("/create-admin")
     public ResponseEntity<AuthResponse> createAdmin(
             @Valid @RequestBody RegisterRequest request

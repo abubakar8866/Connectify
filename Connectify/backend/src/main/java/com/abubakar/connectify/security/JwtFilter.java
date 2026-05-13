@@ -4,94 +4,168 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.exception.EmailNotFound;
-import com.abubakar.connectify.exception.IncorrectCredentialsException;
 import com.abubakar.connectify.service.impl.CustomUserDetailsService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-	
+
 	@Autowired
 	private JwtUtils jwtUtils;
-	
+
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
-	
-	private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
-	
+
+	private static final Logger logger =
+			LoggerFactory.getLogger(JwtFilter.class);
+
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-	        FilterChain filterChain) throws ServletException, IOException {
+	protected void doFilterInternal(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			FilterChain filterChain
+	) throws ServletException, IOException {
 
-	    final String authHeader = request.getHeader("Authorization");
-	    final String jwtToken;
-	    final String email;
+		try {
 
-	    // Check Authorization Header
-	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-	        logger.warn("Authorization header missing or invalid");
-	        filterChain.doFilter(request, response);
-	        return;
-	    }
+			final String authHeader =
+					request.getHeader("Authorization");
 
-	    // Extract JWT Token
-	    jwtToken = authHeader.substring(7);
+			// ================= NO TOKEN =================
 
-	    // Extract Email from Token
-	    email = jwtUtils.extractEmail(jwtToken);
+			if (
+					authHeader == null ||
+							!authHeader.startsWith("Bearer ")
+			) {
 
-	    // Check Authentication
-	    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				filterChain.doFilter(request, response);
+				return;
+			}
 
-	        User user = (User) this.customUserDetailsService.loadUserByUsername(email);
+			// ================= EXTRACT TOKEN =================
 
-	        // Validate Token
-	        if (this.jwtUtils.isTokenValid(jwtToken, user)) {
+			String jwtToken =
+					authHeader.substring(7);
 
-	            UsernamePasswordAuthenticationToken authenticationToken =
-	                    new UsernamePasswordAuthenticationToken(
-	                            user,
-	                            null,
-	                            user.getAuthorities());
+			// ================= EXTRACT EMAIL =================
 
-	            authenticationToken.setDetails(
-	                    new WebAuthenticationDetailsSource().buildDetails(request));
+			String email =
+					jwtUtils.extractEmail(jwtToken);
 
-	            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+			// ================= AUTHENTICATION =================
 
-	            logger.info("User authenticated successfully: {}", email);
+			if (
+					email != null &&
+							SecurityContextHolder
+									.getContext()
+									.getAuthentication() == null
+			) {
 
-	        } else {
-	            logger.error("Invalid JWT token for user: {}", email);
-	            throw new IncorrectCredentialsException("Invalid JWT token for user: "+ email);
-	        }
+				User user =
+						(User) customUserDetailsService
+								.loadUserByUsername(email);
 
-	    } else {
+				// ================= VALIDATE TOKEN =================
 
-	        if (email == null) {
-	            logger.error("Email extraction from JWT token failed");
-	            throw new EmailNotFound("Email extraction from JWT token failed");
-	        }
+				if (!jwtUtils.isTokenValid(jwtToken, user)) {
 
-	        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-	            logger.warn("User already authenticated");
-	        }
-	    }
+					logger.error(
+							"Invalid JWT token for user: {}",
+							email
+					);
 
-	    filterChain.doFilter(request, response);
-	}	
-	
+					response.setStatus(
+							HttpServletResponse.SC_UNAUTHORIZED
+					);
+
+					response.setContentType(
+							"application/json"
+					);
+
+					response.getWriter().write(
+							"""
+                            {
+                                "message":"Invalid JWT token",
+                                "success":false,
+                                "status":401,
+                                "errorCode":"INVALID_JWT",
+                                "timestamp":%d
+                            }
+                            """.formatted(
+									System.currentTimeMillis()
+							)
+					);
+
+					return;
+				}
+
+				UsernamePasswordAuthenticationToken authToken =
+						new UsernamePasswordAuthenticationToken(
+								user,
+								null,
+								user.getAuthorities()
+						);
+
+				authToken.setDetails(
+						new WebAuthenticationDetailsSource()
+								.buildDetails(request)
+				);
+
+				SecurityContextHolder
+						.getContext()
+						.setAuthentication(authToken);
+
+				logger.info(
+						"User authenticated successfully: {}",
+						email
+				);
+			}
+
+			filterChain.doFilter(request, response);
+
+		} catch (Exception e) {
+
+			logger.error(
+					"JWT Authentication Error: {}",
+					e.getMessage()
+			);
+
+			response.setStatus(
+					HttpServletResponse.SC_UNAUTHORIZED
+			);
+
+			response.setContentType("application/json");
+
+			response.getWriter().write(
+					"""
+                    {
+                        "message":"Invalid or expired JWT token",
+                        "success":false,
+                        "status":401,
+                        "errorCode":"INVALID_JWT",
+                        "timestamp":%d
+                    }
+                    """.formatted(
+							System.currentTimeMillis()
+					)
+			);
+		}
+	}
 }
