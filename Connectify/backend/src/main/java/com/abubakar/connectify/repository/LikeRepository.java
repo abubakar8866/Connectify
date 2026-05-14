@@ -21,5 +21,7 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     Long countByComment(Comment comment);
 
+    Long countBy();
+
 }
 

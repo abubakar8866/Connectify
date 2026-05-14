@@ -1,0 +1,164 @@
+package com.abubakar.connectify.service.impl;
+
+import com.abubakar.connectify.dto.response.AdminDashboardResponse;
+import com.abubakar.connectify.dto.response.UserSummaryResponse;
+import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.repository.CommentRepository;
+import com.abubakar.connectify.repository.LikeRepository;
+import com.abubakar.connectify.repository.PostRepository;
+import com.abubakar.connectify.repository.UserRepository;
+import com.abubakar.connectify.service.AdminDashboardService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class AdminDashboardServiceImpl
+        implements AdminDashboardService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AdminDashboardServiceImpl.class
+            );
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
+
+    @Override
+    public AdminDashboardResponse getDashboardData() {
+
+        logger.info("Fetching admin dashboard analytics");
+
+        // ================= USERS =================
+
+        Long totalUsers =
+                userRepository.count();
+
+        Long activeUsers =
+                userRepository.countByIsActiveTrue();
+
+        Long bannedUsers =
+                userRepository.countByAccountStatus(
+                        AccountStatus.BANNED
+                );
+
+        Long newUsersToday =
+                userRepository.countByCreatedAtAfter(
+                        LocalDateTime.now().minusDays(1)
+                );
+
+        logger.info(
+                "User analytics fetched successfully"
+        );
+
+        // ================= POSTS =================
+
+        Long totalPosts =
+                postRepository.count();
+
+        Long postsCreatedToday =
+                postRepository.countByCreatedAtAfter(
+                        LocalDateTime.now().minusDays(1)
+                );
+
+        Long deletedPosts =
+                postRepository.countByDeletedTrue();
+
+        logger.info(
+                "Post analytics fetched successfully"
+        );
+
+        // ================= ENGAGEMENT =================
+
+        Long totalLikes =
+                likeRepository.count();
+
+        Long totalComments =
+                commentRepository.countByDeletedFalse();
+
+        logger.info(
+                "Engagement analytics fetched successfully"
+        );
+
+        // ================= MOST ACTIVE USERS =================
+
+        List<UserSummaryResponse> mostActiveUsers =
+                userRepository.findMostActiveUsers()
+                        .stream()
+                        .limit(10)
+                        .map(this::mapToUserSummary)
+                        .toList();
+
+        logger.info(
+                "Most active users fetched successfully"
+        );
+
+        // ================= FINAL RESPONSE =================
+
+        return AdminDashboardResponse.builder()
+
+                // USERS
+                .totalUsers(totalUsers)
+                .activeUsers(activeUsers)
+                .bannedUsers(bannedUsers)
+                .newUsersToday(newUsersToday)
+
+                // POSTS
+                .totalPosts(totalPosts)
+                .postsCreatedToday(postsCreatedToday)
+                .deletedPosts(deletedPosts)
+
+                // ENGAGEMENT
+                .totalLikes(totalLikes)
+                .totalComments(totalComments)
+
+                // ACTIVE USERS
+                .mostActiveUsers(mostActiveUsers)
+
+                .build();
+    }
+
+    // ================= PRIVATE METHODS =================
+    private UserSummaryResponse mapToUserSummary(
+            User user
+    ) {
+
+        return UserSummaryResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .username(user.getUname())
+                .profileImageUrl(
+                        user.getProfileImageUrl()
+                )
+                .followersCount(
+                        user.getFollowersCount()
+                )
+                .followingCount(
+                        user.getFollowingCount()
+                )
+                .postsCount(
+                        (long) user.getPosts().size()
+                )
+                .build();
+    }
+
+}
+

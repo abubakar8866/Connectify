@@ -24,6 +24,8 @@ public class Comment extends BaseEntity {
 
     private Long likeCount = 0L;
 
+    private Boolean deleted = false;
+
     // COMMENT OWNER
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

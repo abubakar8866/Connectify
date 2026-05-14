@@ -66,6 +66,22 @@ public class User implements UserDetails {
 
     private Long followingCount = 0L;
 
+    private Boolean deleted = false;
+
+    private Boolean isPrivate = false;
+
+    private Boolean isDeleted = false;
+
+    private Boolean isVerified = false;
+
+    private LocalDateTime bannedUntil;
+
+    @Column(columnDefinition = "TEXT")
+    private String banReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String adminNote;
+
     // USERS WHO FOLLOW THIS USER
     @JsonIgnore
     @OneToMany(

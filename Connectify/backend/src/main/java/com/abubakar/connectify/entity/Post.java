@@ -26,6 +26,8 @@ public class Post extends BaseEntity {
 
     private Long commentCount = 0L;
 
+    private Boolean deleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

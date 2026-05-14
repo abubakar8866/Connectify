@@ -1,9 +1,12 @@
 package com.abubakar.connectify.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Role;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -37,6 +40,43 @@ public interface UserRepository extends JpaRepository<User, Long> {
         ORDER BY u.followersCount DESC
     """)
     List<User> findSuggestedUsers(List<Long> excludedIds);
+
+    Long countByIsActiveTrue();
+
+    Long countByAccountStatus(AccountStatus status);
+
+    Long countByCreatedAtAfter(LocalDateTime time);
+
+    Long countByDeletedTrue();
+
+    @Query("""
+    SELECT u
+    FROM User u
+    ORDER BY
+        (u.followersCount + u.followingCount) DESC
+    """)
+    List<User> findMostActiveUsers();
+
+    Page<User> findByNameContainingIgnoreCaseOrUnameContainingIgnoreCase(
+            String name,
+            String uname,
+            Pageable pageable
+    );
+
+    Page<User> findByAccountStatus(
+            AccountStatus status,
+            Pageable pageable
+    );
+
+    Page<User> findByIsPrivate(
+            Boolean isPrivate,
+            Pageable pageable
+    );
+
+    Page<User> findByIsVerified(
+            Boolean isVerified,
+            Pageable pageable
+    );
 
 }
 

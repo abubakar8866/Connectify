@@ -1,12 +1,11 @@
 package com.abubakar.connectify.enums;
 
-public enum AccountStatus {
+public enum AdminUserFilter {
 
     ACTIVE,
-    SUSPENDED,
     BANNED,
-    PUBLIC,
     PRIVATE,
+    PUBLIC,
     VERIFIED
 
 }
