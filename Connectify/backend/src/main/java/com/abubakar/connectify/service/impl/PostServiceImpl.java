@@ -16,7 +16,9 @@ import com.abubakar.connectify.repository.MediaRepository;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.PostService;
+import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.HashtagUtil;
+import com.abubakar.connectify.util.OwnershipValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,12 @@ public class PostServiceImpl implements PostService {
     @Autowired
     private LikeRepository likeRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private OwnershipValidator ownershipValidator;
+
     private static final Logger logger =
             LoggerFactory.getLogger(PostServiceImpl.class);
 
@@ -57,7 +65,7 @@ public class PostServiceImpl implements PostService {
 
         logger.info("Creating new post");
 
-        User user = getCurrentUser();
+        User user = this.authUtil.getCurrentUser();
         logger.info("Post creation requested by userId: {}", user.getId());
 
         Post post = new Post();
@@ -107,10 +115,16 @@ public class PostServiceImpl implements PostService {
 
         Post post = this.getPostById(postId);
 
+        User currentUser = this.authUtil.getCurrentUser();
+
         // Ownership Check
-        this.ownershipCheck(post);
+        this.ownershipValidator.validate(
+                post.getUser().getId(),
+                currentUser,
+                "You are not authorized to access this post"
+        );
         logger.info("Ownership validation passed for userId: {}",
-                getCurrentUser().getId());
+                currentUser.getId());
 
         // Update Caption
         post.setCaption(request.getCaption());
@@ -196,9 +210,17 @@ public class PostServiceImpl implements PostService {
 
         Post post = this.getPostById(postId);
 
-        // Ownership validation
-        this.ownershipCheck(post);
-        logger.info("Ownership validation passed");
+        User currentUser = this.authUtil.getCurrentUser();
+
+        // Ownership Check
+        this.ownershipValidator.validate(
+                post.getUser().getId(),
+                currentUser,
+                "You are not authorized to access this post"
+        );
+
+        logger.info("Ownership validation passed for userId: {}",
+                currentUser.getId());
 
         logger.info("Deleting media files for postId: {}", postId);
         // Delete media files
@@ -214,31 +236,6 @@ public class PostServiceImpl implements PostService {
         postRepository.delete(post);
 
         logger.info("Post deleted successfully with id: {}", postId);
-    }
-
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (authentication == null ||
-                !authentication.isAuthenticated() ||
-                Objects.equals(authentication.getPrincipal(), "anonymousUser")) {
-
-            logger.warn("Unauthorized access attempt");
-
-            throw new UserNotAuthenticatedException(
-                    "User not authenticated"
-            );
-        }
-
-        User user = (User) authentication.getPrincipal();
-
-        logger.debug("Authenticated userId: {}", Objects.requireNonNull(user).getId());
-
-        return user;
     }
 
     private PostResponse mapToResponse(Post post) {
@@ -280,26 +277,6 @@ public class PostServiceImpl implements PostService {
                         new ResourceNotFound("Post not found with id: "+postId)
                 );
 
-    }
-
-    private  void ownershipCheck(Post post){
-
-        User user = this.getCurrentUser();
-
-        if (!post.getUser().getId().equals(user.getId())) {
-
-            logger.warn(
-                    "Unauthorized post access | postOwnerId: {} | currentUserId: {}",
-                    post.getUser().getId(),
-                    user.getId()
-            );
-
-            throw new UnauthorizedException(
-                    "You are not authorized to access this post"
-            );
-        }
-
-        logger.debug("Ownership validation successful");
     }
 
     private List<Hashtag> processHashtags(String caption) {
@@ -384,7 +361,7 @@ public class PostServiceImpl implements PostService {
 
     private Boolean isPostLikedByCurrentUser(Post post) {
 
-        User currentUser = this.getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         return likeRepository
                 .findByUserAndPost(currentUser, post)

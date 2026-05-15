@@ -277,6 +277,37 @@ public class AdminUserServiceImpl implements AdminUserService {
         );
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminUserResponse> getReportedUsers(
+            int page,
+            int size
+    ) {
+
+        logger.info(
+                "Fetching reported users | page: {} | size: {}",
+                page,
+                size
+        );
+
+        Pageable pageable =
+                PageRequest.of(page, size);
+
+        Page<User> users =
+                userRepository.findReportedUsers(
+                        pageable
+                );
+
+        logger.info(
+                "Reported users fetched successfully | count: {}",
+                users.getTotalElements()
+        );
+
+        return users.map(
+                this::mapToAdminUserResponse
+        );
+    }
+
     // ================= PRIVATE METHODS =================
 
     private User getUserById(Long userId) {
@@ -321,3 +352,4 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
 }
+

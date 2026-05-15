@@ -3,12 +3,15 @@ package com.abubakar.connectify.service.impl;
 import com.abubakar.connectify.dto.request.CreateReportRequest;
 import com.abubakar.connectify.dto.response.ReportResponse;
 import com.abubakar.connectify.entity.*;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.enums.ReportStatus;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.*;
+import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.ReportService;
 
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +38,12 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @Override
     public ReportResponse reportPost(
             Long postId,
@@ -46,7 +55,7 @@ public class ReportServiceImpl implements ReportService {
                 postId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() ->
@@ -80,6 +89,33 @@ public class ReportServiceImpl implements ReportService {
 
         reportRepository.save(report);
 
+        // NOTIFY POST OWNER
+        notificationService.createNotification(
+                post.getUser().getId(),                 // receiver
+                currentUser.getId(),                   // sender
+                currentUser.getUname() +
+                        " reported your post",
+                NotificationType.REPORT,
+                post.getId(),
+                null
+        );
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                com.abubakar.connectify.enums.Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname() +
+                                " reported a post",
+                        NotificationType.REPORT,
+                        post.getId(),
+                        null
+                )
+        );
+
         logger.info(
                 "Post reported successfully"
         );
@@ -98,7 +134,7 @@ public class ReportServiceImpl implements ReportService {
                 commentId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Comment comment =
                 commentRepository.findById(commentId)
@@ -133,6 +169,33 @@ public class ReportServiceImpl implements ReportService {
 
         reportRepository.save(report);
 
+        // NOTIFY COMMENT OWNER
+        notificationService.createNotification(
+                comment.getUser().getId(),
+                currentUser.getId(),
+                currentUser.getUname() +
+                        " reported your comment",
+                NotificationType.REPORT,
+                comment.getPost().getId(),
+                comment.getId()
+        );
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                com.abubakar.connectify.enums.Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname() +
+                                " reported a comment",
+                        NotificationType.REPORT,
+                        comment.getPost().getId(),
+                        comment.getId()
+                )
+        );
+
         logger.info(
                 "Comment reported successfully"
         );
@@ -151,7 +214,7 @@ public class ReportServiceImpl implements ReportService {
                 userId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -185,6 +248,33 @@ public class ReportServiceImpl implements ReportService {
 
         reportRepository.save(report);
 
+        // NOTIFY REPORTED USER
+        notificationService.createNotification(
+                user.getId(),
+                currentUser.getId(),
+                currentUser.getUname() +
+                        " reported your profile",
+                NotificationType.REPORT,
+                null,
+                null
+        );
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                com.abubakar.connectify.enums.Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname() +
+                                " reported a user",
+                        NotificationType.REPORT,
+                        null,
+                        null
+                )
+        );
+
         logger.info(
                 "User reported successfully"
         );
@@ -193,33 +283,6 @@ public class ReportServiceImpl implements ReportService {
     }
 
     // ================= HELPERS =================
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        assert authentication != null;
-        String email = authentication.getName();
-
-        logger.debug(
-                "Fetching current authenticated user | email: {}",
-                email
-        );
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Authenticated user not found | email: {}",
-                            email
-                    );
-
-                    return new ResourceNotFound(
-                            "User not found"
-                    );
-                });
-    }
-
     private ReportResponse mapToResponse(
             Report report
     ) {
@@ -267,3 +330,4 @@ public class ReportServiceImpl implements ReportService {
     }
 
 }
+

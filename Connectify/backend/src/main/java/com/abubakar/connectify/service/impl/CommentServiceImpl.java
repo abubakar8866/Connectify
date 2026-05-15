@@ -5,20 +5,21 @@ import com.abubakar.connectify.dto.response.CommentResponse;
 import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.LikeRepository;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.CommentService;
 
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.OwnershipValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,15 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private LikeRepository likeRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private OwnershipValidator ownershipValidator;
+
+    @Autowired
+    private NotificationService notificationService;
+
     private static final Logger logger =
             LoggerFactory.getLogger(CommentServiceImpl.class);
 
@@ -50,7 +60,7 @@ public class CommentServiceImpl implements CommentService {
 
         logger.info("Adding comment to post with id: {}", postId);
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Post post = getPostById(postId);
 
@@ -76,6 +86,35 @@ public class CommentServiceImpl implements CommentService {
 
         Comment savedComment = commentRepository.save(comment);
 
+        // NORMAL COMMENT NOTIFICATION
+        if (request.getParentCommentId() == null) {
+
+            notificationService.createNotification(
+                    post.getUser().getId(),
+                    currentUser.getId(),
+                    currentUser.getUname() + " commented on your post",
+                    NotificationType.COMMENT,
+                    post.getId(),
+                    savedComment.getId()
+            );
+        }
+
+        // REPLY NOTIFICATION
+        else {
+
+            Comment parentComment =
+                    savedComment.getParentComment();
+
+            notificationService.createNotification(
+                    parentComment.getUser().getId(),
+                    currentUser.getId(),
+                    currentUser.getUname() + " replied to your comment",
+                    NotificationType.REPLY,
+                    post.getId(),
+                    savedComment.getId()
+            );
+        }
+
         logger.info(
                 "Comment added successfully | commentId: {} | userId: {}",
                 savedComment.getId(),
@@ -94,7 +133,11 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(commentId);
 
-        ownershipCheck(comment);
+        this.ownershipValidator.validate(
+                    comment.getUser().getId(),
+                    this.authUtil.getCurrentUser(),
+                "You are not authorized to access this comment"
+                );
 
         comment.setContent(request.getContent());
 
@@ -115,7 +158,11 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(commentId);
 
-        ownershipCheck(comment);
+        this.ownershipValidator.validate(
+                comment.getUser().getId(),
+                this.authUtil.getCurrentUser(),
+                "You are not authorized to access this comment"
+        );
 
         commentRepository.delete(comment);
 
@@ -205,56 +252,9 @@ public class CommentServiceImpl implements CommentService {
                 });
     }
 
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        assert authentication != null;
-        String email = authentication.getName();
-
-        logger.debug(
-                "Fetching current authenticated user | email: {}",
-                email
-        );
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Authenticated user not found | email: {}",
-                            email
-                    );
-
-                    return new ResourceNotFound(
-                            "User not found"
-                    );
-                });
-    }
-
-    private void ownershipCheck(Comment comment) {
-
-        User currentUser = getCurrentUser();
-
-        if (!comment.getUser().getId().equals(currentUser.getId())) {
-
-            logger.warn(
-                    "Unauthorized comment access | commentOwnerId: {} | currentUserId: {}",
-                    comment.getUser().getId(),
-                    currentUser.getId()
-            );
-
-            throw new UnauthorizedException(
-                    "You are not authorized to access this comment"
-            );
-        }
-
-        logger.debug("Comment ownership validation successful");
-    }
-
     private Boolean isCommentLikedByCurrentUser(Comment comment) {
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         return likeRepository
                 .findByUserAndComment(currentUser, comment)

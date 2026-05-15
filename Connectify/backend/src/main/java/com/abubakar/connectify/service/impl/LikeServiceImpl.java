@@ -7,6 +7,7 @@ import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Like;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.LikeRepository;
@@ -14,12 +15,12 @@ import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.LikeService;
 
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,13 +43,19 @@ public class LikeServiceImpl implements LikeService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private NotificationService notificationService;
+
     // TOGGLE POST LIKE
     @Override
     public LikeResponse togglePostLike(Long postId) {
 
         logger.info("Toggle post like request | postId: {}", postId);
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Post post = getPostById(postId);
 
@@ -88,6 +95,16 @@ public class LikeServiceImpl implements LikeService {
 
         postRepository.save(post);
 
+        // CREATE NOTIFICATION
+        notificationService.createNotification(
+                post.getUser().getId(),                 // receiver
+                currentUser.getId(),                    // sender
+                currentUser.getUname() + " liked your post",
+                NotificationType.LIKE,
+                post.getId(),
+                null
+        );
+
         logger.info(
                 "Post liked successfully | postId: {} | userId: {}",
                 postId,
@@ -106,7 +123,7 @@ public class LikeServiceImpl implements LikeService {
 
         logger.info("Toggle comment like request | commentId: {}", commentId);
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Comment comment = getCommentById(commentId);
 
@@ -146,6 +163,16 @@ public class LikeServiceImpl implements LikeService {
 
         commentRepository.save(comment);
 
+        // CREATE NOTIFICATION
+        notificationService.createNotification(
+                comment.getUser().getId(),              // receiver
+                currentUser.getId(),                    // sender
+                currentUser.getUname() + " liked your comment",
+                NotificationType.LIKE,
+                null,
+                comment.getId()
+        );
+
         logger.info(
                 "Comment liked successfully | commentId: {} | userId: {}",
                 commentId,
@@ -159,18 +186,6 @@ public class LikeServiceImpl implements LikeService {
     }
 
     // PRIVATE METHODS
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        String email = authentication.getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFound("User not found"));
-    }
-
     private Post getPostById(Long postId) {
 
         return postRepository.findById(postId)

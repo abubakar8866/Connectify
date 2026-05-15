@@ -8,18 +8,19 @@ import com.abubakar.connectify.dto.response.FollowResponse;
 import com.abubakar.connectify.dto.response.UserPreviewResponse;
 import com.abubakar.connectify.entity.Follow;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.FollowRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.FollowService;
 
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,12 @@ public class FollowServiceImpl implements FollowService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private NotificationService notificationService;
+
     // TOGGLE FOLLOW
     @Override
     public FollowResponse toggleFollow(Long userId) {
@@ -44,7 +51,7 @@ public class FollowServiceImpl implements FollowService {
                 userId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         User targetUser = getUserById(userId);
 
@@ -127,6 +134,16 @@ public class FollowServiceImpl implements FollowService {
         userRepository.save(targetUser);
         userRepository.save(currentUser);
 
+        // CREATE NOTIFICATION
+        notificationService.createNotification(
+                targetUser.getId(),
+                currentUser.getId(),
+                currentUser.getUname() + " started following you",
+                NotificationType.FOLLOW,
+                null,
+                null
+        );
+
         logger.info(
                 "User followed successfully | followerId: {} | followingId: {}",
                 currentUser.getId(),
@@ -201,15 +218,15 @@ public class FollowServiceImpl implements FollowService {
 
         return UserPreviewResponse.builder()
                 .id(user.getId())
-                .username(user.getUsername())
-                .profileImage(user.getProfileImageUrl())
+                .uname(user.getUname())
+                .profileImageUrl(user.getProfileImageUrl())
                 .following(isFollowing(user))
                 .build();
     }
 
     private Boolean isFollowing(User targetUser) {
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         return followRepository
                 .findByFollowerAndFollowing(
@@ -217,37 +234,6 @@ public class FollowServiceImpl implements FollowService {
                         targetUser
                 )
                 .isPresent();
-    }
-
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (authentication == null ||
-                !authentication.isAuthenticated() ||
-                Objects.equals(
-                        authentication.getPrincipal(),
-                        "anonymousUser"
-                )) {
-
-            logger.warn("Unauthorized access attempt");
-
-            throw new UnauthorizedException(
-                    "User not authenticated"
-            );
-        }
-
-        User user = (User) authentication.getPrincipal();
-
-        logger.debug(
-                "Authenticated user fetched | userId: {}",
-                user != null ? user.getId() : null
-        );
-
-        return user;
     }
 
     private User getUserById(Long userId) {

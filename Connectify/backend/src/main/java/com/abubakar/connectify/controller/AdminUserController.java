@@ -4,7 +4,9 @@ import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
 import com.abubakar.connectify.enums.AdminUserFilter;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.service.AdminUserService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,13 +79,29 @@ public class AdminUserController {
 
             @PathVariable Long userId,
 
-            @RequestBody BanUserRequest request
+           @Valid @RequestBody BanUserRequest request
     ) {
 
         logger.info(
                 "Ban user request received | userId: {}",
                 userId
         );
+
+        if (Boolean.TRUE.equals(request.getPermanent())
+                && request.getDurationInDays() != null) {
+
+            throw new OperationFailException(
+                    "Permanent ban should not have duration"
+            );
+        }
+
+        if (!Boolean.TRUE.equals(request.getPermanent())
+                && request.getDurationInDays() == null) {
+
+            throw new OperationFailException(
+                    "Duration is required for temporary ban"
+            );
+        }
 
         adminUserService.banUser(
                 userId,
@@ -129,4 +147,29 @@ public class AdminUserController {
         );
     }
 
+    @GetMapping("/reported")
+    public ResponseEntity<Page<AdminUserResponse>>
+    getReportedUsers(
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        logger.info(
+                "Get reported users request received"
+        );
+
+        Page<AdminUserResponse> response =
+                adminUserService.getReportedUsers(
+                        page,
+                        size
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
 }
+

@@ -9,9 +9,9 @@ public class UserPreviewResponse {
 
     private Long id;
 
-    private String username;
+    private String uname;
 
-    private String profileImage;
+    private String profileImageUrl;
 
     private Boolean following;
 

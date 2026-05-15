@@ -29,6 +29,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRole(Role role);
 
+    Optional<User> findByRole(Role role);
+
     List<User> findByUnameContainingIgnoreCaseOrNameContainingIgnoreCase(
             String uname,
             String name
@@ -48,6 +50,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Long countByCreatedAtAfter(LocalDateTime time);
 
     Long countByDeletedTrue();
+
+    @Query("""
+        SELECT DISTINCT r.reportedUser
+        FROM Report r
+        WHERE r.reportedUser IS NOT NULL
+        """)
+    Page<User> findReportedUsers(Pageable pageable);
 
     @Query("""
     SELECT u

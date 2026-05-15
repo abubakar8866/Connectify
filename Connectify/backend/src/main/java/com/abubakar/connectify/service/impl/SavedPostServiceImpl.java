@@ -15,6 +15,7 @@ import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.SavedPostRepository;
 import com.abubakar.connectify.service.SavedPostService;
 
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,9 @@ public class SavedPostServiceImpl implements SavedPostService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
     @Override
     public SavePostResponse toggleSavePost(Long postId) {
 
@@ -45,7 +49,7 @@ public class SavedPostServiceImpl implements SavedPostService {
                 postId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Post post = getPostById(postId);
 
@@ -97,7 +101,7 @@ public class SavedPostServiceImpl implements SavedPostService {
 
         logger.info("Fetching saved posts");
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         List<SavedPost> savedPosts =
                 savedPostRepository
@@ -120,28 +124,6 @@ public class SavedPostServiceImpl implements SavedPostService {
     }
 
     // PRIVATE METHODS
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (authentication == null ||
-                !authentication.isAuthenticated() ||
-                Objects.equals(
-                        authentication.getPrincipal(),
-                        "anonymousUser"
-                )) {
-
-            throw new UnauthorizedException(
-                    "User not authenticated"
-            );
-        }
-
-        return (User) authentication.getPrincipal();
-    }
-
     private Post getPostById(Long postId) {
 
         return postRepository.findById(postId)

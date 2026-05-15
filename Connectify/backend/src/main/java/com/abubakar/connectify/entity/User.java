@@ -1,12 +1,15 @@
 package com.abubakar.connectify.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.AuthProvider;
+import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.enums.Role;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,7 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class User implements UserDetails {
+public class User extends BaseEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -82,6 +85,33 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String adminNote;
 
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "user_languages",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "language")
+    private List<String> languages = new ArrayList<>();
+
+    private LocalDate dateOfBirth;
+
+    @Transient
+    public Integer getAge() {
+
+        if (dateOfBirth == null) {
+            return null;
+        }
+
+        return Period
+                .between(dateOfBirth, LocalDate.now())
+                .getYears();
+    }
+
+    private String city;
+
     // USERS WHO FOLLOW THIS USER
     @JsonIgnore
     @OneToMany(
@@ -100,10 +130,6 @@ public class User implements UserDetails {
     )
     private List<Follow> following = new ArrayList<>();
 
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
     private LocalDateTime lastLoginAt;
 
     @OneToMany(mappedBy = "user")
@@ -114,8 +140,6 @@ public class User implements UserDetails {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
         this.isActive = true;
         this.isEmailVerified = false;
 
@@ -130,11 +154,6 @@ public class User implements UserDetails {
         if (this.provider == null) {
             this.provider = AuthProvider.LOCAL;
         }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

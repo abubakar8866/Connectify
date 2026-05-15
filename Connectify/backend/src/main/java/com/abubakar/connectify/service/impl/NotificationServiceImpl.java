@@ -1,0 +1,353 @@
+package com.abubakar.connectify.service.impl;
+
+import com.abubakar.connectify.dto.response.NotificationResponse;
+import com.abubakar.connectify.entity.Comment;
+import com.abubakar.connectify.entity.Notification;
+import com.abubakar.connectify.entity.Post;
+import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.ResourceNotFound;
+import com.abubakar.connectify.exception.UnauthorizedException;
+import com.abubakar.connectify.repository.CommentRepository;
+import com.abubakar.connectify.repository.NotificationRepository;
+import com.abubakar.connectify.repository.PostRepository;
+import com.abubakar.connectify.repository.UserRepository;
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AuthUtil;
+
+import com.abubakar.connectify.util.OwnershipValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@Transactional
+public class NotificationServiceImpl
+        implements NotificationService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(NotificationServiceImpl.class);
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private OwnershipValidator ownershipValidator;
+
+    // ================= CREATE NOTIFICATION =================
+    @Override
+    public void createNotification(
+            Long receiverId,
+            Long senderId,
+            String message,
+            NotificationType type,
+            Long postId,
+            Long commentId
+    ) {
+
+        logger.info(
+                "Creating notification | receiverId: {} | senderId: {}",
+                receiverId,
+                senderId
+        );
+
+        // DON'T NOTIFY SELF
+        if (receiverId.equals(senderId)) {
+
+            logger.info(
+                    "Skipping self notification | userId: {}",
+                    senderId
+            );
+
+            return;
+        }
+
+        User receiver =
+                userRepository.findById(receiverId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Receiver not found"
+                                )
+                        );
+
+        User sender =
+                userRepository.findById(senderId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Sender not found"
+                                )
+                        );
+
+        Notification notification =
+                Notification.builder()
+                        .receiver(receiver)
+                        .sender(sender)
+                        .message(message)
+                        .type(type)
+                        .isRead(false)
+                        .build();
+
+        if (postId != null) {
+
+            Post post =
+                    postRepository.findById(postId)
+                            .orElseThrow(() ->
+                                    new ResourceNotFound(
+                                            "Post not found"
+                                    )
+                            );
+
+            notification.setPost(post);
+        }
+
+        if (commentId != null) {
+
+            Comment comment =
+                    commentRepository.findById(commentId)
+                            .orElseThrow(() ->
+                                    new ResourceNotFound(
+                                            "Comment not found"
+                                    )
+                            );
+
+            notification.setComment(comment);
+        }
+
+        notificationRepository.save(notification);
+
+        logger.info(
+                "Notification created successfully"
+        );
+    }
+
+    // ================= GET MY NOTIFICATIONS =================
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getMyNotifications() {
+
+        User currentUser = authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching notifications | userId: {}",
+                currentUser.getId()
+        );
+
+        List<Notification> notifications =
+                notificationRepository
+                        .findByReceiverOrderByCreatedAtDesc(
+                                currentUser
+                        );
+
+        logger.info(
+                "Total notifications fetched: {}",
+                notifications.size()
+        );
+
+        return notifications.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ================= MARK AS READ =================
+    @Override
+    public void markAsRead(Long notificationId) {
+
+        User currentUser = authUtil.getCurrentUser();
+
+        logger.info(
+                "Marking notification as read | notificationId: {}",
+                notificationId
+        );
+
+        Notification notification =
+                notificationRepository.findById(notificationId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Notification not found"
+                                )
+                        );
+
+        // OWNERSHIP CHECK
+        if (!notification.getReceiver()
+                .getId()
+                .equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Unauthorized notification access | notificationId: {} | userId: {}",
+                    notificationId,
+                    currentUser.getId()
+            );
+
+            throw new UnauthorizedException(
+                    "You are not authorized to access this notification"
+            );
+        }
+
+        notification.setIsRead(true);
+
+        notificationRepository.save(notification);
+
+        logger.info(
+                "Notification marked as read successfully"
+        );
+    }
+
+    // ================= MARK ALL AS READ =================
+    @Override
+    public void markAllAsRead() {
+
+        User currentUser = authUtil.getCurrentUser();
+
+        logger.info(
+                "Marking all notifications as read | userId: {}",
+                currentUser.getId()
+        );
+
+        List<Notification> unreadNotifications =
+                notificationRepository
+                        .findByReceiverAndIsReadFalse(
+                                currentUser
+                        );
+
+        if (unreadNotifications.isEmpty()) {
+
+            logger.info(
+                    "No unread notifications found | userId: {}",
+                    currentUser.getId()
+            );
+
+            return;
+        }
+
+        unreadNotifications.forEach(
+                notification ->
+                        notification.setIsRead(true)
+        );
+
+        notificationRepository.saveAll(
+                unreadNotifications
+        );
+
+        logger.info(
+                "All notifications marked as read | count: {}",
+                unreadNotifications.size()
+        );
+    }
+
+    // ================= UNREAD COUNT =================
+    @Override
+    @Transactional(readOnly = true)
+    public Long getUnreadCount() {
+
+        User currentUser = authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching unread notification count | userId: {}",
+                currentUser.getId()
+        );
+
+        return notificationRepository
+                .countByReceiverAndIsReadFalse(
+                        currentUser
+                );
+    }
+
+    // ================= DELETE NOTIFICATION =================
+    @Override
+    public void deleteNotification(Long notificationId) {
+
+        User currentUser = authUtil.getCurrentUser();
+
+        logger.info(
+                "Deleting notification | notificationId: {}",
+                notificationId
+        );
+
+        Notification notification =
+                notificationRepository.findById(notificationId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Notification not found"
+                                )
+                        );
+
+        // OWNERSHIP CHECK
+        this.ownershipValidator.validate(
+                notification.getReceiver().getId(),
+                currentUser,
+                "you are not authorized to delete this notification."
+        );
+
+        notificationRepository.delete(notification);
+
+        logger.info(
+                "Notification deleted successfully | notificationId: {}",
+                notificationId
+        );
+    }
+
+    // ================= MAP TO RESPONSE =================
+    private NotificationResponse mapToResponse(
+            Notification notification
+    ) {
+
+        return NotificationResponse.builder()
+
+                .id(notification.getId())
+
+                .type(notification.getType())
+
+                .message(notification.getMessage())
+
+                .isRead(notification.getIsRead())
+
+                .senderId(
+                        notification.getSender().getId()
+                )
+
+                .senderUsername(
+                        notification.getSender().getUname()
+                )
+
+                .senderProfileImage(
+                        notification.getSender().getProfileImageUrl()
+                )
+
+                .postId(
+                        notification.getPost() != null
+                                ? notification.getPost().getId()
+                                : null
+                )
+
+                .commentId(
+                        notification.getComment() != null
+                                ? notification.getComment().getId()
+                                : null
+                )
+
+                .createdAt(
+                        notification.getCreatedAt()
+                )
+
+                .build();
+    }
+
+}
+

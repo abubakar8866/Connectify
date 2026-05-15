@@ -14,6 +14,7 @@ import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.SearchService;
 
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,9 @@ public class SearchServiceImpl implements SearchService {
     @Autowired
     private FollowRepository followRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
     private static final Logger logger =
             LoggerFactory.getLogger(SearchServiceImpl.class);
 
@@ -53,7 +57,7 @@ public class SearchServiceImpl implements SearchService {
                 keyword
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         List<User> users =
                 userRepository
@@ -135,7 +139,7 @@ public class SearchServiceImpl implements SearchService {
 
         logger.info("Fetching suggested users");
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         List<Follow> following =
                 followRepository.findByFollower(currentUser);
@@ -170,34 +174,6 @@ public class SearchServiceImpl implements SearchService {
     }
 
     // ================= PRIVATE METHODS =================
-
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        if (
-                authentication == null
-                        ||
-                        !authentication.isAuthenticated()
-                        ||
-                        Objects.equals(
-                                authentication.getPrincipal(),
-                                "anonymousUser"
-                        )
-        ) {
-
-            logger.error("User not authenticated");
-
-            throw new ResourceNotFound(
-                    "User not authenticated"
-            );
-        }
-
-        return (User) authentication.getPrincipal();
-    }
 
     private UserSearchResponse mapToUserSearchResponse(
             User user,
@@ -250,7 +226,7 @@ public class SearchServiceImpl implements SearchService {
                                 like.getUser()
                                         .getId()
                                         .equals(
-                                                getCurrentUser().getId()
+                                                this.authUtil.getCurrentUser().getId()
                                         )
                         );
 
@@ -281,3 +257,4 @@ public class SearchServiceImpl implements SearchService {
     }
 
 }
+

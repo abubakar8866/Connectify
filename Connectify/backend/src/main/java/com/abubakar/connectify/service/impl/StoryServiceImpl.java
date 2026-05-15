@@ -11,7 +11,6 @@ import com.abubakar.connectify.entity.StoryView;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.StoryReactionRepository;
 import com.abubakar.connectify.repository.StoryReplyRepository;
 import com.abubakar.connectify.repository.StoryRepository;
@@ -20,14 +19,14 @@ import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.StoryService;
 
+import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.OwnershipValidator;
 import org.modelmapper.ModelMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Transactional
@@ -62,6 +60,12 @@ public class StoryServiceImpl implements StoryService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private OwnershipValidator ownershipValidator;
+
     private static final Logger logger =
             LoggerFactory.getLogger(StoryServiceImpl.class);
 
@@ -71,7 +75,7 @@ public class StoryServiceImpl implements StoryService {
 
         logger.info("Creating new story");
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         String uploadedFile =
                 fileService.uploadFile(
@@ -151,7 +155,7 @@ public class StoryServiceImpl implements StoryService {
                 storyId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Story story = getStoryById(storyId);
 
@@ -198,7 +202,7 @@ public class StoryServiceImpl implements StoryService {
                 storyId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Story story = getStoryById(storyId);
 
@@ -268,7 +272,7 @@ public class StoryServiceImpl implements StoryService {
                 storyId
         );
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         Story story = getStoryById(storyId);
 
@@ -304,7 +308,11 @@ public class StoryServiceImpl implements StoryService {
 
         Story story = getStoryById(storyId);
 
-        ownershipCheck(story);
+        this.ownershipValidator.validate(
+                story.getUser().getId(),
+                this.authUtil.getCurrentUser(),
+                "You are not authorized to access this story"
+        );
 
         fileService.deleteFile(
                 story.getPublicId(),
@@ -330,7 +338,11 @@ public class StoryServiceImpl implements StoryService {
 
         Story story = getStoryById(storyId);
 
-        ownershipCheck(story);
+        this.ownershipValidator.validate(
+                story.getUser().getId(),
+                this.authUtil.getCurrentUser(),
+                "You are not authorized to access this story"
+        );
 
         List<StoryView> viewers =
                 storyViewRepository.findByStory(story);
@@ -349,7 +361,7 @@ public class StoryServiceImpl implements StoryService {
     // ================= MAP RESPONSE =================
     private StoryResponse mapToResponse(Story story) {
 
-        User currentUser = getCurrentUser();
+        User currentUser = this.authUtil.getCurrentUser();
 
         boolean viewed =
                 storyViewRepository
@@ -410,45 +422,5 @@ public class StoryServiceImpl implements StoryService {
                 });
     }
 
-    // ================= CURRENT USER =================
-    private User getCurrentUser() {
-
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
-
-        String email =
-                Objects.requireNonNull(authentication).getName();
-
-        return userRepository
-                .findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "User not found"
-                        )
-                );
-    }
-
-    // ================= OWNERSHIP CHECK =================
-    private void ownershipCheck(Story story) {
-
-        User currentUser = getCurrentUser();
-
-        if (!story.getUser()
-                .getId()
-                .equals(currentUser.getId())) {
-
-            logger.warn(
-                    "Unauthorized story access | ownerId: {} | currentUserId: {}",
-                    story.getUser().getId(),
-                    currentUser.getId()
-            );
-
-            throw new UnauthorizedException(
-                    "You are not authorized to access this story"
-            );
-        }
-    }
-
 }
+

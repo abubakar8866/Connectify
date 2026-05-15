@@ -102,8 +102,6 @@ public class AuthServiceImpl implements AuthService {
 
 		user.setIsActive(true);
 
-		user.setCreatedAt(LocalDateTime.now());
-
 		try {
 
 			userRepo.save(user);
@@ -274,7 +272,25 @@ public class AuthServiceImpl implements AuthService {
 			user.setProfileImageUrl(fileName);
 		}
 
-		user.setUpdatedAt(LocalDateTime.now());
+		// Gender
+		if (request.getGender() != null) {
+			user.setGender(request.getGender());
+		}
+
+		// Languages
+		if (request.getLanguages() != null) {
+			user.setLanguages(request.getLanguages());
+		}
+
+		// Date of birth
+		if (request.getDateOfBirth() != null) {
+			user.setDateOfBirth(request.getDateOfBirth());
+		}
+
+		// City
+		if (request.getCity() != null) {
+			user.setCity(request.getCity());
+		}
 
 		userRepo.save(user);
 
@@ -311,8 +327,6 @@ public class AuthServiceImpl implements AuthService {
 		user.setResetTokenExpiry(
 				LocalDateTime.now().plusMinutes(15)
 		);
-
-		user.setUpdatedAt(LocalDateTime.now());
 
 		userRepo.save(user);
 
@@ -363,8 +377,6 @@ public class AuthServiceImpl implements AuthService {
 		user.setResetToken(null);
 
 		user.setResetTokenExpiry(null);
-
-		user.setUpdatedAt(LocalDateTime.now());
 
 		userRepo.save(user);
 
@@ -430,8 +442,6 @@ public class AuthServiceImpl implements AuthService {
 
 		admin.setIsActive(true);
 
-		admin.setCreatedAt(LocalDateTime.now());
-
 		userRepo.save(admin);
 
 		logger.info(
@@ -494,11 +504,14 @@ public class AuthServiceImpl implements AuthService {
 	// ================= ENTITY TO RESPONSE =================
 	private UserResponse mapToResponse(User user) {
 
-		return modelMapper.map(
-				user,
-				UserResponse.class
-		);
+		UserResponse response =
+				modelMapper.map(user, UserResponse.class);
+
+		response.setAge(user.getAge());
+
+		return response;
 
 	}
 
 }
+

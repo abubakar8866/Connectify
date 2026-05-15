@@ -1,10 +1,13 @@
 package com.abubakar.connectify.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.AuthProvider;
 
+import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,6 +34,16 @@ public class UserResponse {
 
     private Role role;
 
+    private Gender gender;
+
+    private List<String> languages;
+
+    private LocalDate dateOfBirth;
+
+    private Integer age;
+
+    private String city;
+
     private AccountStatus accountStatus;
 
     private AuthProvider provider;
@@ -46,3 +59,4 @@ public class UserResponse {
     private LocalDateTime lastLoginAt;
 
 }
+

@@ -19,6 +19,11 @@ public interface AdminUserService {
             Long userId
     );
 
+    Page<AdminUserResponse> getReportedUsers(
+            int page,
+            int size
+    );
+
     void banUser(
             Long userId,
             BanUserRequest request
