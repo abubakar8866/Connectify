@@ -13,6 +13,11 @@ public interface CommentService {
 
     void deleteComment(Long commentId);
 
-    List<CommentResponse> getPostComments(Long postId);
+    List<CommentResponse> getPostComments(
+            Long postId,
+            Long cursor,
+            int size
+    );
+
 }
 

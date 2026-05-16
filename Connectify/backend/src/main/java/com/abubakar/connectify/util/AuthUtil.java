@@ -37,4 +37,6 @@ public class AuthUtil {
 
         return (User) authentication.getPrincipal();
     }
+
 }
+

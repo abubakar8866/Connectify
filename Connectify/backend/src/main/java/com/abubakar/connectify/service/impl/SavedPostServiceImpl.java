@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -96,21 +98,52 @@ public class SavedPostServiceImpl implements SavedPostService {
                 .build();
     }
 
+    // ================= CURSOR PAGINATION =================
     @Override
-    public List<PostResponse> getSavedPosts() {
-
-        logger.info("Fetching saved posts");
-
-        User currentUser = this.authUtil.getCurrentUser();
-
-        List<SavedPost> savedPosts =
-                savedPostRepository
-                        .findByUserOrderByCreatedAtDesc(
-                                currentUser
-                        );
+    public List<PostResponse> getSavedPosts(
+            Long cursor,
+            int size
+    ) {
 
         logger.info(
-                "Total saved posts fetched: {}",
+                "Fetching saved posts | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        List<SavedPost> savedPosts;
+
+        // FIRST PAGE
+        if (cursor == null) {
+
+            savedPosts =
+                    savedPostRepository
+                            .findByUserOrderByIdDesc(
+                                    currentUser,
+                                    pageable
+                            );
+        }
+
+        // NEXT PAGE
+        else {
+
+            savedPosts =
+                    savedPostRepository
+                            .findByUserAndIdLessThanOrderByIdDesc(
+                                    currentUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        logger.info(
+                "Saved posts fetched successfully | count: {}",
                 savedPosts.size()
         );
 

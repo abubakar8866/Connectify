@@ -6,7 +6,9 @@ public enum NotificationType {
     COMMENT,
     FOLLOW,
     REPORT,
-    REPLY
+    REPLY,
+    STORY_REACTION,
+    STORY_REPLY
 
 }
 

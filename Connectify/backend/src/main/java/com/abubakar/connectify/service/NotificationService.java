@@ -16,7 +16,10 @@ public interface NotificationService {
             Long commentId
     );
 
-    List<NotificationResponse> getMyNotifications();
+    List<NotificationResponse> getMyNotifications(
+            Long cursor,
+            int size
+    );
 
     void markAsRead(Long notificationId);
 

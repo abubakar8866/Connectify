@@ -12,7 +12,10 @@ public interface StoryService {
 
     StoryResponse createStory( MultipartFile file );
 
-    List<StoryResponse> getActiveStories();
+    List<StoryResponse> getActiveStories(
+            Long cursor,
+            int size
+    );
 
     void viewStory(Long storyId);
 
@@ -22,7 +25,11 @@ public interface StoryService {
 
     void deleteStory(Long storyId);
 
-    List<UserResponse> getStoryViewers( Long storyId );
+    List<UserResponse> getStoryViewers(
+            Long storyId,
+            Long cursor,
+            int size
+    );
 
 }
 

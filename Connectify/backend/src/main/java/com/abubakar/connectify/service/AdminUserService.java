@@ -3,24 +3,34 @@ package com.abubakar.connectify.service;
 import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
-import com.abubakar.connectify.enums.AdminUserFilter;
-import org.springframework.data.domain.Page;
+import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.enums.Gender;
+
+import java.util.List;
 
 public interface AdminUserService {
 
-    Page<AdminUserResponse> getUsers(
-            int page,
+    List<AdminUserResponse> getUsers(
+            Long cursor,
             int size,
             String keyword,
-            AdminUserFilter filter
+            Boolean verified,
+            Boolean isPrivate,
+            Boolean active,
+            AccountStatus status,
+            String city,
+            Gender gender,
+            Long minFollowers
     );
 
     UserDetailsAdminResponse getUserDetails(
             Long userId
     );
 
-    Page<AdminUserResponse> getReportedUsers(
-            int page,
+    List<AdminUserResponse> getReportedUsers(
+
+            Long cursor,
+
             int size
     );
 
@@ -38,4 +48,3 @@ public interface AdminUserService {
     );
 
 }
-

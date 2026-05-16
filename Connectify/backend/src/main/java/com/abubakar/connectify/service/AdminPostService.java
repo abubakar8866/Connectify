@@ -1,37 +1,19 @@
 package com.abubakar.connectify.service;
 
 import com.abubakar.connectify.dto.response.AdminPostResponse;
-import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface AdminPostService {
 
-    Page<AdminPostResponse> getAllPosts(
-            int page,
-            int size
-    );
+    List<AdminPostResponse> searchPosts(
 
-    Page<AdminPostResponse> getReportedPosts(
-            int page,
-            int size
-    );
-
-    Page<AdminPostResponse> searchPostsByKeyword(
             String keyword,
-            int page,
-            int size
-    );
-
-    Page<AdminPostResponse> searchPostsByUsername(
             String username,
-            int page,
-            int size
-    );
-
-    Page<AdminPostResponse> searchPostsByHashtag(
             String hashtag,
-            int page,
+            Boolean reportedOnly,
+            Long cursor,
             int size
     );
 
 }
-

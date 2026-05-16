@@ -8,18 +8,20 @@ import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.abubakar.connectify.entity.User;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends
+        JpaRepository<User, Long>,
+        JpaSpecificationExecutor<User> {
 
     Optional<User> findByEmail(String email);
-
-    Optional<User> findByUname(String uname);
 
     Boolean existsByEmail(String email);
 
@@ -30,18 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByRole(Role role);
 
     Optional<User> findByRole(Role role);
-
-    List<User> findByUnameContainingIgnoreCaseOrNameContainingIgnoreCase(
-            String uname,
-            String name
-    );
-
-    @Query("""
-        SELECT u FROM User u
-        WHERE u.id NOT IN :excludedIds
-        ORDER BY u.followersCount DESC
-    """)
-    List<User> findSuggestedUsers(List<Long> excludedIds);
 
     Long countByIsActiveTrue();
 
@@ -55,35 +45,39 @@ public interface UserRepository extends JpaRepository<User, Long> {
         SELECT DISTINCT r.reportedUser
         FROM Report r
         WHERE r.reportedUser IS NOT NULL
-        """)
+    """)
     Page<User> findReportedUsers(Pageable pageable);
 
     @Query("""
-    SELECT u
-    FROM User u
-    ORDER BY
-        (u.followersCount + u.followingCount) DESC
+        SELECT u
+        FROM User u
+        ORDER BY
+            (u.followersCount + u.followingCount) DESC
     """)
     List<User> findMostActiveUsers();
 
-    Page<User> findByNameContainingIgnoreCaseOrUnameContainingIgnoreCase(
-            String name,
-            String uname,
+    List<User>
+    findByIdNotInOrderByFollowersCountDesc(
+            List<Long> excludedIds,
             Pageable pageable
     );
 
-    Page<User> findByAccountStatus(
-            AccountStatus status,
+    List<User>
+    findByIdNotInAndIdLessThanOrderByFollowersCountDesc(
+            List<Long> excludedIds,
+            Long cursor,
             Pageable pageable
     );
 
-    Page<User> findByIsPrivate(
-            Boolean isPrivate,
-            Pageable pageable
-    );
-
-    Page<User> findByIsVerified(
-            Boolean isVerified,
+    @Query("""
+        SELECT DISTINCT r.reportedUser
+        FROM Report r
+        WHERE r.reportedUser IS NOT NULL
+        AND r.reportedUser.id < :cursor
+        ORDER BY r.reportedUser.id DESC
+    """)
+    List<User> findReportedUsersByCursor(
+            Long cursor,
             Pageable pageable
     );
 

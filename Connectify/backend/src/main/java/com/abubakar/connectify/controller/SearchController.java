@@ -3,6 +3,8 @@ package com.abubakar.connectify.controller;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
+import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.service.SearchService;
 
 import org.slf4j.Logger;
@@ -28,86 +30,116 @@ public class SearchController {
     @GetMapping("/users")
     public ResponseEntity<List<UserSearchResponse>>
     searchUsers(
-            @RequestParam String keyword
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            Boolean verified,
+
+            @RequestParam(required = false)
+            Boolean isPrivate,
+
+            @RequestParam(required = false)
+            Boolean active,
+
+            @RequestParam(required = false)
+            AccountStatus status,
+
+            @RequestParam(required = false)
+            String city,
+
+            @RequestParam(required = false)
+            Gender gender,
+
+            @RequestParam(required = false)
+            Long minFollowers,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
     ) {
 
-        logger.info(
-                "Search users request | keyword: {}",
-                keyword
+        return ResponseEntity.ok(
+
+                searchService.searchUsers(
+                        keyword,
+                        verified,
+                        isPrivate,
+                        active,
+                        status,
+                        city,
+                        gender,
+                        minFollowers,
+                        cursor,
+                        size
+                )
         );
-
-        List<UserSearchResponse> response =
-                searchService.searchUsers(keyword);
-
-        logger.info(
-                "Users search completed | resultCount: {}",
-                response.size()
-        );
-
-        return ResponseEntity.ok(response);
     }
 
     // ================= SEARCH HASHTAGS =================
     @GetMapping("/hashtags")
     public ResponseEntity<List<HashtagResponse>>
     searchHashtags(
-            @RequestParam String keyword
+
+            @RequestParam String keyword,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
     ) {
 
-        logger.info(
-                "Search hashtags request | keyword: {}",
-                keyword
+        return ResponseEntity.ok(
+                searchService.searchHashtags(
+                        keyword,
+                        cursor,
+                        size
+                )
         );
-
-        List<HashtagResponse> response =
-                searchService.searchHashtags(keyword);
-
-        logger.info(
-                "Hashtag search completed | resultCount: {}",
-                response.size()
-        );
-
-        return ResponseEntity.ok(response);
     }
 
     // ================= TRENDING POSTS =================
     @GetMapping("/trending/posts")
     public ResponseEntity<List<PostResponse>>
-    getTrendingPosts() {
+    getTrendingPosts(
 
-        logger.info(
-                "Trending posts request received"
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        return ResponseEntity.ok(
+                searchService.getTrendingPosts(
+                        cursor,
+                        size
+                )
         );
-
-        List<PostResponse> response =
-                searchService.getTrendingPosts();
-
-        logger.info(
-                "Trending posts fetched | totalPosts: {}",
-                response.size()
-        );
-
-        return ResponseEntity.ok(response);
     }
 
     // ================= SUGGESTED USERS =================
     @GetMapping("/suggested/users")
     public ResponseEntity<List<UserSearchResponse>>
-    getSuggestedUsers() {
+    getSuggestedUsers(
 
-        logger.info(
-                "Suggested users request received"
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        return ResponseEntity.ok(
+                searchService.getSuggestedUsers(
+                        cursor,
+                        size
+                )
         );
-
-        List<UserSearchResponse> response =
-                searchService.getSuggestedUsers();
-
-        logger.info(
-                "Suggested users fetched | totalUsers: {}",
-                response.size()
-        );
-
-        return ResponseEntity.ok(response);
     }
 
 }

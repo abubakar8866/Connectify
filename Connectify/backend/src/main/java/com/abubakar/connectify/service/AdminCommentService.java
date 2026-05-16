@@ -1,19 +1,17 @@
 package com.abubakar.connectify.service;
 
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
-import org.springframework.data.domain.Page;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
+
+import java.util.List;
 
 public interface AdminCommentService {
 
-    Page<AdminCommentResponse> getAllComments(
-            int page,
+    CursorPageResponse<AdminCommentResponse> getAllComments(
+            Long cursor,
             int size,
-            String keyword
-    );
-
-    Page<AdminCommentResponse> getReportedComments(
-            int page,
-            int size
+            String keyword,
+            Boolean reportedOnly
     );
 
     void deleteComment(
@@ -21,3 +19,4 @@ public interface AdminCommentService {
     );
 
 }
+

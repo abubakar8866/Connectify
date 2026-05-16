@@ -10,6 +10,7 @@ import com.abubakar.connectify.entity.StoryReply;
 import com.abubakar.connectify.entity.StoryView;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.MediaType;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.StoryReactionRepository;
 import com.abubakar.connectify.repository.StoryReplyRepository;
@@ -17,6 +18,7 @@ import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.repository.StoryViewRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.FileService;
+import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.StoryService;
 
 import com.abubakar.connectify.util.AuthUtil;
@@ -27,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +57,9 @@ public class StoryServiceImpl implements StoryService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private FileService fileService;
@@ -126,18 +133,40 @@ public class StoryServiceImpl implements StoryService {
 
     // ================= GET ACTIVE STORIES =================
     @Override
-    public List<StoryResponse> getActiveStories() {
+    public List<StoryResponse> getActiveStories(
+            Long cursor,
+            int size
+    ) {
 
-        logger.info("Fetching active stories");
+        logger.info("Fetching active stories with cursor pagination");
 
-        List<Story> stories =
-                storyRepository
-                        .findByExpiresAtAfterOrderByCreatedAtDesc(
-                                LocalDateTime.now()
-                        );
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        List<Story> stories;
+
+        if (cursor == null) {
+
+            stories =
+                    storyRepository
+                            .findByExpiresAtAfterOrderByIdDesc(
+                                    LocalDateTime.now(),
+                                    pageable
+                            );
+
+        } else {
+
+            stories =
+                    storyRepository
+                            .findByExpiresAtAfterAndIdLessThanOrderByIdDesc(
+                                    LocalDateTime.now(),
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         logger.info(
-                "Total active stories fetched: {}",
+                "Stories fetched successfully | count: {}",
                 stories.size()
         );
 
@@ -253,6 +282,16 @@ public class StoryServiceImpl implements StoryService {
 
         storyRepository.save(story);
 
+        // NOTIFICATION
+        notificationService.createNotification(
+                story.getUser().getId(),
+                currentUser.getId(),
+                currentUser.getUname() + " reacted to your story",
+                NotificationType.STORY_REACTION,
+                null,
+                null
+        );
+
         logger.info(
                 "Story reaction added | storyId: {} | userId: {}",
                 storyId,
@@ -290,6 +329,16 @@ public class StoryServiceImpl implements StoryService {
         );
 
         storyRepository.save(story);
+
+        // NOTIFICATION
+        notificationService.createNotification(
+                story.getUser().getId(),
+                currentUser.getId(),
+                currentUser.getUname() + " replied to your story",
+                NotificationType.STORY_REPLY,
+                null,
+                null
+        );
 
         logger.info(
                 "Story reply added successfully | storyId: {}",
@@ -329,10 +378,14 @@ public class StoryServiceImpl implements StoryService {
 
     // ================= GET STORY VIEWERS =================
     @Override
-    public List<UserResponse> getStoryViewers(Long storyId) {
+    public List<UserResponse> getStoryViewers(
+            Long storyId,
+            Long cursor,
+            int size
+    ) {
 
         logger.info(
-                "Fetching story viewers | storyId: {}",
+                "Fetching story viewers with cursor pagination | storyId: {}",
                 storyId
         );
 
@@ -344,8 +397,30 @@ public class StoryServiceImpl implements StoryService {
                 "You are not authorized to access this story"
         );
 
-        List<StoryView> viewers =
-                storyViewRepository.findByStory(story);
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        List<StoryView> viewers;
+
+        if (cursor == null) {
+
+            viewers =
+                    storyViewRepository
+                            .findByStoryOrderByIdDesc(
+                                    story,
+                                    pageable
+                            );
+
+        } else {
+
+            viewers =
+                    storyViewRepository
+                            .findByStoryAndIdLessThanOrderByIdDesc(
+                                    story,
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         return viewers.stream()
                 .map(StoryView::getViewer)

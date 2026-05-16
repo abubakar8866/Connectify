@@ -54,12 +54,22 @@ public class StoryController {
 
     // ================= GET ACTIVE STORIES =================
     @GetMapping
-    public ResponseEntity<List<StoryResponse>> getActiveStories() {
+    public ResponseEntity<List<StoryResponse>> getActiveStories(
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
 
         logger.info("Get active stories request received");
 
         List<StoryResponse> responses =
-                storyService.getActiveStories();
+                storyService.getActiveStories(
+                        cursor,
+                        size
+                );
 
         logger.info(
                 "Stories fetched successfully | totalStories: {}",
@@ -172,7 +182,14 @@ public class StoryController {
     // ================= GET STORY VIEWERS =================
     @GetMapping("/{storyId}/viewers")
     public ResponseEntity<List<UserResponse>> getStoryViewers(
-            @PathVariable Long storyId
+
+            @PathVariable Long storyId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
     ) {
 
         logger.info(
@@ -181,7 +198,11 @@ public class StoryController {
         );
 
         List<UserResponse> viewers =
-                storyService.getStoryViewers(storyId);
+                storyService.getStoryViewers(
+                        storyId,
+                        cursor,
+                        size
+                );
 
         logger.info(
                 "Story viewers fetched successfully | totalViewers: {}",

@@ -1,13 +1,13 @@
 package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminCommentService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,51 +25,33 @@ public class AdminCommentController {
             adminCommentService;
 
     @GetMapping
-    public ResponseEntity<Page<AdminCommentResponse>>
-    getAllComments(
+    public ResponseEntity<CursorPageResponse<AdminCommentResponse>>
+    getComments(
 
-            @RequestParam(defaultValue = "0")
-            int page,
+            @RequestParam(required = false)
+            Long cursor,
 
             @RequestParam(defaultValue = "10")
             int size,
 
             @RequestParam(required = false)
-            String keyword
+            String keyword,
+
+            @RequestParam(required = false)
+            Boolean reportedOnly
     ) {
 
-        logger.info("Get all comments request received");
+        logger.info(
+                "Get comments request received"
+        );
 
         return ResponseEntity.ok(
                 adminCommentService
                         .getAllComments(
-                                page,
+                                cursor,
                                 size,
-                                keyword
-                        )
-        );
-    }
-
-    @GetMapping("/reported")
-    public ResponseEntity<Page<AdminCommentResponse>>
-    getReportedComments(
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "10")
-            int size
-    ) {
-
-        logger.info(
-                "Get reported comments request received"
-        );
-
-        return ResponseEntity.ok(
-                adminCommentService
-                        .getReportedComments(
-                                page,
-                                size
+                                keyword,
+                                reportedOnly
                         )
         );
     }

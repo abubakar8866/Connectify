@@ -3,29 +3,26 @@ package com.abubakar.connectify.service.impl;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
-import com.abubakar.connectify.entity.Follow;
-import com.abubakar.connectify.entity.Hashtag;
-import com.abubakar.connectify.entity.Post;
-import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.repository.FollowRepository;
-import com.abubakar.connectify.repository.HashtagRepository;
-import com.abubakar.connectify.repository.PostRepository;
-import com.abubakar.connectify.repository.UserRepository;
+import com.abubakar.connectify.entity.*;
+import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.enums.Gender;
+import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.SearchService;
-
+import com.abubakar.connectify.specification.UserSpecification;
 import com.abubakar.connectify.util.AuthUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -50,63 +47,113 @@ public class SearchServiceImpl implements SearchService {
 
     // ================= SEARCH USERS =================
     @Override
-    public List<UserSearchResponse> searchUsers(String keyword) {
+    public List<UserSearchResponse> searchUsers(
 
-        logger.info(
-                "Searching users with keyword: {}",
-                keyword
-        );
+            String keyword,
+            Boolean verified,
+            Boolean isPrivate,
+            Boolean active,
+            AccountStatus status,
+            String city,
+            Gender gender,
+            Long minFollowers,
 
-        User currentUser = this.authUtil.getCurrentUser();
+            Long cursor,
+            int size
+    ) {
 
-        List<User> users =
-                userRepository
-                        .findByUnameContainingIgnoreCaseOrNameContainingIgnoreCase(
-                                keyword,
-                                keyword
+        logger.info("Searching users with cursor pagination");
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        Specification<User> specification =
+
+                Specification
+                        .where(
+                                UserSpecification.searchByKeyword(keyword)
+                        )
+                        .and(
+                                UserSpecification.hasVerified(verified)
+                        )
+                        .and(
+                                UserSpecification.hasPrivateAccount(isPrivate)
+                        )
+                        .and(
+                                UserSpecification.hasActive(active)
+                        )
+                        .and(
+                                UserSpecification.hasAccountStatus(status)
+                        )
+                        .and(
+                                UserSpecification.hasCity(city)
+                        )
+                        .and(
+                                UserSpecification.hasGender(gender)
+                        )
+                        .and(
+                                UserSpecification.hasMinFollowers(minFollowers)
+                        )
+                        .and(
+                                UserSpecification.excludeCurrentUser(
+                                        currentUser.getId()
+                                )
+                        )
+                        .and(
+                                UserSpecification.cursor(cursor)
                         );
 
-        logger.info(
-                "Users found: {}",
-                users.size()
-        );
+        Page<User> users =
+                userRepository.findAll(
+                        specification,
+                        pageable
+                );
 
         return users.stream()
-
-                // EXCLUDE CURRENT USER
-                .filter(user ->
-                        !user.getId().equals(currentUser.getId())
-                )
-
                 .map(user ->
                         mapToUserSearchResponse(
                                 user,
                                 currentUser
                         )
                 )
-
                 .toList();
     }
 
     // ================= SEARCH HASHTAGS =================
     @Override
     public List<HashtagResponse> searchHashtags(
-            String keyword
+            String keyword,
+            Long cursor,
+            int size
     ) {
 
-        logger.info(
-                "Searching hashtags with keyword: {}",
-                keyword
-        );
+        Pageable pageable =
+                PageRequest.of(0, size);
 
-        List<Hashtag> hashtags =
-                hashtagRepository
-                        .findByNameContainingIgnoreCase(keyword);
+        List<Hashtag> hashtags;
 
-        logger.info(
-                "Hashtags found: {}",
-                hashtags.size()
-        );
+        if (cursor == null) {
+
+            hashtags =
+                    hashtagRepository
+                            .findByNameContainingIgnoreCaseOrderByIdDesc(
+                                    keyword,
+                                    pageable
+                            );
+
+        } else {
+
+            hashtags =
+                    hashtagRepository
+                            .findByNameContainingIgnoreCaseAndIdLessThanOrderByIdDesc(
+                                    keyword,
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         return hashtags.stream()
                 .map(this::mapToHashtagResponse)
@@ -115,18 +162,33 @@ public class SearchServiceImpl implements SearchService {
 
     // ================= TRENDING POSTS =================
     @Override
-    public List<PostResponse> getTrendingPosts() {
+    public List<PostResponse> getTrendingPosts(
+            Long cursor,
+            int size
+    ) {
 
-        logger.info("Fetching trending posts");
+        Pageable pageable =
+                PageRequest.of(0, size);
 
-        List<Post> posts =
-                postRepository
-                        .findTop20ByOrderByLikeCountDescCommentCountDesc();
+        List<Post> posts;
 
-        logger.info(
-                "Trending posts fetched: {}",
-                posts.size()
-        );
+        if (cursor == null) {
+
+            posts =
+                    postRepository
+                            .findByDeletedFalseOrderByLikeCountDescCommentCountDescIdDesc(
+                                    pageable
+                            );
+
+        } else {
+
+            posts =
+                    postRepository
+                            .findByDeletedFalseAndIdLessThanOrderByLikeCountDescCommentCountDescIdDesc(
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         return posts.stream()
                 .map(this::mapToPostResponse)
@@ -135,16 +197,19 @@ public class SearchServiceImpl implements SearchService {
 
     // ================= SUGGESTED USERS =================
     @Override
-    public List<UserSearchResponse> getSuggestedUsers() {
+    public List<UserSearchResponse> getSuggestedUsers(
+            Long cursor,
+            int size
+    ) {
 
-        logger.info("Fetching suggested users");
-
-        User currentUser = this.authUtil.getCurrentUser();
+        User currentUser =
+                authUtil.getCurrentUser();
 
         List<Follow> following =
                 followRepository.findByFollower(currentUser);
 
-        List<Long> excludedIds = new ArrayList<>();
+        List<Long> excludedIds =
+                new ArrayList<>();
 
         excludedIds.add(currentUser.getId());
 
@@ -155,15 +220,32 @@ public class SearchServiceImpl implements SearchService {
             );
         }
 
-        List<User> suggestedUsers =
-                userRepository.findSuggestedUsers(excludedIds);
+        Pageable pageable =
+                PageRequest.of(0, size);
 
-        logger.info(
-                "Suggested users fetched: {}",
-                suggestedUsers.size()
-        );
+        List<User> users;
 
-        return suggestedUsers.stream()
+        if (cursor == null) {
+
+            users =
+                    userRepository
+                            .findByIdNotInOrderByFollowersCountDesc(
+                                    excludedIds,
+                                    pageable
+                            );
+
+        } else {
+
+            users =
+                    userRepository
+                            .findByIdNotInAndIdLessThanOrderByFollowersCountDesc(
+                                    excludedIds,
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        return users.stream()
                 .map(user ->
                         mapToUserSearchResponse(
                                 user,
@@ -192,12 +274,8 @@ public class SearchServiceImpl implements SearchService {
                 .id(user.getId())
                 .name(user.getName())
                 .uname(user.getUname())
-                .profileImageUrl(
-                        user.getProfileImageUrl()
-                )
-                .followersCount(
-                        user.getFollowersCount()
-                )
+                .profileImageUrl(user.getProfileImageUrl())
+                .followersCount(user.getFollowersCount())
                 .following(following)
                 .build();
     }
@@ -209,9 +287,7 @@ public class SearchServiceImpl implements SearchService {
         return HashtagResponse.builder()
                 .id(hashtag.getId())
                 .name(hashtag.getName())
-                .postCount(
-                        (long) hashtag.getPosts().size()
-                )
+                .postCount((long) hashtag.getPosts().size())
                 .build();
     }
 
@@ -226,7 +302,9 @@ public class SearchServiceImpl implements SearchService {
                                 like.getUser()
                                         .getId()
                                         .equals(
-                                                this.authUtil.getCurrentUser().getId()
+                                                authUtil
+                                                        .getCurrentUser()
+                                                        .getId()
                                         )
                         );
 

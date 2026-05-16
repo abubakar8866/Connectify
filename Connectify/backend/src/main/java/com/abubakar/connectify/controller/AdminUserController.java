@@ -3,7 +3,9 @@ package com.abubakar.connectify.controller;
 import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
+import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.AdminUserFilter;
+import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.service.AdminUserService;
 import jakarta.validation.Valid;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -25,10 +29,11 @@ public class AdminUserController {
             LoggerFactory.getLogger(AdminUserController.class);
 
     @GetMapping
-    public ResponseEntity<Page<AdminUserResponse>> getUsers(
+    public ResponseEntity<List<AdminUserResponse>>
+    getUsers(
 
-            @RequestParam(defaultValue = "0")
-            int page,
+            @RequestParam(required = false)
+            Long cursor,
 
             @RequestParam(defaultValue = "10")
             int size,
@@ -37,22 +42,52 @@ public class AdminUserController {
             String keyword,
 
             @RequestParam(required = false)
-            AdminUserFilter filter
+            Boolean verified,
+
+            @RequestParam(required = false)
+            Boolean isPrivate,
+
+            @RequestParam(required = false)
+            Boolean active,
+
+            @RequestParam(required = false)
+            AccountStatus status,
+
+            @RequestParam(required = false)
+            String city,
+
+            @RequestParam(required = false)
+            Gender gender,
+
+            @RequestParam(required = false)
+            Long minFollowers
     ) {
 
-        logger.info(
-                "Get users request received"
-        );
+        return ResponseEntity.ok(
 
-        Page<AdminUserResponse> response =
                 adminUserService.getUsers(
-                        page,
-                        size,
-                        keyword,
-                        filter
-                );
 
-        return ResponseEntity.ok(response);
+                        cursor,
+
+                        size,
+
+                        keyword,
+
+                        verified,
+
+                        isPrivate,
+
+                        active,
+
+                        status,
+
+                        city,
+
+                        gender,
+
+                        minFollowers
+                )
+        );
     }
 
     @GetMapping("/{userId}")
@@ -148,27 +183,23 @@ public class AdminUserController {
     }
 
     @GetMapping("/reported")
-    public ResponseEntity<Page<AdminUserResponse>>
+    public ResponseEntity<List<AdminUserResponse>>
     getReportedUsers(
 
-            @RequestParam(defaultValue = "0")
-            int page,
+            @RequestParam(required = false)
+            Long cursor,
 
             @RequestParam(defaultValue = "10")
             int size
     ) {
 
-        logger.info(
-                "Get reported users request received"
-        );
+        return ResponseEntity.ok(
 
-        Page<AdminUserResponse> response =
                 adminUserService.getReportedUsers(
-                        page,
+                        cursor,
                         size
-                );
-
-        return ResponseEntity.ok(response);
+                )
+        );
     }
 
 }

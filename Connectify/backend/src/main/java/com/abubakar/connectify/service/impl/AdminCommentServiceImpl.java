@@ -1,18 +1,24 @@
 package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Comment;
-import com.abubakar.connectify.entity.Report;
+import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
 
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,83 +38,94 @@ public class AdminCommentServiceImpl
     @Autowired
     private ReportRepository reportRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private AuthUtil authUtil;
+
     @Override
-    public Page<AdminCommentResponse> getAllComments(
-            int page,
+    public CursorPageResponse<AdminCommentResponse> getAllComments(
+            Long cursor,
             int size,
-            String keyword
+            String keyword,
+            Boolean reportedOnly
     ) {
 
         logger.info(
-                "Fetching comments | page: {} | size: {} | keyword: {}",
-                page,
+                "Fetching comments | cursor: {} | size: {} | keyword: {} | reportedOnly: {}",
+                cursor,
                 size,
-                keyword
+                keyword,
+                reportedOnly
         );
 
         Pageable pageable =
-                PageRequest.of(page, size);
+                PageRequest.of(0, size + 1);
 
-        Page<Comment> comments;
+        List<Comment> comments;
 
-        if (keyword != null && !keyword.isBlank()) {
+        // REPORTED COMMENTS
+        if (Boolean.TRUE.equals(reportedOnly)) {
 
-            comments =
-                    commentRepository
-                            .findByContentContainingIgnoreCaseAndDeletedFalse(
-                                    keyword,
-                                    pageable
-                            );
+            comments = (cursor == null)
 
-        } else {
+                    ? reportRepository.findReportedComments( pageable )
 
-            comments =
-                    commentRepository
-                            .findByDeletedFalse(pageable);
+                    : reportRepository.findReportedCommentsByCursor(
+                        cursor, pageable
+                    );
         }
 
-        return comments.map(this::mapToResponse);
-    }
+        // SEARCH COMMENTS
+        else if (
+                keyword != null
+                        && !keyword.isBlank()
+        ) {
 
-    @Override
-    public Page<AdminCommentResponse> getReportedComments(
-            int page,
-            int size
-    ) {
+            comments = (cursor == null)
 
-        logger.info("Fetching reported comments");
+                    ? commentRepository
+                    .findByContentContainingIgnoreCaseAndDeletedFalseOrderByIdDesc(
+                            keyword,
+                            pageable
+                    )
 
-        List<Report> reports =
-                reportRepository.findByCommentIsNotNull();
+                    : commentRepository
+                    .findByContentContainingIgnoreCaseAndDeletedFalseAndIdLessThanOrderByIdDesc(
+                            keyword,
+                            cursor,
+                            pageable
+                    );
+        }
 
-        List<Comment> comments =
-                reports.stream()
-                        .map(Report::getComment)
-                        .distinct()
-                        .toList();
+        // NORMAL COMMENTS
+        else {
 
-        Pageable pageable =
-                PageRequest.of(page, size);
+            comments = (cursor == null)
 
-        int start =
-                (int) pageable.getOffset();
+                    ? commentRepository
+                    .findByDeletedFalseOrderByIdDesc(
+                            pageable
+                    )
 
-        int end =
-                Math.min(
-                        start + pageable.getPageSize(),
-                        comments.size()
-                );
+                    : commentRepository
+                    .findByDeletedFalseAndIdLessThanOrderByIdDesc(
+                            cursor,
+                            pageable
+                    );
+        }
 
-        List<AdminCommentResponse> responseList =
-                comments.subList(start, end)
-                        .stream()
-                        .map(this::mapToResponse)
-                        .toList();
-
-        return new PageImpl<>(
-                responseList,
-                pageable,
+        logger.info(
+                "Comments fetched successfully | count: {}",
                 comments.size()
+        );
+
+        return CursorPaginationUtil.buildResponse(
+                comments,
+                size,
+                Comment::getId,
+                this::mapToResponse
         );
     }
 
@@ -133,6 +150,17 @@ public class AdminCommentServiceImpl
         comment.setDeleted(true);
 
         commentRepository.save(comment);
+
+        User currentUser = this.authUtil.getCurrentUser();
+
+        this.notificationService.createNotification(
+                comment.getUser().getId(),
+                currentUser.getId(),
+                "Comment deleted by admin.",
+                NotificationType.COMMENT,
+                null,
+                null
+        );
 
         logger.info(
                 "Comment deleted successfully | commentId: {}",
@@ -173,3 +201,4 @@ public class AdminCommentServiceImpl
     }
 
 }
+

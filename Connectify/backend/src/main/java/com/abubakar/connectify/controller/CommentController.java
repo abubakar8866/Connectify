@@ -91,18 +91,34 @@ public class CommentController {
     }
 
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<CommentResponse>> getPostComments(@PathVariable Long postId) {
+    public ResponseEntity<List<CommentResponse>>
+    getPostComments(
+
+            @PathVariable Long postId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
 
         logger.info(
-                "Get comments request received | postId: {}",
-                postId
+                "Get comments request | postId: {} | cursor: {} | size: {}",
+                postId,
+                cursor,
+                size
         );
 
         List<CommentResponse> responses =
-                commentService.getPostComments(postId);
+                commentService.getPostComments(
+                        postId,
+                        cursor,
+                        size
+                );
 
         logger.info(
-                "Comments fetched successfully | totalComments: {}",
+                "Comments fetched successfully | count: {}",
                 responses.size()
         );
 

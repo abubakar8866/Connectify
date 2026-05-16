@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,23 +142,54 @@ public class NotificationServiceImpl
     // ================= GET MY NOTIFICATIONS =================
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getMyNotifications() {
+    public List<NotificationResponse> getMyNotifications(
+            Long cursor,
+            int size
+    ) {
 
         User currentUser = authUtil.getCurrentUser();
 
         logger.info(
-                "Fetching notifications | userId: {}",
-                currentUser.getId()
+                """
+                Fetching notifications
+                | userId: {}
+                | cursor: {}
+                | size: {}
+                """,
+                currentUser.getId(),
+                cursor,
+                size
         );
 
-        List<Notification> notifications =
-                notificationRepository
-                        .findByReceiverOrderByCreatedAtDesc(
-                                currentUser
-                        );
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        List<Notification> notifications;
+
+        // FIRST PAGE
+        if (cursor == null) {
+
+            notifications =
+                    notificationRepository
+                            .findByReceiverOrderByIdDesc(
+                                    currentUser,
+                                    pageable
+                            );
+
+        } else {
+
+            // NEXT PAGES
+            notifications =
+                    notificationRepository
+                            .findByReceiverAndIdLessThanOrderByIdDesc(
+                                    currentUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         logger.info(
-                "Total notifications fetched: {}",
+                "Notifications fetched successfully | count: {}",
                 notifications.size()
         );
 

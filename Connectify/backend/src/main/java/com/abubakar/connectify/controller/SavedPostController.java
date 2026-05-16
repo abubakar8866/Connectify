@@ -45,15 +45,30 @@ public class SavedPostController {
 
     // GET SAVED POSTS
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getSavedPosts() {
+    public ResponseEntity<List<PostResponse>>
+    getSavedPosts(
 
-        logger.info("Get saved posts request received");
+            @RequestParam(required = false)
+            Long cursor,
 
-        List<PostResponse> response =
-                savedPostService.getSavedPosts();
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
 
         logger.info(
-                "Saved posts fetched successfully | totalSavedPosts: {}",
+                "Get saved posts request | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        List<PostResponse> response =
+                savedPostService.getSavedPosts(
+                        cursor,
+                        size
+                );
+
+        logger.info(
+                "Saved posts fetched successfully | count: {}",
                 response.size()
         );
 

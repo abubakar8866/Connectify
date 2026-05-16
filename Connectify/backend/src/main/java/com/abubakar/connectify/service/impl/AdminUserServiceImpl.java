@@ -5,26 +5,32 @@ import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
-import com.abubakar.connectify.enums.AdminUserFilter;
+import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.AdminUserService;
+import com.abubakar.connectify.specification.UserSpecification;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Transactional
-public class AdminUserServiceImpl implements AdminUserService {
+public class AdminUserServiceImpl
+        implements AdminUserService {
 
     @Autowired
     private UserRepository userRepository;
@@ -36,88 +42,110 @@ public class AdminUserServiceImpl implements AdminUserService {
     private ReportRepository reportRepository;
 
     private static final Logger logger =
-            LoggerFactory.getLogger(AdminUserServiceImpl.class);
+            LoggerFactory.getLogger(
+                    AdminUserServiceImpl.class
+            );
 
     @Override
-    public Page<AdminUserResponse> getUsers(
-            int page,
+    public List<AdminUserResponse> getUsers(
+            Long cursor,
             int size,
             String keyword,
-            AdminUserFilter filter
+            Boolean verified,
+            Boolean isPrivate,
+            Boolean active,
+            AccountStatus status,
+            String city,
+            Gender gender,
+            Long minFollowers
     ) {
 
         logger.info(
-                "Fetching users | page: {} | size: {} | keyword: {} | filter: {}",
-                page,
-                size,
-                keyword,
-                filter
+                "Fetching admin users"
         );
 
         Pageable pageable =
-                PageRequest.of(page, size);
+                PageRequest.of(
+                        0,
+                        size,
+                        Sort.by(Sort.Direction.DESC, "id")
+                );
 
-        Page<User> users;
+        Specification<User> specification =
+                Specification
+                        .where(
+                                UserSpecification.cursor(cursor)
+                        )
+                        .and(
+                                UserSpecification.searchByKeyword(keyword)
+                        )
+                        .and(
+                                UserSpecification.hasVerified(verified)
+                        )
+                        .and(
+                                UserSpecification.hasPrivateAccount(isPrivate)
+                        )
+                        .and(
+                                UserSpecification.hasActive(active)
+                        )
+                        .and(
+                                UserSpecification.hasAccountStatus(status)
+                        )
+                        .and(
+                                UserSpecification.hasCity(city)
+                        )
+                        .and(
+                                UserSpecification.hasGender(gender)
+                        )
+                        .and(
+                                UserSpecification.hasMinFollowers(minFollowers)
+                        );
 
-        // SEARCH
-        if (keyword != null && !keyword.isBlank()) {
+        List<User> users =
+                userRepository
+                        .findAll(specification, pageable)
+                        .getContent();
+
+        return users.stream()
+                .map(this::mapToAdminUserResponse)
+                .toList();
+    }
+
+    @Override
+    public List<AdminUserResponse> getReportedUsers(
+            Long cursor,
+            int size
+    ) {
+
+        Pageable pageable =
+                PageRequest.of(
+                        0,
+                        size,
+                        Sort.by(Sort.Direction.DESC, "id")
+                );
+
+        List<User> users;
+
+        if (cursor == null) {
 
             users =
                     userRepository
-                            .findByNameContainingIgnoreCaseOrUnameContainingIgnoreCase(
-                                    keyword,
-                                    keyword,
-                                    pageable
-                            );
-        }
-
-        // FILTERS
-        else if (filter != null) {
-
-            users = switch (filter) {
-
-                case ACTIVE ->
-                        userRepository.findByAccountStatus(
-                                AccountStatus.ACTIVE,
-                                pageable
-                        );
-
-                case BANNED ->
-                        userRepository.findByAccountStatus(
-                                AccountStatus.BANNED,
-                                pageable
-                        );
-
-                case PRIVATE ->
-                        userRepository.findByIsPrivate(
-                                true,
-                                pageable
-                        );
-
-                case PUBLIC ->
-                        userRepository.findByIsPrivate(
-                                false,
-                                pageable
-                        );
-
-                case VERIFIED ->
-                        userRepository.findByIsVerified(
-                                true,
-                                pageable
-                        );
-            };
+                            .findReportedUsers(pageable)
+                            .getContent();
 
         } else {
 
             users =
-                    userRepository.findAll(pageable);
+                    userRepository
+                            .findReportedUsersByCursor(
+                                    cursor,
+                                    pageable
+                            );
         }
 
-        logger.info(
-                "Users fetched successfully"
-        );
-
-        return users.map(this::mapToAdminUserResponse);
+        return users.stream()
+                .map(this::mapToAdminUserResponse)
+                .toList();
     }
 
     @Override
@@ -125,23 +153,13 @@ public class AdminUserServiceImpl implements AdminUserService {
             Long userId
     ) {
 
-        logger.info(
-                "Fetching user details | userId: {}",
-                userId
-        );
-
-        User user =
-                getUserById(userId);
+        User user = getUserById(userId);
 
         Long postsCount =
                 postRepository.countByUser(user);
 
         Long reportsCount =
                 reportRepository.countByReportedUser(user);
-
-        logger.info(
-                "User details fetched successfully"
-        );
 
         return UserDetailsAdminResponse.builder()
 
@@ -175,13 +193,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             BanUserRequest request
     ) {
 
-        logger.info(
-                "Ban user request | userId: {}",
-                userId
-        );
-
-        User user =
-                getUserById(userId);
+        User user = getUserById(userId);
 
         user.setAccountStatus(
                 AccountStatus.BANNED
@@ -197,11 +209,9 @@ public class AdminUserServiceImpl implements AdminUserService {
                 request.getAdminNote()
         );
 
-        if (
-                Boolean.TRUE.equals(
-                        request.getPermanent()
-                )
-        ) {
+        if (Boolean.TRUE.equals(
+                request.getPermanent()
+        )) {
 
             user.setBannedUntil(null);
 
@@ -216,23 +226,12 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         userRepository.save(user);
-
-        logger.info(
-                "User banned successfully | userId: {}",
-                userId
-        );
     }
 
     @Override
     public void unbanUser(Long userId) {
 
-        logger.info(
-                "Unban user request | userId: {}",
-                userId
-        );
-
-        User user =
-                getUserById(userId);
+        User user = getUserById(userId);
 
         user.setAccountStatus(
                 AccountStatus.ACTIVE
@@ -247,83 +246,30 @@ public class AdminUserServiceImpl implements AdminUserService {
         user.setBannedUntil(null);
 
         userRepository.save(user);
-
-        logger.info(
-                "User unbanned successfully | userId: {}",
-                userId
-        );
     }
 
     @Override
     public void deleteUser(Long userId) {
 
-        logger.info(
-                "Soft delete user request | userId: {}",
-                userId
-        );
-
-        User user =
-                getUserById(userId);
+        User user = getUserById(userId);
 
         user.setIsDeleted(true);
 
         user.setIsActive(false);
 
         userRepository.save(user);
-
-        logger.info(
-                "User soft deleted successfully | userId: {}",
-                userId
-        );
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AdminUserResponse> getReportedUsers(
-            int page,
-            int size
-    ) {
-
-        logger.info(
-                "Fetching reported users | page: {} | size: {}",
-                page,
-                size
-        );
-
-        Pageable pageable =
-                PageRequest.of(page, size);
-
-        Page<User> users =
-                userRepository.findReportedUsers(
-                        pageable
-                );
-
-        logger.info(
-                "Reported users fetched successfully | count: {}",
-                users.getTotalElements()
-        );
-
-        return users.map(
-                this::mapToAdminUserResponse
-        );
-    }
-
-    // ================= PRIVATE METHODS =================
+    // ================= PRIVATE =================
 
     private User getUserById(Long userId) {
 
         return userRepository.findById(userId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "User not found | userId: {}",
-                            userId
-                    );
-
-                    return new ResourceNotFound(
-                            "User not found with id: " + userId
-                    );
-                });
+                .orElseThrow(() ->
+                        new ResourceNotFound(
+                                "User not found"
+                        )
+                );
     }
 
     private AdminUserResponse mapToAdminUserResponse(
@@ -352,4 +298,3 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
 }
-

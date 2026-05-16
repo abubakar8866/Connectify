@@ -42,4 +42,29 @@ public interface ReportRepository
 
     List<Report> findByCommentIsNotNull();
 
+    @Query("""
+        SELECT DISTINCT r.comment
+        FROM Report r
+        WHERE r.comment IS NOT NULL
+        AND r.comment.deleted = false
+        ORDER BY r.comment.id DESC
+    """)
+    List<Comment> findReportedComments(
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT DISTINCT r.comment
+        FROM Report r
+        WHERE r.comment IS NOT NULL
+        AND r.comment.deleted = false
+        AND r.comment.id < :cursor
+        ORDER BY r.comment.id DESC
+    """)
+    List<Comment> findReportedCommentsByCursor(
+            Long cursor,
+            Pageable pageable
+    );
+
 }
+

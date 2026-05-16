@@ -54,5 +54,10 @@ public class Post extends BaseEntity {
     )
     private List<Like> likes = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "post"
+    )
+    private List<Report> reports = new ArrayList<>();
+
 }
 

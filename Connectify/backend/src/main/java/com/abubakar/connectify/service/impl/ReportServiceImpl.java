@@ -5,6 +5,7 @@ import com.abubakar.connectify.dto.response.ReportResponse;
 import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.enums.ReportStatus;
+import com.abubakar.connectify.enums.Role;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.*;
@@ -182,7 +183,7 @@ public class ReportServiceImpl implements ReportService {
 
         // NOTIFY ADMIN
         userRepository.findByRole(
-                com.abubakar.connectify.enums.Role.ADMIN
+                Role.ADMIN
         ).ifPresent(admin ->
 
                 notificationService.createNotification(

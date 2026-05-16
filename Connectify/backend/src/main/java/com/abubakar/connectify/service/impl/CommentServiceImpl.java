@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -172,17 +174,48 @@ public class CommentServiceImpl implements CommentService {
         );
     }
 
+    // ================= CURSOR PAGINATION =================
     @Override
-    public List<CommentResponse> getPostComments(Long postId) {
-
-        logger.info("Fetching comments for postId: {}", postId);
-
-        List<Comment> comments =
-                commentRepository
-                        .findByPostIdAndParentCommentIsNullOrderByCreatedAtDesc(postId);
+    public List<CommentResponse> getPostComments(
+            Long postId,
+            Long cursor,
+            int size
+    ) {
 
         logger.info(
-                "Total root comments fetched: {}",
+                "Fetching comments | postId: {} | cursor: {} | size: {}",
+                postId,
+                cursor,
+                size
+        );
+
+        Pageable pageable =
+                PageRequest.of(0, size);
+
+        List<Comment> comments;
+
+        if (cursor == null) {
+
+            comments =
+                    commentRepository
+                            .findByPostIdAndParentCommentIsNullAndDeletedFalseOrderByIdDesc(
+                                    postId,
+                                    pageable
+                            );
+
+        } else {
+
+            comments =
+                    commentRepository
+                            .findByPostIdAndParentCommentIsNullAndDeletedFalseAndIdLessThanOrderByIdDesc(
+                                    postId,
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        logger.info(
+                "Comments fetched successfully | count: {}",
                 comments.size()
         );
 

@@ -9,7 +9,11 @@ public interface SavedPostService {
 
     SavePostResponse toggleSavePost(Long postId);
 
-    List<PostResponse> getSavedPosts();
+    // CURSOR PAGINATION
+    List<PostResponse> getSavedPosts(
+            Long cursor,
+            int size
+    );
 
 }
 

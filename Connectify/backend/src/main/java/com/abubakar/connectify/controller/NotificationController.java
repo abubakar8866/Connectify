@@ -17,10 +17,20 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<List<NotificationResponse>>
-    getMyNotifications() {
+    getMyNotifications(
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "20")
+            int size
+    ) {
 
         return ResponseEntity.ok(
-                notificationService.getMyNotifications()
+                notificationService.getMyNotifications(
+                        cursor,
+                        size
+                )
         );
     }
 

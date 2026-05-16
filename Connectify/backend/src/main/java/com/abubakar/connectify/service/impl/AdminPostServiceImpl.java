@@ -7,14 +7,20 @@ import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminPostService;
+import com.abubakar.connectify.specification.PostSpecification;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -27,99 +33,72 @@ public class AdminPostServiceImpl
     @Autowired
     private ReportRepository reportRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(AdminPostServiceImpl.class);
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AdminPostServiceImpl.class
+            );
 
     @Override
-    public Page<AdminPostResponse> getAllPosts( int page, int size ) {
+    public List<AdminPostResponse> searchPosts(
+
+            String keyword,
+
+            String username,
+
+            String hashtag,
+
+            Boolean reportedOnly,
+
+            Long cursor,
+
+            int size
+    ) {
 
         logger.info(
-                "Fetching all posts"
+                "Searching posts with cursor pagination"
         );
 
         Pageable pageable =
-                PageRequest.of(page, size);
+                PageRequest.of(
+                        0,
+                        size,
+                        Sort.by(Sort.Direction.DESC, "id")
+                );
 
-        return postRepository.findAll(pageable)
-                .map(this::mapToResponse);
-    }
+        Specification<Post> specification =
+                Specification
+                        .where(
+                                PostSpecification.keyword(keyword)
+                        )
+                        .and(
+                                PostSpecification.username(username)
+                        )
+                        .and(
+                                PostSpecification.hashtag(hashtag)
+                        )
+                        .and(
+                                PostSpecification.cursor(cursor)
+                        );
 
-    @Override
-    public Page<AdminPostResponse> getReportedPosts( int page, int size ) {
+        if (Boolean.TRUE.equals(reportedOnly)) {
 
-        logger.info(
-                "Fetching reported posts"
-        );
-
-        Pageable pageable =
-                PageRequest.of(page, size);
-
-        return reportRepository
-                .findReportedPosts(pageable)
-                .map(this::mapToResponse);
-    }
-
-    @Override
-    public Page<AdminPostResponse>
-    searchPostsByKeyword( String keyword, int page, int size ) {
-
-        logger.info(
-                "Searching posts by keyword: {}",
-                keyword
-        );
-
-        Pageable pageable =
-                PageRequest.of(page, size);
+            specification =
+                    specification.and(
+                            PostSpecification.reportedOnly()
+                    );
+        }
 
         return postRepository
-                .findByCaptionContainingIgnoreCase(
-                        keyword,
-                        pageable
-                )
-                .map(this::mapToResponse);
-    }
-
-    @Override
-    public Page<AdminPostResponse>
-    searchPostsByUsername( String username, int page, int size ) {
-
-        logger.info(
-                "Searching posts by username: {}",
-                username
-        );
-
-        Pageable pageable =
-                PageRequest.of(page, size);
-
-        return postRepository
-                .searchByUsername(
-                        username,
-                        pageable
-                )
-                .map(this::mapToResponse);
-    }
-
-    @Override
-    public Page<AdminPostResponse>
-    searchPostsByHashtag( String hashtag, int page, int size ) {
-
-        logger.info(
-                "Searching posts by hashtag: {}",
-                hashtag
-        );
-
-        Pageable pageable =
-                PageRequest.of(page, size);
-
-        return postRepository
-                .searchByHashtag(
-                        hashtag,
-                        pageable
-                )
-                .map(this::mapToResponse);
+                .findAll(specification, pageable)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     // ================= MAP RESPONSE =================
-    private AdminPostResponse mapToResponse( Post post ) {
+    private AdminPostResponse mapToResponse(
+            Post post
+    ) {
 
         Long reportCount =
                 reportRepository.countByPost(post);
@@ -162,4 +141,3 @@ public class AdminPostServiceImpl
     }
 
 }
-
