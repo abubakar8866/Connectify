@@ -3,6 +3,7 @@ package com.abubakar.connectify.service.impl;
 import com.abubakar.connectify.dto.request.CreateReportRequest;
 import com.abubakar.connectify.dto.response.ReportResponse;
 import com.abubakar.connectify.entity.*;
+import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.enums.ReportStatus;
 import com.abubakar.connectify.enums.Role;
@@ -13,6 +14,7 @@ import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.ReportService;
 
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.ValidateUserAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class ReportServiceImpl implements ReportService {
 
     private static final Logger logger =
@@ -45,6 +49,9 @@ public class ReportServiceImpl implements ReportService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private ValidateUserAccess validateUserAccess;
+
     @Override
     public ReportResponse reportPost(
             Long postId,
@@ -64,6 +71,33 @@ public class ReportServiceImpl implements ReportService {
                                 "Post not found"
                         )
                 );
+
+        // DELETED POST VALIDATION
+        if (Boolean.TRUE.equals(post.getDeleted())) {
+
+            throw new OperationFailException(
+                    "Deleted post cannot be reported"
+            );
+        }
+
+        // BANNED OWNER VALIDATION
+        if (post.getUser().getAccountStatus()
+                == AccountStatus.BANNED) {
+
+            throw new OperationFailException(
+                    "This post is unavailable"
+            );
+        }
+
+        // SELF REPORT VALIDATION
+        if (post.getUser().getId()
+                .equals(currentUser.getId())) {
+
+            throw new OperationFailException(
+                    "You cannot report your own post"
+            );
+        }
+
 
         boolean alreadyReported =
                 reportRepository
@@ -103,7 +137,7 @@ public class ReportServiceImpl implements ReportService {
 
         // NOTIFY ADMIN
         userRepository.findByRole(
-                com.abubakar.connectify.enums.Role.ADMIN
+                Role.ADMIN
         ).ifPresent(admin ->
 
                 notificationService.createNotification(
@@ -144,6 +178,32 @@ public class ReportServiceImpl implements ReportService {
                                         "Comment not found"
                                 )
                         );
+
+        // DELETED COMMENT VALIDATION
+        if (Boolean.TRUE.equals(comment.getDeleted())) {
+
+            throw new OperationFailException(
+                    "Deleted comment cannot be reported"
+            );
+        }
+
+        // BANNED OWNER VALIDATION
+        if (comment.getUser().getAccountStatus()
+                == AccountStatus.BANNED) {
+
+            throw new OperationFailException(
+                    "This comment is unavailable"
+            );
+        }
+
+        // SELF REPORT VALIDATION
+        if (comment.getUser().getId()
+                .equals(currentUser.getId())) {
+
+            throw new OperationFailException(
+                    "You cannot report your own comment"
+            );
+        }
 
         boolean alreadyReported =
                 reportRepository
@@ -217,12 +277,7 @@ public class ReportServiceImpl implements ReportService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "User not found"
-                        )
-                );
+        User user = this.validateUserAccess.getValidUser(userId);
 
         boolean alreadyReported =
                 reportRepository
@@ -262,7 +317,7 @@ public class ReportServiceImpl implements ReportService {
 
         // NOTIFY ADMIN
         userRepository.findByRole(
-                com.abubakar.connectify.enums.Role.ADMIN
+                Role.ADMIN
         ).ifPresent(admin ->
 
                 notificationService.createNotification(

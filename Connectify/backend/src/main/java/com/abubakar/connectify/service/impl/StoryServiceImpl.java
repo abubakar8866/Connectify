@@ -2,6 +2,7 @@ package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.StoryReactionRequest;
 import com.abubakar.connectify.dto.request.StoryReplyRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.StoryResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import com.abubakar.connectify.entity.Story;
@@ -11,6 +12,7 @@ import com.abubakar.connectify.entity.StoryView;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.StoryReactionRepository;
 import com.abubakar.connectify.repository.StoryReplyRepository;
@@ -22,14 +24,15 @@ import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.StoryService;
 
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.OwnershipValidator;
+import com.abubakar.connectify.util.PaginationUtil;
 import org.modelmapper.ModelMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -56,9 +59,6 @@ public class StoryServiceImpl implements StoryService {
     private StoryReplyRepository storyReplyRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private NotificationService notificationService;
 
     @Autowired
@@ -78,12 +78,17 @@ public class StoryServiceImpl implements StoryService {
 
     // ================= CREATE STORY =================
     @Override
-    public StoryResponse createStory(MultipartFile file) {
+    public StoryResponse createStory(
+            MultipartFile file,
+            MultipartFile thumbnail
+    ) {
 
         logger.info("Creating new story");
 
-        User currentUser = this.authUtil.getCurrentUser();
+        User currentUser =
+                this.authUtil.getCurrentUser();
 
+        // UPLOAD MAIN MEDIA
         String uploadedFile =
                 fileService.uploadFile(
                         file,
@@ -92,22 +97,50 @@ public class StoryServiceImpl implements StoryService {
                         "stories"
                 );
 
-        String contentType = file.getContentType();
+        String contentType =
+                file.getContentType();
 
         MediaType mediaType;
 
+        String thumbnailUrl;
+
+        // VIDEO STORY
         if (contentType != null &&
                 contentType.startsWith("video")) {
 
             mediaType = MediaType.VIDEO;
 
-        } else {
+            // THUMBNAIL REQUIRED FOR VIDEO
+            if (thumbnail == null ||
+                    thumbnail.isEmpty()) {
+
+                throw new OperationFailException(
+                        "Thumbnail is required for video stories"
+                );
+            }
+
+            thumbnailUrl =
+                    fileService.uploadFile(
+                            thumbnail,
+                            currentUser.getId(),
+                            null,
+                            "story-thumbnails"
+                    );
+
+        }
+
+        // IMAGE STORY
+        else {
 
             mediaType = MediaType.IMAGE;
+
+            // IMAGE ITSELF USED AS THUMBNAIL
+            thumbnailUrl = uploadedFile;
         }
 
         Story story = Story.builder()
                 .mediaUrl(uploadedFile)
+                .thumbnailUrl(thumbnailUrl)
                 .publicId(uploadedFile)
                 .mediaType(mediaType)
                 .expiresAt(
@@ -133,15 +166,17 @@ public class StoryServiceImpl implements StoryService {
 
     // ================= GET ACTIVE STORIES =================
     @Override
-    public List<StoryResponse> getActiveStories(
+    public CursorPageResponse<StoryResponse> getActiveStories(
             Long cursor,
             int size
-    ) {
+     ) {
 
         logger.info("Fetching active stories with cursor pagination");
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Story> stories;
 
@@ -149,7 +184,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByExpiresAtAfterOrderByIdDesc(
+                            .findByExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
                                     LocalDateTime.now(),
                                     pageable
                             );
@@ -158,7 +193,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByExpiresAtAfterAndIdLessThanOrderByIdDesc(
+                            .findByExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
                                     LocalDateTime.now(),
                                     cursor,
                                     pageable
@@ -170,9 +205,12 @@ public class StoryServiceImpl implements StoryService {
                 stories.size()
         );
 
-        return stories.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                stories,
+                size,
+                Story::getId,
+                this::mapToResponse
+        );
     }
 
     // ================= VIEW STORY =================
@@ -235,6 +273,14 @@ public class StoryServiceImpl implements StoryService {
 
         Story story = getStoryById(storyId);
 
+        if (story.getUser().getId()
+                .equals(currentUser.getId())) {
+
+            throw new OperationFailException(
+                    "You cannot react to your own story"
+            );
+        }
+
         StoryReaction existingReaction =
                 storyReactionRepository
                         .findByStoryAndUser(
@@ -283,14 +329,14 @@ public class StoryServiceImpl implements StoryService {
         storyRepository.save(story);
 
         // NOTIFICATION
-        notificationService.createNotification(
-                story.getUser().getId(),
-                currentUser.getId(),
-                currentUser.getUname() + " reacted to your story",
-                NotificationType.STORY_REACTION,
-                null,
-                null
-        );
+       notificationService.createNotification(
+            story.getUser().getId(),
+            currentUser.getId(),
+            currentUser.getUname() + " reacted to your story",
+            NotificationType.STORY_REACTION,
+            null,
+            null
+       );
 
         logger.info(
                 "Story reaction added | storyId: {} | userId: {}",
@@ -314,6 +360,14 @@ public class StoryServiceImpl implements StoryService {
         User currentUser = this.authUtil.getCurrentUser();
 
         Story story = getStoryById(storyId);
+
+        if (story.getUser().getId()
+                .equals(currentUser.getId())) {
+
+            throw new OperationFailException(
+                    "You cannot reply to your own story"
+            );
+        }
 
         StoryReply reply =
                 StoryReply.builder()
@@ -364,8 +418,13 @@ public class StoryServiceImpl implements StoryService {
         );
 
         fileService.deleteFile(
-                story.getPublicId(),
+                story.getMediaUrl(),
                 "stories"
+        );
+
+        fileService.deleteFile(
+                story.getThumbnailUrl(),
+                "story-thumbnails"
         );
 
         storyRepository.delete(story);
@@ -378,7 +437,7 @@ public class StoryServiceImpl implements StoryService {
 
     // ================= GET STORY VIEWERS =================
     @Override
-    public List<UserResponse> getStoryViewers(
+    public CursorPageResponse<UserResponse> getStoryViewers(
             Long storyId,
             Long cursor,
             int size
@@ -398,7 +457,9 @@ public class StoryServiceImpl implements StoryService {
         );
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<StoryView> viewers;
 
@@ -422,15 +483,63 @@ public class StoryServiceImpl implements StoryService {
                             );
         }
 
-        return viewers.stream()
-                .map(StoryView::getViewer)
-                .map(user ->
+        return CursorPaginationUtil.buildResponse(
+                viewers,
+                size,
+                StoryView::getId,
+                viewer ->
                         modelMapper.map(
-                                user,
+                                viewer.getViewer(),
                                 UserResponse.class
                         )
-                )
-                .toList();
+        );
+    }
+
+    // ================= GET OWN STORY =================
+    @Override
+    public CursorPageResponse<StoryResponse> getMyStories(
+            Long cursor,
+            int size
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Story> stories;
+
+        if (cursor == null) {
+
+            stories =
+                    storyRepository
+                            .findByUserAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+                                    currentUser,
+                                    LocalDateTime.now(),
+                                    pageable
+                            );
+
+        } else {
+
+            stories =
+                    storyRepository
+                            .findByUserAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+                                    currentUser,
+                                    LocalDateTime.now(),
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        return CursorPaginationUtil.buildResponse(
+                stories,
+                size,
+                Story::getId,
+                this::mapToResponse
+        );
     }
 
     // ================= MAP RESPONSE =================
@@ -456,6 +565,7 @@ public class StoryServiceImpl implements StoryService {
         return StoryResponse.builder()
                 .id(story.getId())
                 .mediaUrl(story.getMediaUrl())
+                .thumbnailUrl(story.getThumbnailUrl())
                 .mediaType(story.getMediaType())
 
                 .username(
@@ -466,6 +576,9 @@ public class StoryServiceImpl implements StoryService {
                         story.getUser().getProfileImageUrl()
                 )
 
+                .isVerified(
+                        story.getUser().getIsVerified()
+                )
                 .viewCount(story.getViewCount())
                 .reactionCount(story.getReactionCount())
                 .replyCount(story.getReplyCount())
@@ -482,7 +595,7 @@ public class StoryServiceImpl implements StoryService {
     // ================= GET STORY BY ID =================
     private Story getStoryById(Long storyId) {
 
-        return storyRepository.findById(storyId)
+        Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> {
 
                     logger.error(
@@ -495,6 +608,28 @@ public class StoryServiceImpl implements StoryService {
                                     + storyId
                     );
                 });
+
+        validateActiveStory(story);
+
+        return story;
+    }
+
+    private void validateActiveStory(Story story) {
+
+        if (Boolean.FALSE.equals(story.getIsActive())) {
+
+            throw new ResourceNotFound(
+                    "Story is unavailable"
+            );
+        }
+
+        if (story.getExpiresAt()
+                .isBefore(LocalDateTime.now())) {
+
+            throw new ResourceNotFound(
+                    "Story has expired"
+            );
+        }
     }
 
 }

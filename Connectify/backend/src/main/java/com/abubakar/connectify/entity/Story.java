@@ -23,6 +23,8 @@ public class Story extends BaseEntity {
 
     private String mediaUrl;
 
+    private String thumbnailUrl;
+
     private String publicId;
 
     @Enumerated(EnumType.STRING)

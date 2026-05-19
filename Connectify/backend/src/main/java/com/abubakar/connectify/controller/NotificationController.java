@@ -1,12 +1,12 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.NotificationResponse;
 import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.PaginationConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -16,21 +16,24 @@ public class NotificationController {
     private NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>>
-    getMyNotifications(
+    public ResponseEntity<
+            CursorPageResponse<NotificationResponse>
+            > getMyNotifications(
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "20")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
         return ResponseEntity.ok(
-                notificationService.getMyNotifications(
-                        cursor,
-                        size
-                )
+
+                notificationService
+                        .getMyNotifications(
+                                cursor,
+                                size
+                        )
         );
     }
 

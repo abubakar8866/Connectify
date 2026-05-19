@@ -61,6 +61,10 @@ public class User extends BaseEntity implements UserDetails {
 
     private Boolean isEmailVerified;
 
+    private String emailVerificationToken;
+
+    private LocalDateTime emailVerificationExpiry;
+
     private String resetToken;
 
     private LocalDateTime resetTokenExpiry;
@@ -70,6 +74,17 @@ public class User extends BaseEntity implements UserDetails {
     private Long followingCount = 0L;
 
     private Boolean deleted = false;
+
+    private Boolean restoreRequested = false;
+
+    private Boolean unbanRequested = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String unbanAppealMessage;
+
+    private LocalDateTime deletedAt;
+
+    private LocalDateTime restoredAt;
 
     private Boolean isPrivate = false;
 

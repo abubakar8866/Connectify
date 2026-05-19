@@ -2,17 +2,16 @@ package com.abubakar.connectify.service;
 
 import com.abubakar.connectify.dto.request.StoryReactionRequest;
 import com.abubakar.connectify.dto.request.StoryReplyRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.StoryResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 public interface StoryService {
 
-    StoryResponse createStory( MultipartFile file );
+    StoryResponse createStory( MultipartFile file, MultipartFile thumbnail );
 
-    List<StoryResponse> getActiveStories(
+    CursorPageResponse<StoryResponse> getActiveStories(
             Long cursor,
             int size
     );
@@ -25,8 +24,13 @@ public interface StoryService {
 
     void deleteStory(Long storyId);
 
-    List<UserResponse> getStoryViewers(
+    CursorPageResponse<UserResponse> getStoryViewers(
             Long storyId,
+            Long cursor,
+            int size
+    );
+
+    CursorPageResponse<StoryResponse> getMyStories(
             Long cursor,
             int size
     );

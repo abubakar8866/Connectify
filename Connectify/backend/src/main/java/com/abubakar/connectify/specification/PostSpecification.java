@@ -81,6 +81,25 @@ public class PostSpecification {
         };
     }
 
+    // RESTORE REQUESTED POSTS
+    public static Specification<Post> restoreRequested(
+            Boolean restoreRequested
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (restoreRequested == null) {
+
+                return null;
+            }
+
+            return cb.equal(
+                    root.get("restoreRequested"),
+                    restoreRequested
+            );
+        };
+    }
+
     // CURSOR
     public static Specification<Post> cursor(
             Long cursor

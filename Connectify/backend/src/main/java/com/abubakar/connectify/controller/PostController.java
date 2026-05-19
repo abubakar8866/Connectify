@@ -1,9 +1,11 @@
 package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.request.CreatePostRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.service.PostService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -66,18 +68,81 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    // GET FEED
-    @GetMapping
-    public ResponseEntity<List<PostResponse>> getFeed(
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size
+    // GET SINGLE POST
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostResponse> getSinglePost(
+            @PathVariable Long postId
     ) {
 
-        logger.info("Get feed API called | cursor: {} | size: {}",cursor,size);
+        logger.info(
+                "Get single post API called"
+        );
 
-        List<PostResponse> response = postService.getFeed(cursor, size);
+        return ResponseEntity.ok(
+                postService.getSinglePost(postId)
+        );
+    }
 
-        logger.info("Feed fetched successfully | total posts: {}",response.size());
+    // GET USER SPECIFIC POST
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<
+            CursorPageResponse<PostResponse>
+            > getUserPosts(
+
+            @PathVariable Long userId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        logger.info(
+                "Get user posts API called"
+        );
+
+        return ResponseEntity.ok(
+                postService.getUserPosts(
+                        userId,
+                        cursor,
+                        size
+                )
+        );
+    }
+
+    // GET FEED
+    @GetMapping
+    public ResponseEntity<
+            CursorPageResponse<PostResponse>
+            > getFeed(
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            int size
+    ) {
+
+        logger.info(
+                "Get feed API called | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        CursorPageResponse<PostResponse>
+                response =
+                postService.getFeed(
+                        cursor,
+                        size
+                );
+
+        logger.info(
+                "Feed fetched successfully"
+        );
 
         return ResponseEntity.ok(response);
     }
@@ -88,11 +153,32 @@ public class PostController {
 
         logger.info("Delete post API called for postId: {}",postId);
 
-        postService.deletePost(postId);
+        postService.softDeletePost(postId);
 
         logger.info("Post deleted successfully with id: {}",postId);
 
         return ResponseEntity.ok("Post deleted successfully");
     }
 
+    // RESTORE POST
+    @PutMapping("/{postId}/restore-request")
+    public ResponseEntity<String>
+    requestRestorePost(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Restore request API called"
+        );
+
+        postService.requestRestorePost(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Restore request submitted successfully"
+        );
+    }
+
 }
+

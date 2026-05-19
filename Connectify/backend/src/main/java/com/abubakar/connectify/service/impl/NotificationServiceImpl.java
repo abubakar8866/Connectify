@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.NotificationResponse;
 import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Notification;
@@ -15,12 +16,13 @@ import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.AuthUtil;
 
+import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.OwnershipValidator;
+import com.abubakar.connectify.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,7 +144,7 @@ public class NotificationServiceImpl
     // ================= GET MY NOTIFICATIONS =================
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getMyNotifications(
+    public CursorPageResponse<NotificationResponse> getMyNotifications(
             Long cursor,
             int size
     ) {
@@ -162,7 +164,9 @@ public class NotificationServiceImpl
         );
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Notification> notifications;
 
@@ -193,9 +197,12 @@ public class NotificationServiceImpl
                 notifications.size()
         );
 
-        return notifications.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                notifications,
+                size,
+                Notification::getId,
+                this::mapToResponse
+        );
     }
 
     // ================= MARK AS READ =================
@@ -218,20 +225,10 @@ public class NotificationServiceImpl
                         );
 
         // OWNERSHIP CHECK
-        if (!notification.getReceiver()
-                .getId()
-                .equals(currentUser.getId())) {
-
-            logger.warn(
-                    "Unauthorized notification access | notificationId: {} | userId: {}",
-                    notificationId,
-                    currentUser.getId()
-            );
-
-            throw new UnauthorizedException(
-                    "You are not authorized to access this notification"
-            );
-        }
+        this.ownershipValidator.validate(
+                notification.getReceiver().getId(),
+                currentUser,
+                "You are not authorized to access this notification");
 
         notification.setIsRead(true);
 

@@ -11,3 +11,4 @@ public class SavePostResponse {
 
     private Long postId;
 }
+

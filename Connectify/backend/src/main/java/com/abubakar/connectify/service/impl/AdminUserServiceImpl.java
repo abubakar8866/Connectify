@@ -2,24 +2,28 @@ package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Gender;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.AdminUserService;
+import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.UserSpecification;
 
+import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
+import com.abubakar.connectify.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,23 +45,32 @@ public class AdminUserServiceImpl
     @Autowired
     private ReportRepository reportRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private AuthUtil authUtil;
+
     private static final Logger logger =
             LoggerFactory.getLogger(
                     AdminUserServiceImpl.class
             );
 
     @Override
-    public List<AdminUserResponse> getUsers(
+    public CursorPageResponse<AdminUserResponse> getUsers(
             Long cursor,
             int size,
             String keyword,
             Boolean verified,
+            Boolean emailVerified,
             Boolean isPrivate,
             Boolean active,
             AccountStatus status,
             String city,
             Gender gender,
-            Long minFollowers
+            Long minFollowers,
+            Boolean restoreRequested,
+            Boolean unbanRequested
     ) {
 
         logger.info(
@@ -65,10 +78,8 @@ public class AdminUserServiceImpl
         );
 
         Pageable pageable =
-                PageRequest.of(
-                        0,
-                        size,
-                        Sort.by(Sort.Direction.DESC, "id")
+                PaginationUtil.createCursorPageable(
+                        size
                 );
 
         Specification<User> specification =
@@ -81,6 +92,9 @@ public class AdminUserServiceImpl
                         )
                         .and(
                                 UserSpecification.hasVerified(verified)
+                        )
+                        .and(
+                                UserSpecification.hasEmailVerified(emailVerified)
                         )
                         .and(
                                 UserSpecification.hasPrivateAccount(isPrivate)
@@ -99,6 +113,12 @@ public class AdminUserServiceImpl
                         )
                         .and(
                                 UserSpecification.hasMinFollowers(minFollowers)
+                        )
+                        .and(
+                                UserSpecification.restoreRequested(restoreRequested)
+                        )
+                        .and(
+                                UserSpecification.unbanRequested(unbanRequested)
                         );
 
         List<User> users =
@@ -106,22 +126,23 @@ public class AdminUserServiceImpl
                         .findAll(specification, pageable)
                         .getContent();
 
-        return users.stream()
-                .map(this::mapToAdminUserResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                users,
+                size,
+                User::getId,
+                this::mapToAdminUserResponse
+        );
     }
 
     @Override
-    public List<AdminUserResponse> getReportedUsers(
+    public CursorPageResponse<AdminUserResponse> getReportedUsers(
             Long cursor,
             int size
     ) {
 
         Pageable pageable =
-                PageRequest.of(
-                        0,
-                        size,
-                        Sort.by(Sort.Direction.DESC, "id")
+                PaginationUtil.createCursorPageable(
+                        size
                 );
 
         List<User> users;
@@ -143,9 +164,12 @@ public class AdminUserServiceImpl
                             );
         }
 
-        return users.stream()
-                .map(this::mapToAdminUserResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                users,
+                size,
+                User::getId,
+                this::mapToAdminUserResponse
+        );
     }
 
     @Override
@@ -226,6 +250,24 @@ public class AdminUserServiceImpl
         }
 
         userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your account has been banned by admin.",
+                NotificationType.ACCOUNT_BANNED,
+                null,
+                null
+        );
+
+        logger.info(
+                "User banned successfully | userId: {}",
+                userId
+        );
+
     }
 
     @Override
@@ -246,6 +288,119 @@ public class AdminUserServiceImpl
         user.setBannedUntil(null);
 
         userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your account has been unbanned.",
+                NotificationType.ACCOUNT_UNBANNED,
+                null,
+                null
+        );
+
+        logger.info(
+                "User unbanned successfully | userId: {}",
+                userId
+        );
+
+    }
+
+    @Override
+    public void restoreUser(Long userId) {
+
+        User user = getUserById(userId);
+
+        user.setIsDeleted(false);
+
+        user.setIsActive(true);
+
+        user.setAccountStatus(AccountStatus.ACTIVE);
+
+        userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your account has been restored.",
+                NotificationType.ACCOUNT_RESTORED,
+                null,
+                null
+        );
+
+        logger.info(
+                "User restored successfully | userId: {}",
+                userId
+        );
+    }
+
+    @Override
+    public void approveUnbanRequest(Long userId) {
+
+        User user = getUserById(userId);
+
+        user.setAccountStatus(AccountStatus.ACTIVE);
+
+        user.setIsActive(true);
+
+        user.setBanReason(null);
+
+        user.setAdminNote(null);
+
+        user.setBannedUntil(null);
+
+        userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your unban request has been approved.",
+                NotificationType.UNBAN_APPROVED,
+                null,
+                null
+        );
+
+        logger.info(
+                "Unban request approved | userId: {}",
+                userId
+        );
+    }
+
+    @Override
+    public void rejectUnbanRequest(Long userId) {
+
+        User user = getUserById(userId);
+
+        user.setAdminNote(
+                "Your unban request was rejected by admin."
+        );
+
+        userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your unban request has been rejected.",
+                NotificationType.UNBAN_REJECTED,
+                null,
+                null
+        );
+
+        logger.info(
+                "Unban request rejected | userId: {}",
+                userId
+        );
     }
 
     @Override
@@ -258,6 +413,24 @@ public class AdminUserServiceImpl
         user.setIsActive(false);
 
         userRepository.save(user);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your account has been deleted by admin.",
+                NotificationType.ACCOUNT_DELETED,
+                null,
+                null
+        );
+
+        logger.info(
+                "User deleted successfully | userId: {}",
+                userId
+        );
+
     }
 
     // ================= PRIVATE =================
@@ -286,6 +459,7 @@ public class AdminUserServiceImpl
                 .isActive(user.getIsActive())
                 .isPrivate(user.getIsPrivate())
                 .isVerified(user.getIsVerified())
+                .isEmailVerified(user.getIsEmailVerified())
 
                 .accountStatus(user.getAccountStatus())
 
@@ -298,3 +472,4 @@ public class AdminUserServiceImpl
     }
 
 }
+

@@ -7,7 +7,9 @@ import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Like;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.LikeRepository;
@@ -59,6 +61,22 @@ public class LikeServiceImpl implements LikeService {
 
         Post post = getPostById(postId);
 
+        // DELETED POST VALIDATION
+        if (Boolean.TRUE.equals(post.getDeleted())) {
+
+            throw new OperationFailException(
+                    "Post is deleted"
+            );
+        }
+
+        // BANNED USER VALIDATION
+        if (post.getUser().getAccountStatus()== AccountStatus.BANNED) {
+
+            throw new OperationFailException(
+                    "Cannot interact with banned user's post"
+            );
+        }
+
         Optional<Like> existingLike =
                 likeRepository.findByUserAndPost(currentUser, post);
 
@@ -67,7 +85,7 @@ public class LikeServiceImpl implements LikeService {
 
             likeRepository.delete(existingLike.get());
 
-            post.setLikeCount(post.getLikeCount() - 1);
+            post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
 
             postRepository.save(post);
 
@@ -95,11 +113,11 @@ public class LikeServiceImpl implements LikeService {
 
         postRepository.save(post);
 
-        // CREATE NOTIFICATION
         notificationService.createNotification(
-                post.getUser().getId(),                 // receiver
-                currentUser.getId(),                    // sender
-                currentUser.getUname() + " liked your post",
+                post.getUser().getId(),
+                currentUser.getId(),
+                currentUser.getUname()
+                            + " liked your post",
                 NotificationType.LIKE,
                 post.getId(),
                 null
@@ -127,6 +145,25 @@ public class LikeServiceImpl implements LikeService {
 
         Comment comment = getCommentById(commentId);
 
+        // DELETED COMMENT VALIDATION
+        if (Boolean.TRUE.equals(comment.getDeleted())) {
+
+            throw new OperationFailException(
+                    "Comment is deleted"
+            );
+        }
+
+        // BANNED USER VALIDATION
+        if (
+                comment.getUser().getAccountStatus()
+                        == AccountStatus.BANNED
+        ) {
+
+            throw new OperationFailException(
+                    "Cannot interact with banned user's comment"
+            );
+        }
+
         Optional<Like> existingLike =
                 likeRepository.findByUserAndComment(currentUser, comment);
 
@@ -135,7 +172,7 @@ public class LikeServiceImpl implements LikeService {
 
             likeRepository.delete(existingLike.get());
 
-            comment.setLikeCount(comment.getLikeCount() - 1);
+            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
 
             commentRepository.save(comment);
 
@@ -163,14 +200,14 @@ public class LikeServiceImpl implements LikeService {
 
         commentRepository.save(comment);
 
-        // CREATE NOTIFICATION
         notificationService.createNotification(
-                comment.getUser().getId(),              // receiver
-                currentUser.getId(),                    // sender
-                currentUser.getUname() + " liked your comment",
-                NotificationType.LIKE,
-                null,
-                comment.getId()
+            comment.getUser().getId(),
+            currentUser.getId(),
+            currentUser.getUname()
+                            + " liked your comment",
+            NotificationType.LIKE,
+            null,
+            comment.getId()
         );
 
         logger.info(

@@ -1,19 +1,19 @@
 package com.abubakar.connectify.service;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Gender;
 
-import java.util.List;
-
 public interface SearchService {
 
-    List<UserSearchResponse> searchUsers(
+    CursorPageResponse<UserSearchResponse> searchUsers(
 
             String keyword,
             Boolean verified,
+            Boolean emailVerified,
             Boolean isPrivate,
             Boolean active,
             AccountStatus status,
@@ -25,18 +25,18 @@ public interface SearchService {
             int size
     );
 
-    List<HashtagResponse> searchHashtags(
+    CursorPageResponse<HashtagResponse> searchHashtags(
             String keyword,
             Long cursor,
             int size
     );
 
-    List<PostResponse> getTrendingPosts(
+    CursorPageResponse<PostResponse> getTrendingPosts(
             Long cursor,
             int size
     );
 
-    List<UserSearchResponse> getSuggestedUsers(
+    CursorPageResponse<UserSearchResponse> getSuggestedUsers(
             Long cursor,
             int size
     );

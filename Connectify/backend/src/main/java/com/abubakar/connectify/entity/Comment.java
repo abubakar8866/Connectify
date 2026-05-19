@@ -26,6 +26,8 @@ public class Comment extends BaseEntity {
 
     private Boolean deleted = false;
 
+    private Boolean restoreRequested = false;
+
     // COMMENT OWNER
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -40,6 +42,9 @@ public class Comment extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
+
+    @OneToMany(mappedBy = "comment")
+    private List<Report> reports = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "parentComment",

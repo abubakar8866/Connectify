@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.NotificationResponse;
 import com.abubakar.connectify.enums.NotificationType;
 
@@ -16,7 +17,8 @@ public interface NotificationService {
             Long commentId
     );
 
-    List<NotificationResponse> getMyNotifications(
+    CursorPageResponse<NotificationResponse>
+    getMyNotifications(
             Long cursor,
             int size
     );

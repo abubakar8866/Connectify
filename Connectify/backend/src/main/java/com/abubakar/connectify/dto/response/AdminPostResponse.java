@@ -20,6 +20,8 @@ public class AdminPostResponse {
 
     private Boolean deleted;
 
+    private Boolean restoreRequested;
+
     private Long reportCount;
 
     private String username;
@@ -31,3 +33,4 @@ public class AdminPostResponse {
     private LocalDateTime createdAt;
 
 }
+

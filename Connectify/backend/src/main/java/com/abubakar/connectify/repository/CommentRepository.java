@@ -27,24 +27,37 @@ public interface CommentRepository
 
     Long countByDeletedFalse();
 
-    // CURSOR PAGINATION
-    List<Comment> findByDeletedFalseOrderByIdDesc(
+    // ADMIN ALL COMMENTS
+    List<Comment> findAllByOrderByIdDesc(
             Pageable pageable
     );
 
-    List<Comment> findByDeletedFalseAndIdLessThanOrderByIdDesc(
+    List<Comment> findByIdLessThanOrderByIdDesc(
             Long cursor,
             Pageable pageable
     );
 
-    // SEARCH + CURSOR
-    List<Comment> findByContentContainingIgnoreCaseAndDeletedFalseOrderByIdDesc(
+    // RESTORE REQUESTS
+    List<Comment>
+    findByRestoreRequestedTrueOrderByIdDesc(
+            Pageable pageable
+    );
+
+    List<Comment>
+    findByRestoreRequestedTrueAndIdLessThanOrderByIdDesc(
+            Long cursor,
+            Pageable pageable
+    );
+
+    // SEARCH
+    List<Comment>
+    findByContentContainingIgnoreCaseOrderByIdDesc(
             String keyword,
             Pageable pageable
     );
 
     List<Comment>
-    findByContentContainingIgnoreCaseAndDeletedFalseAndIdLessThanOrderByIdDesc(
+    findByContentContainingIgnoreCaseAndIdLessThanOrderByIdDesc(
             String keyword,
             Long cursor,
             Pageable pageable

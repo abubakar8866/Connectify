@@ -1,19 +1,35 @@
 package com.abubakar.connectify.service;
 
 import com.abubakar.connectify.dto.response.AdminPostResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 
 import java.util.List;
 
 public interface AdminPostService {
 
-    List<AdminPostResponse> searchPosts(
+    // ================= SEARCH POSTS =================
+    CursorPageResponse<AdminPostResponse> searchPosts(
 
             String keyword,
             String username,
             String hashtag,
             Boolean reportedOnly,
+            Boolean restoreRequested,
+
             Long cursor,
             int size
     );
 
+    // ================= PERMANENT DELETE POST =================
+    // Admin hard delete
+    void permanentlyDeletePost(
+            Long postId
+    );
+
+    // Admin restore post
+    void restorePost(
+            Long postId
+    );
+
 }
+

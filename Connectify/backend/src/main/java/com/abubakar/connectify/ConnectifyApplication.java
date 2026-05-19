@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ConnectifyApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(ConnectifyApplication.class, args);
 	}
 

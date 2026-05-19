@@ -54,6 +54,24 @@ public class UserSpecification {
         };
     }
 
+    // ================= EMAIL VERIFIED =================
+    public static Specification<User> hasEmailVerified(
+            Boolean emailVerified
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (emailVerified == null) {
+                return cb.conjunction();
+            }
+
+            return cb.equal(
+                    root.get("isEmailVerified"),
+                    emailVerified
+            );
+        };
+    }
+
     // ================= PRIVATE FILTER =================
     public static Specification<User> hasPrivateAccount(
             Boolean isPrivate
@@ -189,6 +207,42 @@ public class UserSpecification {
             return cb.lessThan(
                     root.get("id"),
                     cursor
+            );
+        };
+    }
+
+    // ================= RESTORE REQUEST =================
+    public static Specification<User> restoreRequested(
+            Boolean restoreRequested
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (restoreRequested == null) {
+                return cb.conjunction();
+            }
+
+            return cb.equal(
+                    root.get("restoreRequested"),
+                    restoreRequested
+            );
+        };
+    }
+
+    // ================= UNBAN REQUEST =================
+    public static Specification<User> unbanRequested(
+            Boolean unbanRequested
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (unbanRequested == null) {
+                return cb.conjunction();
+            }
+
+            return cb.equal(
+                    root.get("unbanRequested"),
+                    unbanRequested
             );
         };
     }

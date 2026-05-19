@@ -8,3 +8,4 @@ public interface LikeService {
 
     LikeResponse toggleCommentLike(Long commentId);
 }
+

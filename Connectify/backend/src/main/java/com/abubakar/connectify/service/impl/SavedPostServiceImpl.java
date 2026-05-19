@@ -1,29 +1,31 @@
 package com.abubakar.connectify.service.impl;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.SavePostResponse;
+import com.abubakar.connectify.entity.Hashtag;
+import com.abubakar.connectify.entity.Media;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.SavedPost;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.SavedPostRepository;
 import com.abubakar.connectify.service.SavedPostService;
-
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
+import com.abubakar.connectify.util.PaginationUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class SavedPostServiceImpl implements SavedPostService {
     @Autowired
     private AuthUtil authUtil;
 
+    // ================= TOGGLE SAVE =================
     @Override
     public SavePostResponse toggleSavePost(Long postId) {
 
@@ -51,7 +54,7 @@ public class SavedPostServiceImpl implements SavedPostService {
                 postId
         );
 
-        User currentUser = this.authUtil.getCurrentUser();
+        User currentUser = authUtil.getCurrentUser();
 
         Post post = getPostById(postId);
 
@@ -70,7 +73,9 @@ public class SavedPostServiceImpl implements SavedPostService {
                     currentUser.getId()
             );
 
-            savedPostRepository.delete(existingSave.get());
+            savedPostRepository.delete(
+                    existingSave.get()
+            );
 
             return SavePostResponse.builder()
                     .saved(false)
@@ -98,9 +103,10 @@ public class SavedPostServiceImpl implements SavedPostService {
                 .build();
     }
 
-    // ================= CURSOR PAGINATION =================
+    // ================= GET SAVED POSTS =================
     @Override
-    public List<PostResponse> getSavedPosts(
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PostResponse> getSavedPosts(
             Long cursor,
             int size
     ) {
@@ -115,7 +121,9 @@ public class SavedPostServiceImpl implements SavedPostService {
                 authUtil.getCurrentUser();
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<SavedPost> savedPosts;
 
@@ -124,8 +132,9 @@ public class SavedPostServiceImpl implements SavedPostService {
 
             savedPosts =
                     savedPostRepository
-                            .findByUserOrderByIdDesc(
+                            .findByUserAndPostDeletedFalseAndPostUserAccountStatusNotOrderByIdDesc(
                                     currentUser,
+                                    AccountStatus.BANNED,
                                     pageable
                             );
         }
@@ -135,8 +144,9 @@ public class SavedPostServiceImpl implements SavedPostService {
 
             savedPosts =
                     savedPostRepository
-                            .findByUserAndIdLessThanOrderByIdDesc(
+                            .findByUserAndPostDeletedFalseAndPostUserAccountStatusNotAndIdLessThanOrderByIdDesc(
                                     currentUser,
+                                    AccountStatus.BANNED,
                                     cursor,
                                     pageable
                             );
@@ -147,34 +157,116 @@ public class SavedPostServiceImpl implements SavedPostService {
                 savedPosts.size()
         );
 
-        return savedPosts.stream()
-                .map(savedPost ->
-                        mapToPostResponse(
-                                savedPost.getPost()
-                        )
-                )
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                savedPosts,
+                size,
+                SavedPost::getId,
+                this::mapToPostResponse
+        );
     }
 
-    // PRIVATE METHODS
+    // ================= PRIVATE METHODS =================
     private Post getPostById(Long postId) {
 
-        return postRepository.findById(postId)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() ->
                         new ResourceNotFound(
                                 "Post not found with id: " + postId
                         )
                 );
+
+        // DELETED POST VALIDATION
+        if (Boolean.TRUE.equals(post.getDeleted())) {
+
+            throw new ResourceNotFound(
+                    "Post not found"
+            );
+        }
+
+        // BANNED USER VALIDATION
+        if (post.getUser().getAccountStatus()
+                == AccountStatus.BANNED) {
+
+            throw new OperationFailException(
+                    "This post is unavailable"
+            );
+        }
+
+        return post;
     }
 
-    private PostResponse mapToPostResponse(Post post) {
+    private PostResponse mapToPostResponse(
+            SavedPost savedPost
+    ) {
+
+        Post post = savedPost.getPost();
+
+        User currentUser =
+                authUtil.getCurrentUser();
 
         return PostResponse.builder()
+
                 .id(post.getId())
+
                 .caption(post.getCaption())
-                .likeCount(post.getLikeCount())
-                .commentCount(post.getCommentCount())
-                .createdAt(post.getCreatedAt())
+
+                .userId(
+                        post.getUser().getId()
+                )
+
+                .username(
+                        post.getUser().getUname()
+                )
+
+                .userProfileImage(
+                        post.getUser().getProfileImageUrl()
+                )
+
+                .isVerified(
+                        post.getUser().getIsVerified()
+                )
+
+                .likeCount(
+                        post.getLikeCount()
+                )
+
+                .commentCount(
+                        post.getCommentCount()
+                )
+
+                .liked(
+                        false
+                )
+
+                .mine(
+                        currentUser.getId()
+                                .equals(
+                                        post.getUser().getId()
+                                )
+                )
+
+                .createdAt(
+                        post.getCreatedAt()
+                )
+
+                .updatedAt(
+                        savedPost.getCreatedAt()
+                )
+
+                .mediaUrls(
+                        post.getMediaList()
+                                .stream()
+                                .map(Media::getUrl)
+                                .toList()
+                )
+
+                .hashtags(
+                        post.getHashtags()
+                                .stream()
+                                .map(Hashtag::getName)
+                                .toList()
+                )
+
                 .build();
     }
 

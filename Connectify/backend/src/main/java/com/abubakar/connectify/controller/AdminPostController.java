@@ -1,16 +1,16 @@
 package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.response.AdminPostResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminPostService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/posts")
@@ -25,7 +25,7 @@ public class AdminPostController {
             );
 
     @GetMapping
-    public ResponseEntity<List<AdminPostResponse>>
+    public ResponseEntity<CursorPageResponse<AdminPostResponse>>
     searchPosts(
 
             @RequestParam(required = false)
@@ -41,10 +41,14 @@ public class AdminPostController {
             Boolean reportedOnly,
 
             @RequestParam(required = false)
+            Boolean restoreRequested,
+
+            @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
+
     ) {
 
         logger.info(
@@ -57,10 +61,51 @@ public class AdminPostController {
                         username,
                         hashtag,
                         reportedOnly,
+                        restoreRequested,
                         cursor,
                         size
                 )
         );
     }
 
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<String>
+    permanentlyDeletePost(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin permanent delete API called | postId: {}",
+                postId
+        );
+
+        adminPostService.permanentlyDeletePost(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Post permanently deleted successfully"
+        );
+    }
+
+    @PutMapping("/{postId}/restore")
+    public ResponseEntity<String>
+    restorePost(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin restore post API called"
+        );
+
+        adminPostService.restorePost(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Post restored successfully"
+        );
+    }
+
 }
+

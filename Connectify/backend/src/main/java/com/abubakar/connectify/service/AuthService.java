@@ -11,25 +11,51 @@ import com.abubakar.connectify.dto.response.UserResponse;
 
 public interface AuthService {
 
-    // Register new user
+    // ================= AUTH =================
+
     AuthResponse register(RegisterRequest request);
 
-    // Login user
     AuthResponse login(LoginRequest request);
 
-    // Get currently logged-in user
-    UserResponse getCurrentUser();
-
-    // Update user profile
-    UserResponse updateProfile(Long userId,UpdateProfileRequest request,MultipartFile file);
-
-    // Generate forgot password reset token
-    void forgotPassword(String email);
-
-    // Reset password using token
-    void resetPassword(String token, ResetPasswordRequest request);
-
-    // For registering admin
     AuthResponse createAdmin(RegisterRequest request);
 
+    // ================= USER =================
+
+    UserResponse getCurrentUser();
+
+    UserResponse updateProfile(
+            Long userId,
+            UpdateProfileRequest request,
+            MultipartFile file
+    );
+
+    // ================= PASSWORD =================
+
+    void forgotPassword(String email);
+
+    void resetPassword(
+            String token,
+            ResetPasswordRequest request
+    );
+
+    // ================= EMAIL VERIFICATION =================
+
+    void sendEmailVerification();
+
+    void verifyEmail(String token);
+
+    // ================= ACCOUNT MANAGEMENT =================
+
+    // User soft deletes own account
+    void deactivateMyAccount();
+
+    // User requests restore after self deactivation
+    void requestAccountRestore();
+
+    // User appeals admin ban
+    void requestUnbanAppeal(
+            String message
+    );
+
 }
+

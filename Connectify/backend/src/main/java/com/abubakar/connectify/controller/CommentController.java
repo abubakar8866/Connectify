@@ -1,11 +1,11 @@
 package com.abubakar.connectify.controller;
 
-import java.util.List;
-
 import com.abubakar.connectify.dto.request.CreateCommentRequest;
 import com.abubakar.connectify.dto.response.CommentResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.CommentService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -78,7 +78,7 @@ public class CommentController {
                 commentId
         );
 
-        commentService.deleteComment(commentId);
+        commentService.softDeleteComment(commentId);
 
         logger.info(
                 "Comment deleted successfully | commentId: {}",
@@ -90,8 +90,27 @@ public class CommentController {
         );
     }
 
+    @PostMapping("/{commentId}/restore-request")
+    public ResponseEntity<String> requestRestoreComment(
+            @PathVariable Long commentId
+    ) {
+
+        logger.info(
+                "Restore request API called | commentId: {}",
+                commentId
+        );
+
+        commentService.requestRestoreComment(
+                commentId
+        );
+
+        return ResponseEntity.ok(
+                "Restore request submitted successfully"
+        );
+    }
+
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<CommentResponse>>
+    public  ResponseEntity<CursorPageResponse<CommentResponse>>
     getPostComments(
 
             @PathVariable Long postId,
@@ -99,7 +118,7 @@ public class CommentController {
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
@@ -110,7 +129,7 @@ public class CommentController {
                 size
         );
 
-        List<CommentResponse> responses =
+        CursorPageResponse<CommentResponse> response =
                 commentService.getPostComments(
                         postId,
                         cursor,
@@ -119,10 +138,10 @@ public class CommentController {
 
         logger.info(
                 "Comments fetched successfully | count: {}",
-                responses.size()
+                response.getCurrentPageData()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(response);
     }
 
 }

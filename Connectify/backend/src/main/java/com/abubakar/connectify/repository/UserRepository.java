@@ -8,7 +8,6 @@ import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.abubakar.connectify.entity.User;
@@ -39,7 +38,9 @@ public interface UserRepository extends
 
     Long countByCreatedAtAfter(LocalDateTime time);
 
-    Long countByDeletedTrue();
+    Optional<User> findByEmailVerificationToken(
+            String token
+    );
 
     @Query("""
         SELECT DISTINCT r.reportedUser

@@ -23,8 +23,11 @@ public class AdminCommentResponse {
 
     private Boolean deleted;
 
+    private Boolean restoreRequested;
+
     private Long reportsCount;
 
     private LocalDateTime createdAt;
 
 }
+

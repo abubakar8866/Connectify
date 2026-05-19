@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.abubakar.connectify.dto.response.CursorCountResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.FollowResponse;
 import com.abubakar.connectify.dto.response.UserPreviewResponse;
 import com.abubakar.connectify.entity.Follow;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.FollowRepository;
 import com.abubakar.connectify.repository.UserRepository;
@@ -17,10 +18,14 @@ import com.abubakar.connectify.service.FollowService;
 
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
+import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.ValidateUserAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class FollowServiceImpl implements FollowService {
 
     private static final Logger logger = LoggerFactory.getLogger(FollowServiceImpl.class);
+
+    private static final long VERIFIED_FOLLOWERS_COUNT = 5;
 
     @Autowired
     private FollowRepository followRepository;
@@ -42,6 +49,9 @@ public class FollowServiceImpl implements FollowService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private ValidateUserAccess validateUserAccess;
+
     // TOGGLE FOLLOW
     @Override
     public FollowResponse toggleFollow(Long userId) {
@@ -53,7 +63,7 @@ public class FollowServiceImpl implements FollowService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        User targetUser = getUserById(userId);
+        User targetUser = this.validateUserAccess.getValidUser(userId);
 
         // SELF FOLLOW CHECK
         if (Objects.equals(currentUser.getId(), targetUser.getId())) {
@@ -89,8 +99,10 @@ public class FollowServiceImpl implements FollowService {
             followRepository.delete(existingFollow.get());
 
             targetUser.setFollowersCount(
-                    targetUser.getFollowersCount() - 1
+                    Math.max(0, targetUser.getFollowersCount() - 1)
             );
+
+            updateVerificationBadge(targetUser);
 
             currentUser.setFollowingCount(
                     currentUser.getFollowingCount() - 1
@@ -127,6 +139,8 @@ public class FollowServiceImpl implements FollowService {
                 targetUser.getFollowersCount() + 1
         );
 
+        updateVerificationBadge(targetUser);
+
         currentUser.setFollowingCount(
                 currentUser.getFollowingCount() + 1
         );
@@ -159,58 +173,149 @@ public class FollowServiceImpl implements FollowService {
 
     // GET FOLLOWERS
     @Override
-    public List<UserPreviewResponse> getFollowers(Long userId) {
+    public CursorCountResponse<UserPreviewResponse> getFollowers(
+            Long userId,
+            Long cursor,
+            int size
+    )  {
 
         logger.info(
                 "Fetching followers list | userId: {}",
                 userId
         );
 
-        User targetUser = getUserById(userId);
+        User targetUser = this.validateUserAccess.getValidUser(userId);
 
-        List<Follow> followers =
-                followRepository.findByFollowing(targetUser);
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Follow> followers;
+
+        if (cursor == null) {
+
+            followers =
+                    followRepository
+                            .findByFollowingOrderByIdDesc(
+                                    targetUser,
+                                    pageable
+                            );
+
+        } else {
+
+            followers =
+                    followRepository
+                            .findByFollowingAndIdLessThanOrderByIdDesc(
+                                    targetUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         logger.info(
                 "Total followers fetched: {}",
                 followers.size()
         );
 
-        return followers.stream()
-                .map(follow ->
-                        mapToUserPreviewResponse(
-                                follow.getFollower()
-                        )
+        CursorPageResponse<UserPreviewResponse> page =
+                CursorPaginationUtil.buildResponse(
+                        followers,
+                        size,
+                        Follow::getId,
+                        follow ->
+                                mapToUserPreviewResponse(
+                                        follow.getFollower()
+                                )
+                );
+
+        return CursorCountResponse
+                .<UserPreviewResponse>builder()
+                .page(page)
+                .totalCount(
+                        targetUser.getFollowersCount()
                 )
-                .toList();
+                .build();
     }
 
     // GET FOLLOWING
     @Override
-    public List<UserPreviewResponse> getFollowing(Long userId) {
+    public CursorCountResponse<UserPreviewResponse>
+    getFollowing(
+
+            Long userId,
+
+            Long cursor,
+
+            int size
+    ) {
 
         logger.info(
-                "Fetching following list | userId: {}",
-                userId
+                """
+                Fetching following list
+                | userId: {}
+                | cursor: {}
+                | size: {}
+                """,
+                userId,
+                cursor,
+                size
         );
 
-        User targetUser = getUserById(userId);
+        User targetUser = this.validateUserAccess.getValidUser(userId);
 
-        List<Follow> following =
-                followRepository.findByFollower(targetUser);
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Follow> following;
+
+        // FIRST PAGE
+        if (cursor == null) {
+
+            following =
+                    followRepository
+                            .findByFollowerOrderByIdDesc(
+                                    targetUser,
+                                    pageable
+                            );
+
+        }
+
+        // NEXT PAGE
+        else {
+
+            following =
+                    followRepository
+                            .findByFollowerAndIdLessThanOrderByIdDesc(
+                                    targetUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
 
         logger.info(
-                "Total following fetched: {}",
+                "Following fetched successfully | count: {}",
                 following.size()
         );
 
-        return following.stream()
-                .map(follow ->
-                        mapToUserPreviewResponse(
-                                follow.getFollowing()
-                        )
-                )
-                .toList();
+        CursorPageResponse<UserPreviewResponse> page =
+                CursorPaginationUtil.buildResponse(
+                        following,
+                        size,
+                        Follow::getId,
+                        follow ->
+                                mapToUserPreviewResponse(
+                                        follow.getFollowing()
+                                )
+                );
+
+        return CursorCountResponse
+                .<UserPreviewResponse>builder()
+                .page(page)
+                .totalCount(targetUser.getFollowingCount())
+                .build();
     }
 
     // PRIVATE METHODS
@@ -236,25 +341,20 @@ public class FollowServiceImpl implements FollowService {
                 .isPresent();
     }
 
-    private User getUserById(Long userId) {
+    private void updateVerificationBadge(User user) {
 
-        logger.debug(
-                "Fetching user by id: {}",
-                userId
+        boolean verified =
+                Boolean.TRUE.equals(user.getIsEmailVerified())
+                        &&
+                        user.getFollowersCount() >= VERIFIED_FOLLOWERS_COUNT;
+
+        user.setIsVerified(verified);
+
+        logger.info(
+                "Verification badge updated | userId: {} | verified: {}",
+                user.getId(),
+                verified
         );
-
-        return userRepository.findById(userId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "User not found with id: {}",
-                            userId
-                    );
-
-                    return new ResourceNotFound(
-                            "User not found with id: " + userId
-                    );
-                });
     }
 
 }

@@ -1,11 +1,11 @@
 package com.abubakar.connectify.controller;
 
-import java.util.List;
-
+import com.abubakar.connectify.dto.response.CursorCountResponse;
 import com.abubakar.connectify.dto.response.FollowResponse;
 import com.abubakar.connectify.dto.response.UserPreviewResponse;
 import com.abubakar.connectify.service.FollowService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,21 +47,42 @@ public class FollowController {
 
     // GET FOLLOWERS
     @GetMapping("/{userId}/followers")
-    public ResponseEntity<List<UserPreviewResponse>> getFollowers(
-            @PathVariable Long userId) {
+    public ResponseEntity<
+            CursorCountResponse<UserPreviewResponse>
+            > getFollowers(
+
+            @PathVariable Long userId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            int size
+    ) {
 
         logger.info(
-                "Get followers request received | userId: {}",
-                userId
+                """
+                Get followers request
+                | userId: {}
+                | cursor: {}
+                | size: {}
+                """,
+                userId,
+                cursor,
+                size
         );
 
-        List<UserPreviewResponse> response =
-                followService.getFollowers(userId);
+        CursorCountResponse<UserPreviewResponse>
+                response =
+                followService.getFollowers(
+                        userId,
+                        cursor,
+                        size
+                );
 
         logger.info(
-                "Followers fetched successfully | userId: {} | totalFollowers: {}",
-                userId,
-                response.size()
+                "Followers fetched successfully | userId: {}",
+                userId
         );
 
         return ResponseEntity.ok(response);
@@ -70,21 +91,42 @@ public class FollowController {
 
     // GET FOLLOWING
     @GetMapping("/{userId}/following")
-    public ResponseEntity<List<UserPreviewResponse>> getFollowing(
-            @PathVariable Long userId) {
+    public ResponseEntity<
+            CursorCountResponse<UserPreviewResponse>
+            > getFollowing(
+
+            @PathVariable Long userId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            int size
+    ) {
 
         logger.info(
-                "Get following request received | userId: {}",
-                userId
+                """
+                Get following request
+                | userId: {}
+                | cursor: {}
+                | size: {}
+                """,
+                userId,
+                cursor,
+                size
         );
 
-        List<UserPreviewResponse> response =
-                followService.getFollowing(userId);
+        CursorCountResponse<UserPreviewResponse>
+                response =
+                followService.getFollowing(
+                        userId,
+                        cursor,
+                        size
+                );
 
         logger.info(
-                "Following fetched successfully | userId: {} | totalFollowing: {}",
-                userId,
-                response.size()
+                "Following fetched successfully | userId: {}",
+                userId
         );
 
         return ResponseEntity.ok(response);

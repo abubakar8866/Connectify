@@ -1,6 +1,7 @@
 package com.abubakar.connectify.configuration;
 
 import com.abubakar.connectify.entity.Story;
+import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.service.FileService;
 import org.slf4j.Logger;
@@ -48,6 +49,15 @@ public class StoryCleanupScheduler {
                     story.getPublicId(),
                     "stories"
             );
+
+            if (story.getMediaType() == MediaType.VIDEO &&
+                    story.getThumbnailUrl() != null) {
+
+                fileService.deleteFile(
+                        story.getThumbnailUrl(),
+                        "story-thumbnails"
+                );
+            }
 
             // DELETE DB RECORD
             storyRepository.delete(story);

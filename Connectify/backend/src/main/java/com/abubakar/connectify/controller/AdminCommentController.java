@@ -3,6 +3,7 @@ package com.abubakar.connectify.controller;
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminCommentService;
+import com.abubakar.connectify.util.PaginationConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,55 +22,90 @@ public class AdminCommentController {
             );
 
     @Autowired
-    private AdminCommentService
-            adminCommentService;
+    private AdminCommentService adminCommentService;
 
+    // ================= GET COMMENTS =================
     @GetMapping
-    public ResponseEntity<CursorPageResponse<AdminCommentResponse>>
-    getComments(
-
-            @RequestParam(required = false)
-            Long cursor,
-
-            @RequestParam(defaultValue = "10")
-            int size,
+    public ResponseEntity<
+            CursorPageResponse<AdminCommentResponse>
+            > getComments(
 
             @RequestParam(required = false)
             String keyword,
 
             @RequestParam(required = false)
-            Boolean reportedOnly
+            Boolean reportedOnly,
+
+            @RequestParam(required = false)
+            Boolean restoreRequested,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
     ) {
 
         logger.info(
-                "Get comments request received"
+                "Admin get comments request"
         );
 
         return ResponseEntity.ok(
-                adminCommentService
-                        .getAllComments(
-                                cursor,
-                                size,
-                                keyword,
-                                reportedOnly
-                        )
+
+                adminCommentService.getAllComments(
+
+                        cursor,
+                        size,
+                        keyword,
+                        reportedOnly,
+                        restoreRequested
+                )
         );
     }
 
-    @DeleteMapping("/{commentId}")
-    public ResponseEntity<String> deleteComment(
+    // ================= RESTORE COMMENT =================
+    @PatchMapping("/{commentId}/restore")
+    public ResponseEntity<String> restoreComment(
             @PathVariable Long commentId
     ) {
 
         logger.info(
-                "Delete abusive comment request received"
+                "Restore comment request | commentId: {}",
+                commentId
+        );
+
+        adminCommentService.restoreComment(
+                commentId
+        );
+
+        return ResponseEntity.ok(
+                "Comment restored successfully"
+        );
+    }
+
+    // ================= HARD DELETE =================
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<String>
+    permanentlyDeleteComment(
+
+            @PathVariable Long commentId
+    ) {
+
+        logger.info(
+                "Permanent delete request | commentId: {}",
+                commentId
         );
 
         adminCommentService
-                .deleteComment(commentId);
+                .permanentlyDeleteComment(
+                        commentId
+                );
 
         return ResponseEntity.ok(
-                "Comment deleted successfully"
+                "Comment permanently deleted"
         );
     }
 

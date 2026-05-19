@@ -2,10 +2,12 @@ package com.abubakar.connectify.controller;
 
 import java.util.List;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.SavePostResponse;
 import com.abubakar.connectify.service.SavedPostService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +26,9 @@ public class SavedPostController {
 
     // SAVE / UNSAVED
     @PostMapping("/{postId}/toggle")
-    public ResponseEntity<SavePostResponse> toggleSavePost(@PathVariable Long postId) {
+    public ResponseEntity<SavePostResponse> toggleSavePost(
+            @PathVariable Long postId
+    ) {
 
         logger.info(
                 "Toggle save post request received | postId: {}",
@@ -45,13 +49,13 @@ public class SavedPostController {
 
     // GET SAVED POSTS
     @GetMapping
-    public ResponseEntity<List<PostResponse>>
+    public ResponseEntity<CursorPageResponse<PostResponse>>
     getSavedPosts(
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
@@ -61,15 +65,16 @@ public class SavedPostController {
                 size
         );
 
-        List<PostResponse> response =
+        CursorPageResponse<PostResponse> response =
                 savedPostService.getSavedPosts(
                         cursor,
                         size
                 );
 
+
         logger.info(
                 "Saved posts fetched successfully | count: {}",
-                response.size()
+                response.getCurrentPageData()
         );
 
         return ResponseEntity.ok(response);

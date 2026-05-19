@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
@@ -11,6 +12,8 @@ import com.abubakar.connectify.service.SearchService;
 import com.abubakar.connectify.specification.UserSpecification;
 import com.abubakar.connectify.util.AuthUtil;
 
+import com.abubakar.connectify.util.CursorPaginationUtil;
+import com.abubakar.connectify.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,17 +50,17 @@ public class SearchServiceImpl implements SearchService {
 
     // ================= SEARCH USERS =================
     @Override
-    public List<UserSearchResponse> searchUsers(
+    public CursorPageResponse<UserSearchResponse> searchUsers(
 
             String keyword,
             Boolean verified,
+            Boolean emailVerified,
             Boolean isPrivate,
             Boolean active,
             AccountStatus status,
             String city,
             Gender gender,
             Long minFollowers,
-
             Long cursor,
             int size
     ) {
@@ -68,7 +71,9 @@ public class SearchServiceImpl implements SearchService {
                 authUtil.getCurrentUser();
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         Specification<User> specification =
 
@@ -78,6 +83,11 @@ public class SearchServiceImpl implements SearchService {
                         )
                         .and(
                                 UserSpecification.hasVerified(verified)
+                        )
+                        .and(
+                                UserSpecification.hasEmailVerified(
+                                        emailVerified
+                                )
                         )
                         .and(
                                 UserSpecification.hasPrivateAccount(isPrivate)
@@ -112,26 +122,30 @@ public class SearchServiceImpl implements SearchService {
                         pageable
                 );
 
-        return users.stream()
-                .map(user ->
+        return CursorPaginationUtil.buildResponse(
+                users.getContent(),
+                size,
+                User::getId,
+                user ->
                         mapToUserSearchResponse(
                                 user,
                                 currentUser
                         )
-                )
-                .toList();
+        );
     }
 
     // ================= SEARCH HASHTAGS =================
     @Override
-    public List<HashtagResponse> searchHashtags(
+    public CursorPageResponse<HashtagResponse> searchHashtags(
             String keyword,
             Long cursor,
             int size
     ) {
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Hashtag> hashtags;
 
@@ -155,20 +169,25 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
-        return hashtags.stream()
-                .map(this::mapToHashtagResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                hashtags,
+                size,
+                Hashtag::getId,
+                this::mapToHashtagResponse
+        );
     }
 
     // ================= TRENDING POSTS =================
     @Override
-    public List<PostResponse> getTrendingPosts(
+    public CursorPageResponse<PostResponse> getTrendingPosts(
             Long cursor,
             int size
     ) {
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Post> posts;
 
@@ -190,14 +209,17 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
-        return posts.stream()
-                .map(this::mapToPostResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                posts,
+                size,
+                Post::getId,
+                this::mapToPostResponse
+        );
     }
 
     // ================= SUGGESTED USERS =================
     @Override
-    public List<UserSearchResponse> getSuggestedUsers(
+    public CursorPageResponse<UserSearchResponse> getSuggestedUsers(
             Long cursor,
             int size
     ) {
@@ -221,7 +243,9 @@ public class SearchServiceImpl implements SearchService {
         }
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<User> users;
 
@@ -245,14 +269,16 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
-        return users.stream()
-                .map(user ->
+        return CursorPaginationUtil.buildResponse(
+                users,
+                size,
+                User::getId,
+                user ->
                         mapToUserSearchResponse(
                                 user,
                                 currentUser
                         )
-                )
-                .toList();
+        );
     }
 
     // ================= PRIVATE METHODS =================

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.abubakar.connectify.dto.request.CreateCommentRequest;
 import com.abubakar.connectify.dto.response.CommentResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 
 public interface CommentService {
 
@@ -11,12 +12,16 @@ public interface CommentService {
 
     CommentResponse updateComment(Long commentId, CreateCommentRequest request);
 
-    void deleteComment(Long commentId);
+    void softDeleteComment(Long commentId);
 
-    List<CommentResponse> getPostComments(
+    CursorPageResponse<CommentResponse> getPostComments(
             Long postId,
             Long cursor,
             int size
+    );
+
+    void requestRestoreComment(
+            Long commentId
     );
 
 }

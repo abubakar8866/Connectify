@@ -34,3 +34,4 @@ public class StoryView extends BaseEntity {
     private User viewer;
 
 }
+

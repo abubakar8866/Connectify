@@ -11,10 +11,15 @@ public interface AdminCommentService {
             Long cursor,
             int size,
             String keyword,
-            Boolean reportedOnly
+            Boolean reportedOnly,
+            Boolean restoreRequested
     );
 
-    void deleteComment(
+    void restoreComment(
+            Long commentId
+    );
+
+    void permanentlyDeleteComment(
             Long commentId
     );
 

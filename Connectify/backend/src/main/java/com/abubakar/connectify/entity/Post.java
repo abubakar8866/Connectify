@@ -28,6 +28,8 @@ public class Post extends BaseEntity {
 
     private Boolean deleted = false;
 
+    private Boolean restoreRequested = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

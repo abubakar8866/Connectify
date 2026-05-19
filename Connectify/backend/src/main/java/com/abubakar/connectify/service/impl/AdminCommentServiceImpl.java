@@ -9,21 +9,23 @@ import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
-
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
+import com.abubakar.connectify.util.PaginationUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class AdminCommentServiceImpl
         implements AdminCommentService {
 
@@ -45,39 +47,64 @@ public class AdminCommentServiceImpl
     private AuthUtil authUtil;
 
     @Override
-    public CursorPageResponse<AdminCommentResponse> getAllComments(
+    public CursorPageResponse<AdminCommentResponse>
+    getAllComments(
+
             Long cursor,
             int size,
             String keyword,
-            Boolean reportedOnly
+            Boolean reportedOnly,
+            Boolean restoreRequested
     ) {
 
         logger.info(
-                "Fetching comments | cursor: {} | size: {} | keyword: {} | reportedOnly: {}",
-                cursor,
-                size,
-                keyword,
-                reportedOnly
+                "Fetching comments for admin panel"
         );
 
         Pageable pageable =
-                PageRequest.of(0, size + 1);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Comment> comments;
 
-        // REPORTED COMMENTS
-        if (Boolean.TRUE.equals(reportedOnly)) {
+        // ================= RESTORE REQUESTED =================
+
+        if (Boolean.TRUE.equals(restoreRequested)) {
 
             comments = (cursor == null)
 
-                    ? reportRepository.findReportedComments( pageable )
+                    ? commentRepository
+                    .findByRestoreRequestedTrueOrderByIdDesc(
+                            pageable
+                    )
 
-                    : reportRepository.findReportedCommentsByCursor(
-                        cursor, pageable
+                    : commentRepository
+                    .findByRestoreRequestedTrueAndIdLessThanOrderByIdDesc(
+                            cursor,
+                            pageable
                     );
         }
 
-        // SEARCH COMMENTS
+        // ================= REPORTED COMMENTS =================
+
+        else if (Boolean.TRUE.equals(reportedOnly)) {
+
+            comments = (cursor == null)
+
+                    ? reportRepository.findReportedComments(
+                    pageable
+            )
+
+                    : reportRepository
+                    .findReportedCommentsByCursor(
+                            cursor,
+                            pageable
+                    );
+        }
+
+        // ================= SEARCH =================
+
         else if (
                 keyword != null
                         && !keyword.isBlank()
@@ -86,40 +113,36 @@ public class AdminCommentServiceImpl
             comments = (cursor == null)
 
                     ? commentRepository
-                    .findByContentContainingIgnoreCaseAndDeletedFalseOrderByIdDesc(
+                    .findByContentContainingIgnoreCaseOrderByIdDesc(
                             keyword,
                             pageable
                     )
 
                     : commentRepository
-                    .findByContentContainingIgnoreCaseAndDeletedFalseAndIdLessThanOrderByIdDesc(
+                    .findByContentContainingIgnoreCaseAndIdLessThanOrderByIdDesc(
                             keyword,
                             cursor,
                             pageable
                     );
         }
 
-        // NORMAL COMMENTS
+        // ================= ALL COMMENTS =================
+
         else {
 
             comments = (cursor == null)
 
                     ? commentRepository
-                    .findByDeletedFalseOrderByIdDesc(
+                    .findAllByOrderByIdDesc(
                             pageable
                     )
 
                     : commentRepository
-                    .findByDeletedFalseAndIdLessThanOrderByIdDesc(
+                    .findByIdLessThanOrderByIdDesc(
                             cursor,
                             pageable
                     );
         }
-
-        logger.info(
-                "Comments fetched successfully | count: {}",
-                comments.size()
-        );
 
         return CursorPaginationUtil.buildResponse(
                 comments,
@@ -129,53 +152,112 @@ public class AdminCommentServiceImpl
         );
     }
 
+    // ================= RESTORE COMMENT =================
+
     @Override
-    public void deleteComment(
+    public void restoreComment(
             Long commentId
     ) {
 
         logger.info(
-                "Deleting abusive comment | commentId: {}",
+                "Restoring comment | commentId: {}",
                 commentId
         );
 
         Comment comment =
-                commentRepository.findById(commentId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Comment not found"
-                                )
-                        );
+                getCommentById(commentId);
 
-        comment.setDeleted(true);
+        comment.setDeleted(false);
+
+        comment.setRestoreRequested(false);
 
         commentRepository.save(comment);
 
-        User currentUser = this.authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
 
-        this.notificationService.createNotification(
+        notificationService.createNotification(
+
                 comment.getUser().getId(),
-                currentUser.getId(),
-                "Comment deleted by admin.",
+
+                admin.getId(),
+
+                "Your comment has been restored by admin.",
+
                 NotificationType.COMMENT,
-                null,
-                null
+
+                comment.getPost().getId(),
+
+                comment.getId()
         );
 
         logger.info(
-                "Comment deleted successfully | commentId: {}",
+                "Comment restored successfully"
+        );
+    }
+
+    // ================= HARD DELETE COMMENT =================
+
+    @Override
+    public void permanentlyDeleteComment(
+            Long commentId
+    ) {
+
+        logger.info(
+                "Permanently deleting comment | commentId: {}",
                 commentId
+        );
+
+        Comment comment =
+                getCommentById(commentId);
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        notificationService.createNotification(
+
+                comment.getUser().getId(),
+
+                admin.getId(),
+
+                "Your comment was permanently removed by admin.",
+
+                NotificationType.COMMENT,
+
+                null,
+
+                null
+        );
+
+        commentRepository.delete(comment);
+
+        logger.info(
+                "Comment permanently deleted"
         );
     }
 
     // ================= HELPER =================
+
+    private Comment getCommentById(
+            Long commentId
+    ) {
+
+        return commentRepository.findById(commentId)
+                .orElseThrow(() ->
+                        new ResourceNotFound(
+                                "Comment not found"
+                        )
+                );
+    }
 
     private AdminCommentResponse mapToResponse(
             Comment comment
     ) {
 
         Long reportsCount =
-                reportRepository.countByComment(comment);
+                reportRepository.countByComment(
+                        comment
+                );
 
         return AdminCommentResponse.builder()
 
@@ -192,6 +274,10 @@ public class AdminCommentServiceImpl
                 .likeCount(comment.getLikeCount())
 
                 .deleted(comment.getDeleted())
+
+                .restoreRequested(
+                        comment.getRestoreRequested()
+                )
 
                 .reportsCount(reportsCount)
 

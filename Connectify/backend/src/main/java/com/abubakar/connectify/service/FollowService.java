@@ -1,7 +1,6 @@
 package com.abubakar.connectify.service;
 
-import java.util.List;
-
+import com.abubakar.connectify.dto.response.CursorCountResponse;
 import com.abubakar.connectify.dto.response.FollowResponse;
 import com.abubakar.connectify.dto.response.UserPreviewResponse;
 
@@ -9,9 +8,17 @@ public interface FollowService {
 
     FollowResponse toggleFollow(Long userId);
 
-    List<UserPreviewResponse> getFollowers(Long userId);
+    CursorCountResponse<UserPreviewResponse> getFollowers(
+            Long userId,
+            Long cursor,
+            int size
+    );
 
-    List<UserPreviewResponse> getFollowing(Long userId);
+    CursorCountResponse<UserPreviewResponse> getFollowing(
+            Long userId,
+            Long cursor,
+            int size
+    );
 
 }
 

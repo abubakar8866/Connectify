@@ -1,5 +1,6 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
@@ -7,14 +8,13 @@ import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.service.SearchService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/search")
@@ -28,7 +28,7 @@ public class SearchController {
 
     // ================= SEARCH USERS =================
     @GetMapping("/users")
-    public ResponseEntity<List<UserSearchResponse>>
+    public ResponseEntity<CursorPageResponse<UserSearchResponse>>
     searchUsers(
 
             @RequestParam(required = false)
@@ -36,6 +36,9 @@ public class SearchController {
 
             @RequestParam(required = false)
             Boolean verified,
+
+            @RequestParam(required = false)
+            Boolean emailVerified,
 
             @RequestParam(required = false)
             Boolean isPrivate,
@@ -58,8 +61,9 @@ public class SearchController {
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
+
     ) {
 
         return ResponseEntity.ok(
@@ -67,6 +71,7 @@ public class SearchController {
                 searchService.searchUsers(
                         keyword,
                         verified,
+                        emailVerified,
                         isPrivate,
                         active,
                         status,
@@ -81,7 +86,7 @@ public class SearchController {
 
     // ================= SEARCH HASHTAGS =================
     @GetMapping("/hashtags")
-    public ResponseEntity<List<HashtagResponse>>
+    public ResponseEntity<CursorPageResponse<HashtagResponse>>
     searchHashtags(
 
             @RequestParam String keyword,
@@ -89,7 +94,7 @@ public class SearchController {
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
@@ -104,13 +109,13 @@ public class SearchController {
 
     // ================= TRENDING POSTS =================
     @GetMapping("/trending/posts")
-    public ResponseEntity<List<PostResponse>>
+    public ResponseEntity<CursorPageResponse<PostResponse>>
     getTrendingPosts(
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
@@ -124,13 +129,13 @@ public class SearchController {
 
     // ================= SUGGESTED USERS =================
     @GetMapping("/suggested/users")
-    public ResponseEntity<List<UserSearchResponse>>
+    public ResponseEntity<CursorPageResponse<UserSearchResponse>>
     getSuggestedUsers(
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 

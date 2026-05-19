@@ -33,8 +33,7 @@ public class CursorPaginationUtil {
                             entities.size() - 1
                     );
 
-            nextCursor =
-                    cursorExtractor.apply(lastEntity);
+            nextCursor = cursorExtractor.apply(lastEntity);
         }
 
         List<R> content =
@@ -52,3 +51,4 @@ public class CursorPaginationUtil {
     }
 
 }
+

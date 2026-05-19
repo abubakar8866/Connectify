@@ -24,6 +24,8 @@ public class AdminUserResponse {
 
     private Boolean isVerified;
 
+    private Boolean isEmailVerified;
+
     private AccountStatus accountStatus;
 
     private Long followersCount;

@@ -2,10 +2,12 @@ package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.request.StoryReactionRequest;
 import com.abubakar.connectify.dto.request.StoryReplyRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.StoryResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import com.abubakar.connectify.service.StoryService;
 
+import com.abubakar.connectify.util.PaginationConstants;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -18,8 +20,6 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/stories")
@@ -34,13 +34,21 @@ public class StoryController {
     // ================= CREATE STORY =================
     @PostMapping
     public ResponseEntity<StoryResponse> createStory(
-            @RequestParam("file") MultipartFile file
+
+            @RequestParam("file")
+            MultipartFile file,
+
+            @RequestParam(value = "thumbnail",required = false)
+            MultipartFile thumbnail
     ) {
 
         logger.info("Create story request received");
 
         StoryResponse response =
-                storyService.createStory(file);
+                storyService.createStory(
+                        file,
+                        thumbnail
+                );
 
         logger.info(
                 "Story created successfully | storyId: {}",
@@ -54,18 +62,18 @@ public class StoryController {
 
     // ================= GET ACTIVE STORIES =================
     @GetMapping
-    public ResponseEntity<List<StoryResponse>> getActiveStories(
+    public ResponseEntity<CursorPageResponse<StoryResponse>> getActiveStories(
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
         logger.info("Get active stories request received");
 
-        List<StoryResponse> responses =
+        CursorPageResponse<StoryResponse> responses =
                 storyService.getActiveStories(
                         cursor,
                         size
@@ -73,7 +81,7 @@ public class StoryController {
 
         logger.info(
                 "Stories fetched successfully | totalStories: {}",
-                responses.size()
+                responses.getCurrentPageData()
         );
 
         return ResponseEntity.ok(responses);
@@ -181,14 +189,14 @@ public class StoryController {
 
     // ================= GET STORY VIEWERS =================
     @GetMapping("/{storyId}/viewers")
-    public ResponseEntity<List<UserResponse>> getStoryViewers(
+    public ResponseEntity<CursorPageResponse<UserResponse>> getStoryViewers(
 
             @PathVariable Long storyId,
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = "10")
+            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
 
@@ -197,7 +205,7 @@ public class StoryController {
                 storyId
         );
 
-        List<UserResponse> viewers =
+        CursorPageResponse<UserResponse> viewers =
                 storyService.getStoryViewers(
                         storyId,
                         cursor,
@@ -206,10 +214,34 @@ public class StoryController {
 
         logger.info(
                 "Story viewers fetched successfully | totalViewers: {}",
-                viewers.size()
+                viewers.getCurrentPageData()
         );
 
         return ResponseEntity.ok(viewers);
+    }
+
+    // ================= GET OWN STORY =================
+    @GetMapping("/me")
+    public ResponseEntity<
+            CursorPageResponse<StoryResponse>
+            > getMyStories(
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        return ResponseEntity.ok(
+                storyService.getMyStories(
+                        cursor,
+                        size
+                )
+        );
     }
 
 }

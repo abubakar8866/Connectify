@@ -169,5 +169,99 @@ public class AuthController {
         );
     }
 
+    // ================= SEND EMAIL VERIFICATION =================
+    @PostMapping("/email/send-verification")
+    public ResponseEntity<String> sendEmailVerification() {
+
+        logger.info(
+                "Send verification email request received"
+        );
+
+        authService.sendEmailVerification();
+
+        return ResponseEntity.ok(
+                        "Verification email sent successfully"
+        );
+    }
+
+    // ================= VERIFY EMAIL =================
+    @GetMapping("/email/verify")
+    public ResponseEntity<String> verifyEmail(
+            @RequestParam String token
+    ) {
+
+        logger.info(
+                "Verify email request received"
+        );
+
+        authService.verifyEmail(token);
+
+        return ResponseEntity.ok(
+                        "Email verified successfully"
+        );
+    }
+
+    // ================= DEACTIVATE ACCOUNT =================
+    @PutMapping("/deactivate")
+    public ResponseEntity<?> deactivateMyAccount() {
+
+        logger.info(
+                "Deactivate account request received"
+        );
+
+        authService.deactivateMyAccount();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Account deactivated successfully"
+                )
+        );
+
+    }
+
+    // ================= REQUEST ACCOUNT RESTORE =================
+    @PostMapping("/restore-request")
+    public ResponseEntity<?> requestAccountRestore() {
+
+        logger.info(
+                "Account restore request received"
+        );
+
+        authService.requestAccountRestore();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Restore request submitted successfully"
+                )
+        );
+
+    }
+
+    // ================= REQUEST UNBAN APPEAL =================
+    @PostMapping("/unban-request")
+    public ResponseEntity<?> requestUnbanAppeal(
+            @RequestBody Map<String, String> request
+    ) {
+
+        logger.info(
+                "Unban appeal request received"
+        );
+
+        authService.requestUnbanAppeal(
+                request.get("message")
+        );
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Unban appeal submitted successfully"
+                )
+        );
+
+    }
+
+
 }
 

@@ -3,6 +3,7 @@ package com.abubakar.connectify.util;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.exception.UserNotAuthenticatedException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,9 @@ import java.util.Objects;
 
 @Component
 public class AuthUtil {
+
+    @Autowired
+    private  ValidateUserAccess validateUserAccess;
 
     public User getCurrentUser() {
 
@@ -35,7 +39,10 @@ public class AuthUtil {
             );
         }
 
-        return (User) authentication.getPrincipal();
+        User user =
+                (User) authentication.getPrincipal();
+
+        return this.validateUserAccess.getValidUser(user.getId());
     }
 
 }

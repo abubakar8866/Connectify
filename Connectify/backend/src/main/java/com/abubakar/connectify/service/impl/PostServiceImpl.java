@@ -1,24 +1,21 @@
 package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.CreatePostRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
-import com.abubakar.connectify.entity.Hashtag;
-import com.abubakar.connectify.entity.Media;
-import com.abubakar.connectify.entity.Post;
-import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.entity.*;
+import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.MediaType;
+import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.exception.UserNotAuthenticatedException;
-import com.abubakar.connectify.repository.HashtagRepository;
-import com.abubakar.connectify.repository.LikeRepository;
-import com.abubakar.connectify.repository.MediaRepository;
-import com.abubakar.connectify.repository.PostRepository;
+import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.FileService;
+import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.PostService;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.HashtagUtil;
-import com.abubakar.connectify.util.OwnershipValidator;
+import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +49,15 @@ public class PostServiceImpl implements PostService {
     private LikeRepository likeRepository;
 
     @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -61,7 +67,10 @@ public class PostServiceImpl implements PostService {
             LoggerFactory.getLogger(PostServiceImpl.class);
 
     @Override
-    public PostResponse createPost(CreatePostRequest request, List<MultipartFile> files) {
+    public PostResponse createPost(
+            CreatePostRequest request,
+            List<MultipartFile> files)
+    {
 
         logger.info("Creating new post");
 
@@ -108,7 +117,10 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse updatePost(Long postId, CreatePostRequest request, List<MultipartFile> files
+    public PostResponse updatePost(
+            Long postId,
+            CreatePostRequest request,
+            List<MultipartFile> files
     ) {
 
         logger.info("Updating post with id: {}", postId);
@@ -174,83 +186,275 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostResponse> getFeed(Long cursor, int size) {
+    @Transactional(readOnly = true)
+    public PostResponse getSinglePost(
+            Long postId
+    ) {
 
-        if (size <= 0 || size > 50) {
-            size = 10;
-        }
-
-        logger.info("Fetching feed | cursor: {} | size: {}",
-                cursor,
-                size);
-
-        Pageable pageable =
-                PageRequest.of(0, size);
-
-        List<Post> posts;
-
-        if (cursor == null) {
-            posts = postRepository.findAllByOrderByIdDesc(pageable);
-        } else {
-            posts =postRepository.findByIdLessThanOrderByIdDesc(cursor,pageable);
-        }
-
-        logger.info("Fetched {} posts from feed",
-                posts.size());
-
-        return posts.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    @Override
-    public void deletePost(Long postId) {
-
-        logger.info("Deleting post with id: {}", postId);
+        logger.info(
+                "Fetching single post | postId: {}",
+                postId
+        );
 
         Post post = this.getPostById(postId);
 
-        User currentUser = this.authUtil.getCurrentUser();
+        return mapToResponse(post);
+    }
 
-        // Ownership Check
-        this.ownershipValidator.validate(
-                post.getUser().getId(),
-                currentUser,
-                "You are not authorized to access this post"
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PostResponse>
+    getFeed(
+            Long cursor,
+            int size
+    ) {
+
+        logger.info(
+                "Fetching personalized feed"
         );
 
-        logger.info("Ownership validation passed for userId: {}",
-                currentUser.getId());
+        User currentUser =
+                authUtil.getCurrentUser();
 
-        logger.info("Deleting media files for postId: {}", postId);
-        // Delete media files
-        for (Media media : post.getMediaList()) {
+        List<Follow> following =
+                followRepository.findByFollower(
+                        currentUser
+                );
 
-            fileService.deleteFile(
-                    media.getUrl(),
-                    "posts"
+        List<User> users =
+                new ArrayList<>();
+
+        // OWN POSTS
+        users.add(currentUser);
+
+        // FOLLOWING USERS POSTS
+        for (Follow follow : following) {
+
+            users.add(
+                    follow.getFollowing()
             );
         }
 
-        // Delete Post
-        postRepository.delete(post);
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
-        logger.info("Post deleted successfully with id: {}", postId);
+        List<Post> posts;
+
+        // FIRST PAGE
+        if (cursor == null) {
+
+            posts =
+                    postRepository
+                            .findByUserInAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
+                                    users,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+
+        }
+
+        // NEXT PAGE
+        else {
+
+            posts =
+                    postRepository
+                            .findByUserInAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
+                                    users,
+                                    cursor,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+        }
+
+        return CursorPaginationUtil.buildResponse(
+                posts,
+                size,
+                Post::getId,
+                this::mapToResponse
+        );
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PostResponse>
+    getUserPosts(
+            Long userId,
+            Long cursor,
+            int size
+    ) {
+
+        logger.info(
+                "Fetching user posts | userId: {}",
+                userId
+        );
+
+        User user =
+                userRepository.findById(userId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "User not found"
+                                )
+                        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Post> posts;
+
+        // FIRST PAGE
+        if (cursor == null) {
+
+            posts =
+                    postRepository
+                            .findByUserAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
+                                    user,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+
+        }
+
+        // NEXT PAGE
+        else {
+
+            posts =
+                    postRepository
+                            .findByUserAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
+                                    user,
+                                    cursor,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+        }
+
+        return CursorPaginationUtil.buildResponse(
+                posts,
+                size,
+                Post::getId,
+                this::mapToResponse
+        );
+    }
+
+    @Override
+    public void softDeletePost(
+            Long postId
+    ) {
+
+        logger.info(
+                "Soft deleting post | postId: {}",
+                postId
+        );
+
+        Post post = getPostById(postId);
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        ownershipValidator.validate(
+                post.getUser().getId(),
+                currentUser,
+                "You are not authorized to delete this post"
+        );
+
+        post.setDeleted(true);
+
+        postRepository.save(post);
+
+        notificationService.createNotification(
+                post.getUser().getId(),
+                currentUser.getId(),
+                "Your post was removed due to policy violation",
+                NotificationType.POST_REMOVED,
+                post.getId(),
+                null
+        );
+
+        logger.info(
+                "Post soft deleted successfully"
+        );
+    }
+
+    @Override
+    public void requestRestorePost(
+            Long postId
+    ) {
+
+        logger.info(
+                "Restore request for postId: {}",
+                postId
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Post post = this.getPostById(postId);
+
+        // OWNERSHIP CHECK
+        ownershipValidator.validate(
+                post.getUser().getId(),
+                currentUser,
+                "You are not authorized"
+        );
+
+        if (!post.getDeleted()) {
+
+            throw new OperationFailException(
+                    "Post is not deleted."
+            );
+        }
+
+        post.setRestoreRequested(true);
+
+        postRepository.save(post);
+
+        logger.info(
+                "Restore request submitted"
+        );
+    }
+
+    //private method
     private PostResponse mapToResponse(Post post) {
 
+        User currentUser = authUtil.getCurrentUser();
+
         return PostResponse.builder()
+
                 .id(post.getId())
+
                 .caption(post.getCaption())
 
-                .likeCount(post.getLikeCount())
-                .commentCount(post.getCommentCount())
-
-                .liked(isPostLikedByCurrentUser(post))
+                .userId(post.getUser().getId())
 
                 .username(post.getUser().getUname())
+
+                .userProfileImage(
+                        post.getUser().getProfileImageUrl()
+                )
+
+                .isVerified(
+                        post.getUser().getIsVerified()
+                )
+
+                .likeCount(post.getLikeCount())
+
+                .commentCount(post.getCommentCount())
+
+                .liked(
+                        isPostLikedByCurrentUser(post)
+                )
+
+                .mine(
+                        currentUser.getId()
+                                .equals(post.getUser().getId())
+                )
+
                 .createdAt(post.getCreatedAt())
+
+                .updatedAt(post.getUpdatedAt())
 
                 .mediaUrls(
                         post.getMediaList()
@@ -267,16 +471,17 @@ public class PostServiceImpl implements PostService {
                 )
 
                 .build();
-
     }
 
     private Post getPostById(Long postId){
 
-        return postRepository.findById(postId)
+        return postRepository
+                .findByIdAndDeletedFalse(postId)
                 .orElseThrow(() ->
-                        new ResourceNotFound("Post not found with id: "+postId)
+                        new ResourceNotFound(
+                                "Post not found with id: " + postId
+                        )
                 );
-
     }
 
     private List<Hashtag> processHashtags(String caption) {
@@ -313,7 +518,9 @@ public class PostServiceImpl implements PostService {
         return hashtags;
     }
 
-    private List<Media> uploadMedia(List<MultipartFile> files, Post post
+    private List<Media> uploadMedia(
+            List<MultipartFile> files,
+            Post post
     ) {
 
         List<Media> mediaList = new ArrayList<>();

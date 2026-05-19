@@ -16,15 +16,25 @@ public class PostResponse {
 
     private String caption;
 
+    private Long userId;
+
+    private String username;
+
+    private String userProfileImage;
+
+    private Boolean isVerified;
+
     private Long likeCount;
 
     private Long commentCount;
 
     private Boolean liked;
 
-    private String username;
+    private Boolean mine;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 
     private List<String> mediaUrls;
 

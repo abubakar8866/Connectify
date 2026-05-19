@@ -1,9 +1,11 @@
 package com.abubakar.connectify.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.abubakar.connectify.dto.request.UpdateProfileRequest;
+import com.abubakar.connectify.util.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,9 @@ public class AuthServiceImpl implements AuthService {
 	private JwtUtils jwtUtil;
 
 	@Autowired
+	private AuthUtil authUtil;
+
+	@Autowired
 	private FileService fileService;
 
 	@Autowired
@@ -88,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
 
 		user.setName(request.getName());
 		user.setUname(request.getUname());
-		user.setEmail(request.getEmail().trim());
+		user.setEmail(request.getEmail().trim().toLowerCase());
 
 		user.setPassword(
 				passwordEncoder.encode(request.getPassword())
@@ -141,9 +145,23 @@ public class AuthServiceImpl implements AuthService {
 
 			User user = (User) authentication.getPrincipal();
 
-			user.setLastLoginAt(LocalDateTime.now());
+			Objects.requireNonNull(user).setLastLoginAt(LocalDateTime.now());
 
 			userRepo.save(user);
+
+			if (Boolean.TRUE.equals(user.getIsDeleted())) {
+
+				throw new OperationFailException(
+						"Account is deactivated"
+				);
+			}
+
+			if (user.getAccountStatus() == AccountStatus.BANNED) {
+
+				throw new OperationFailException(
+						"Account is banned"
+				);
+			}
 
 			String token = jwtUtil.generateToken(user);
 
@@ -171,18 +189,7 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public UserResponse getCurrentUser() {
 
-		Authentication authentication =
-				SecurityContextHolder.getContext()
-						.getAuthentication();
-
-		if (authentication == null || !authentication.isAuthenticated()) {
-
-			throw new OperationFailException(
-					"User not authenticated"
-			);
-		}
-
-		User user = (User) authentication.getPrincipal();
+		User user = this.authUtil.getCurrentUser();
 
 		logger.info(
 				"Current user fetched: {}",
@@ -213,12 +220,7 @@ public class AuthServiceImpl implements AuthService {
 						)
 				);
 
-		Authentication authentication =
-				SecurityContextHolder.getContext()
-						.getAuthentication();
-
-		User currentUser =
-				(User) authentication.getPrincipal();
+		User currentUser = this.authUtil.getCurrentUser();
 
 		// Authorization
 		if (!user.getId().equals(currentUser.getId())) {
@@ -301,7 +303,6 @@ public class AuthServiceImpl implements AuthService {
 
 		return mapToResponse(user);
 	}
-
 
 	// ================= FORGOT PASSWORD =================
 	@Override
@@ -499,6 +500,205 @@ public class AuthServiceImpl implements AuthService {
 					"Failed to send reset email"
 			);
 		}
+	}
+
+	// ================= SEND EMAIL VERIFICATION =================
+	@Override
+	@Transactional
+	public void sendEmailVerification() {
+
+		User currentUser = this.authUtil.getCurrentUser();
+
+		if (Boolean.TRUE.equals(
+				currentUser.getIsEmailVerified()
+		)) {
+
+			throw new OperationFailException(
+					"Email already verified"
+			);
+		}
+
+		String token =
+				UUID.randomUUID().toString();
+
+		currentUser.setEmailVerificationToken(token);
+
+		currentUser.setEmailVerificationExpiry(
+				LocalDateTime.now().plusMinutes(30)
+		);
+
+		userRepo.save(currentUser);
+
+		String verificationUrl =
+				"http://localhost:3000/verify-email?token="
+						+ token;
+
+		try {
+
+			SimpleMailMessage message =
+					new SimpleMailMessage();
+
+			message.setTo(currentUser.getEmail());
+
+			message.setSubject(
+					"Verify Your Connectify Account"
+			);
+
+			message.setText(
+					"Click below link to verify email:\n\n"
+							+ verificationUrl
+							+ "\n\nLink expires in 30 minutes."
+			);
+
+			mailSender.send(message);
+
+		} catch (Exception e) {
+
+			throw new OperationFailException(
+					"Failed to send verification email"
+			);
+		}
+
+		logger.info(
+				"Verification email sent | userId: {}",
+				currentUser.getId()
+		);
+	}
+
+	// ================= VERIFY EMAIL =================
+	@Override
+	@Transactional
+	public void verifyEmail(String token) {
+
+		User user =
+				userRepo.findByEmailVerificationToken(token)
+						.orElseThrow(() ->
+								new OperationFailException(
+										"Invalid verification token"
+								)
+						);
+
+		if (
+				user.getEmailVerificationExpiry()
+						.isBefore(LocalDateTime.now())
+		) {
+
+			throw new OperationFailException(
+					"Verification token expired"
+			);
+		}
+
+		user.setIsEmailVerified(true);
+
+		user.setEmailVerificationToken(null);
+
+		user.setEmailVerificationExpiry(null);
+
+		userRepo.save(user);
+
+		logger.info(
+				"Email verified successfully | userId: {}",
+				user.getId()
+		);
+	}
+
+	// ================= DEACTIVATE ACCOUNT =================
+	@Override
+	@Transactional
+	public void deactivateMyAccount() {
+
+		User currentUser = this.authUtil.getCurrentUser();
+
+		logger.info(
+				"Account deactivation request for userId: {}",
+				currentUser.getId()
+		);
+
+		currentUser.setDeleted(true);
+
+		currentUser.setIsActive(false);
+
+		currentUser.setDeletedAt(LocalDateTime.now());
+
+		currentUser.setAccountStatus(
+				AccountStatus.DEACTIVATED
+		);
+
+		userRepo.save(currentUser);
+
+		logger.info(
+				"Account deactivated successfully for userId: {}",
+				currentUser.getId()
+		);
+
+	}
+
+	// ================= REQUEST ACCOUNT RESTORE =================
+	@Override
+	@Transactional
+	public void requestAccountRestore() {
+
+		User currentUser = this.authUtil.getCurrentUser();
+
+		logger.info(
+				"Restore request received for userId: {}",
+				currentUser.getId()
+		);
+
+		if (!Boolean.TRUE.equals(currentUser.getDeleted())) {
+
+			throw new OperationFailException(
+					"Account is not deactivated"
+			);
+		}
+
+		currentUser.setRestoreRequested(true);
+
+		userRepo.save(currentUser);
+
+		logger.info(
+				"Restore request submitted successfully for userId: {}",
+				currentUser.getId()
+		);
+
+
+	}
+
+	// ================= REQUEST UNBAN APPEAL =================
+	@Override
+	@Transactional
+	public void requestUnbanAppeal(
+			String message
+	) {
+
+		User currentUser = this.authUtil.getCurrentUser();
+
+		logger.info(
+				"Unban appeal request for userId: {}",
+				currentUser.getId()
+		);
+
+		if (
+				currentUser.getAccountStatus()
+						!= AccountStatus.BANNED
+		) {
+
+			throw new OperationFailException(
+					"User is not banned"
+			);
+		}
+
+		currentUser.setUnbanRequested(true);
+
+		currentUser.setUnbanAppealMessage(message);
+
+		userRepo.save(currentUser);
+
+		logger.info(
+				"Unban appeal submitted successfully for userId: {}",
+				currentUser.getId()
+		);
+
 	}
 
 	// ================= ENTITY TO RESPONSE =================

@@ -2,10 +2,12 @@ package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.CreateCommentRequest;
 import com.abubakar.connectify.dto.response.CommentResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.LikeRepository;
@@ -15,12 +17,13 @@ import com.abubakar.connectify.service.CommentService;
 
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.OwnershipValidator;
+import com.abubakar.connectify.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,29 +157,67 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteComment(Long commentId) {
+    public void softDeleteComment(Long commentId) {
 
-        logger.info("Deleting comment with id: {}", commentId);
+        logger.info(
+                "Soft deleting comment with id: {}",
+                commentId
+        );
 
-        Comment comment = getCommentById(commentId);
+        Comment comment =
+                getCommentById(commentId);
 
-        this.ownershipValidator.validate(
+        ownershipValidator.validate(
                 comment.getUser().getId(),
-                this.authUtil.getCurrentUser(),
+                authUtil.getCurrentUser(),
                 "You are not authorized to access this comment"
         );
 
-        commentRepository.delete(comment);
+        comment.setDeleted(true);
+
+        commentRepository.save(comment);
 
         logger.info(
-                "Comment deleted successfully | commentId: {}",
+                "Comment soft deleted successfully"
+        );
+    }
+
+    @Override
+    public void requestRestoreComment(Long commentId) {
+
+        logger.info(
+                "Restore request for commentId: {}",
                 commentId
+        );
+
+        Comment comment =
+                getCommentById(commentId);
+
+        ownershipValidator.validate(
+                comment.getUser().getId(),
+                authUtil.getCurrentUser(),
+                "You are not authorized to access this comment"
+        );
+
+        if (!comment.getDeleted()) {
+
+            throw new OperationFailException(
+                    "Comment is not deleted"
+            );
+        }
+
+        comment.setRestoreRequested(true);
+
+        commentRepository.save(comment);
+
+        logger.info(
+                "Restore request submitted successfully"
         );
     }
 
     // ================= CURSOR PAGINATION =================
     @Override
-    public List<CommentResponse> getPostComments(
+    public CursorPageResponse<CommentResponse> getPostComments(
             Long postId,
             Long cursor,
             int size
@@ -190,7 +231,9 @@ public class CommentServiceImpl implements CommentService {
         );
 
         Pageable pageable =
-                PageRequest.of(0, size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         List<Comment> comments;
 
@@ -219,9 +262,12 @@ public class CommentServiceImpl implements CommentService {
                 comments.size()
         );
 
-        return comments.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return CursorPaginationUtil.buildResponse(
+                comments,
+                size,
+                Comment::getId,
+                this::mapToResponse
+        );
     }
 
     // PRIVATE METHODS
@@ -232,7 +278,10 @@ public class CommentServiceImpl implements CommentService {
                 .content(comment.getContent())
 
                 .userId(comment.getUser().getId())
-                .username(comment.getUser().getUsername())
+                .username(comment.getUser().getUname())
+                .userProfileImage(
+                        comment.getUser().getProfileImageUrl()
+                )
 
                 .likeCount(comment.getLikeCount())
                 .liked(isCommentLikedByCurrentUser(comment))
