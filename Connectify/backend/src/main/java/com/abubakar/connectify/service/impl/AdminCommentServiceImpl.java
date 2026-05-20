@@ -10,6 +10,7 @@ import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
 import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.util.AdminValidator;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.PaginationUtil;
@@ -46,6 +47,9 @@ public class AdminCommentServiceImpl
     @Autowired
     private AuthUtil authUtil;
 
+    @Autowired
+    private AdminValidator adminValidator;
+
     @Override
     public CursorPageResponse<AdminCommentResponse>
     getAllComments(
@@ -60,6 +64,11 @@ public class AdminCommentServiceImpl
         logger.info(
                 "Fetching comments for admin panel"
         );
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -164,6 +173,11 @@ public class AdminCommentServiceImpl
                 commentId
         );
 
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
         Comment comment =
                 getCommentById(commentId);
 
@@ -172,9 +186,6 @@ public class AdminCommentServiceImpl
         comment.setRestoreRequested(false);
 
         commentRepository.save(comment);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
 
@@ -208,11 +219,13 @@ public class AdminCommentServiceImpl
                 commentId
         );
 
-        Comment comment =
-                getCommentById(commentId);
-
         User admin =
                 authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Comment comment =
+                getCommentById(commentId);
 
         notificationService.createNotification(
 

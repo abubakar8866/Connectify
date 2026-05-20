@@ -90,4 +90,49 @@ public class ReportController {
                 .body(response);
     }
 
+    @PostMapping("/chat/{chatId}")
+    public ResponseEntity<ReportResponse> reportChat(
+            @PathVariable Long chatId,
+            @Valid @RequestBody CreateReportRequest request
+    ) {
+
+        logger.info(
+                "Report chat request received | chatId: {}",
+                chatId
+        );
+
+        ReportResponse response =
+                reportService.reportChat(
+                        chatId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PostMapping("/message/{messageId}")
+    public ResponseEntity<ReportResponse> reportMessage(
+            @PathVariable Long messageId,
+            @Valid @RequestBody CreateReportRequest request
+    ) {
+
+        logger.info(
+                "Report message request received | messageId: {}",
+                messageId
+        );
+
+        ReportResponse response =
+                reportService.reportMessage(
+                        messageId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
 }
+

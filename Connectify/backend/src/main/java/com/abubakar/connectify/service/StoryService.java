@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface StoryService {
 
-    StoryResponse createStory( MultipartFile file, MultipartFile thumbnail );
+    StoryResponse createStory( MultipartFile file);
 
     CursorPageResponse<StoryResponse> getActiveStories(
             Long cursor,

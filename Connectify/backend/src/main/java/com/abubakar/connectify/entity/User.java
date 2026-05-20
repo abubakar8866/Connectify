@@ -147,6 +147,8 @@ public class User extends BaseEntity implements UserDetails {
 
     private LocalDateTime lastLoginAt;
 
+    private LocalDateTime lastSeenAt;
+
     @OneToMany(mappedBy = "user")
     private List<Post> posts = new ArrayList<>();
 

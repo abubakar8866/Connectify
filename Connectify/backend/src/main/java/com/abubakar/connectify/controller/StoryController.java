@@ -36,19 +36,13 @@ public class StoryController {
     public ResponseEntity<StoryResponse> createStory(
 
             @RequestParam("file")
-            MultipartFile file,
-
-            @RequestParam(value = "thumbnail",required = false)
-            MultipartFile thumbnail
+            MultipartFile file
     ) {
 
         logger.info("Create story request received");
 
         StoryResponse response =
-                storyService.createStory(
-                        file,
-                        thumbnail
-                );
+                storyService.createStory(file);
 
         logger.info(
                 "Story created successfully | storyId: {}",

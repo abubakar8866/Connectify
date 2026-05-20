@@ -1,0 +1,280 @@
+package com.abubakar.connectify.controller;
+
+import com.abubakar.connectify.dto.request.EditMessageRequest;
+import com.abubakar.connectify.dto.request.SendMessageRequest;
+import com.abubakar.connectify.dto.response.ChatResponse;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
+import com.abubakar.connectify.dto.response.MessageResponse;
+import com.abubakar.connectify.service.ChatService;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api/v1/chats")
+public class ChatController {
+
+    @Autowired
+    private ChatService chatService;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    ChatController.class
+            );
+
+    // ================= CREATE CHAT =================
+    @PostMapping("/{receiverId}")
+    public ResponseEntity<ChatResponse>
+    createChat(
+            @PathVariable Long receiverId
+    ) {
+
+        logger.info(
+                "Create chat API called | receiverId: {}",
+                receiverId
+        );
+
+        ChatResponse response =
+                chatService.createChat(receiverId);
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
+    // ================= GET MY CHATS =================
+    @GetMapping
+    public ResponseEntity<
+                    CursorPageResponse<ChatResponse>
+            >
+    getMyChats(
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "20")
+            int size
+    ) {
+
+        logger.info(
+                "Get my chats API called | cursor: {}, size: {}",
+                cursor,
+                size
+        );
+
+        CursorPageResponse<ChatResponse> response =
+                chatService.getMyChats(
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
+    // ================= SEND MESSAGE =================
+    @PostMapping(
+            value = "/{chatId}/messages",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<MessageResponse>
+    sendMessage(
+
+            @PathVariable Long chatId,
+
+            @Valid
+            @RequestPart("request")
+            SendMessageRequest request,
+
+            @RequestPart(
+                    value = "media",
+                    required = false
+            )
+            MultipartFile media
+    ) {
+
+        logger.info(
+                "Send message API called | chatId: {}",
+                chatId
+        );
+
+        MessageResponse response =
+                chatService.sendMessage(
+                        chatId,
+                        request,
+                        media
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
+    // ================= GET MESSAGES =================
+    @GetMapping("/{chatId}/messages")
+    public ResponseEntity<
+                    CursorPageResponse<MessageResponse>
+            >
+    getMessages(
+
+            @PathVariable Long chatId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "20")
+            int size
+    ) {
+
+        logger.info(
+                "Get messages API called | chatId: {}, cursor: {}, size: {}",
+                chatId,
+                cursor,
+                size
+        );
+
+        CursorPageResponse<MessageResponse> response =
+                chatService.getMessages(
+                        chatId,
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
+    // ================= MARK AS SEEN =================
+    @PutMapping("/{chatId}/seen")
+    public ResponseEntity<String>
+    markMessagesAsSeen(
+            @PathVariable Long chatId
+    ) {
+
+        logger.info(
+                "Mark messages as seen API called | chatId: {}",
+                chatId
+        );
+
+        chatService.markMessagesAsSeen(chatId);
+
+        return ResponseEntity.ok(
+                        "Messages marked as seen"
+        );
+    }
+
+    // ================= EDIT MESSAGE =================
+    @PutMapping("/messages/{messageId}")
+    public ResponseEntity<MessageResponse>
+    editMessage(
+
+            @PathVariable Long messageId,
+
+            @Valid
+            @RequestBody
+            EditMessageRequest request
+    ) {
+
+        logger.info(
+                "Edit message API called | messageId: {}",
+                messageId
+        );
+
+        MessageResponse response =
+                chatService.editMessage(
+                        messageId,
+                        request
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
+    // ================= DELETE MESSAGE FOR ME =================
+    @DeleteMapping("/messages/{messageId}/me")
+    public ResponseEntity<String>
+    deleteMessageForMe(
+            @PathVariable Long messageId
+    ) {
+
+        logger.info(
+                "Delete message for me API called | messageId: {}",
+                messageId
+        );
+
+        chatService.deleteMessageForMe(messageId);
+
+        return ResponseEntity.ok(
+                        "Message deleted for you"
+        );
+    }
+
+    // ================= DELETE MESSAGE FOR EVERYONE =================
+    @DeleteMapping("/messages/{messageId}/everyone")
+    public ResponseEntity<String>
+    deleteMessageForEveryone(
+            @PathVariable Long messageId
+    ) {
+
+        logger.info(
+                "Delete message for everyone API called | messageId: {}",
+                messageId
+        );
+
+        chatService.deleteMessageForEveryone(messageId);
+
+        return ResponseEntity.ok(
+                        "Message deleted for everyone"
+        );
+    }
+
+    @PostMapping("/messages/{messageId}/restore-request")
+    public ResponseEntity<String> requestRestoreMessage(
+            @PathVariable Long messageId
+    ) {
+
+        logger.info(
+                "Restore message request API called | messageId: {}",
+                messageId
+        );
+
+        chatService.requestRestoreMessage(
+                messageId
+        );
+
+        return ResponseEntity.ok(
+                "Restore request submitted successfully"
+        );
+    }
+
+    @PostMapping("/{chatId}/restore-request")
+    public ResponseEntity<String> requestRestoreChat(
+            @PathVariable Long chatId
+    ) {
+
+        logger.info(
+                "Restore chat request API called | chatId: {}",
+                chatId
+        );
+
+        chatService.requestRestoreChat(
+                chatId
+        );
+
+        return ResponseEntity.ok(
+                "Restore request submitted successfully"
+        );
+    }
+
+}
+

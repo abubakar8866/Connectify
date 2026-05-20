@@ -10,6 +10,8 @@ import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.AdminDashboardService;
 
+import com.abubakar.connectify.util.AdminValidator;
+import com.abubakar.connectify.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,17 @@ public class AdminDashboardServiceImpl
     @Autowired
     private LikeRepository likeRepository;
 
+    @Autowired
+    private AuthUtil authUtil;
+
+    @Autowired
+    private AdminValidator adminValidator;
+
     @Override
     public AdminDashboardResponse getDashboardData() {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
 
         logger.info("Fetching admin dashboard analytics");
 

@@ -10,3 +10,4 @@ public class StoryReplyRequest {
     private String message;
 
 }
+

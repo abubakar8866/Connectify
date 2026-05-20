@@ -1,9 +1,6 @@
 package com.abubakar.connectify.repository;
 
-import com.abubakar.connectify.entity.Comment;
-import com.abubakar.connectify.entity.Post;
-import com.abubakar.connectify.entity.Report;
-import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.entity.*;
 
 import com.abubakar.connectify.enums.ReportStatus;
 import org.springframework.data.domain.Page;
@@ -64,6 +61,16 @@ public interface ReportRepository
     List<Comment> findReportedCommentsByCursor(
             Long cursor,
             Pageable pageable
+    );
+
+    Optional<Report> findByReportedByAndChat(
+            User reportedBy,
+            Chat chat
+    );
+
+    Optional<Report> findByReportedByAndMessage(
+            User reportedBy,
+            Message message
     );
 
 }

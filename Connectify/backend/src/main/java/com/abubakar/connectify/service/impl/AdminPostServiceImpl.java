@@ -5,6 +5,7 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Hashtag;
 import com.abubakar.connectify.entity.Media;
 import com.abubakar.connectify.entity.Post;
+import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
@@ -14,6 +15,7 @@ import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.PostSpecification;
 
+import com.abubakar.connectify.util.AdminValidator;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.PaginationUtil;
@@ -46,6 +48,9 @@ public class AdminPostServiceImpl
     private AuthUtil authUtil;
 
     @Autowired
+    private AdminValidator adminValidator;
+
+    @Autowired
     private NotificationService notificationService;
 
     private static final Logger logger =
@@ -63,6 +68,9 @@ public class AdminPostServiceImpl
             Long cursor,
             int size
     ) {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
 
         logger.info(
                 "Searching posts with cursor pagination"
@@ -119,6 +127,9 @@ public class AdminPostServiceImpl
             Long postId
     ) {
 
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         logger.info(
                 "Admin permanently deleting post | postId: {}",
                 postId
@@ -162,6 +173,9 @@ public class AdminPostServiceImpl
     public void restorePost(
             Long postId
     ) {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
 
         logger.info(
                 "Admin restoring post | postId: {}",

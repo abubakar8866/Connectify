@@ -16,6 +16,7 @@ import com.abubakar.connectify.service.AdminUserService;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.UserSpecification;
 
+import com.abubakar.connectify.util.AdminValidator;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.PaginationUtil;
@@ -51,6 +52,9 @@ public class AdminUserServiceImpl
     @Autowired
     private AuthUtil authUtil;
 
+    @Autowired
+    private AdminValidator adminValidator;
+
     private static final Logger logger =
             LoggerFactory.getLogger(
                     AdminUserServiceImpl.class
@@ -72,6 +76,9 @@ public class AdminUserServiceImpl
             Boolean restoreRequested,
             Boolean unbanRequested
     ) {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
 
         logger.info(
                 "Fetching admin users"
@@ -140,6 +147,9 @@ public class AdminUserServiceImpl
             int size
     ) {
 
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
                         size
@@ -176,6 +186,9 @@ public class AdminUserServiceImpl
     public UserDetailsAdminResponse getUserDetails(
             Long userId
     ) {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
 
         User user = getUserById(userId);
 
@@ -217,6 +230,9 @@ public class AdminUserServiceImpl
             BanUserRequest request
     ) {
 
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setAccountStatus(
@@ -251,9 +267,6 @@ public class AdminUserServiceImpl
 
         userRepository.save(user);
 
-        User admin =
-                authUtil.getCurrentUser();
-
         notificationService.createNotification(
                 user.getId(),
                 admin.getId(),
@@ -273,6 +286,10 @@ public class AdminUserServiceImpl
     @Override
     public void unbanUser(Long userId) {
 
+        User admin =
+                authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setAccountStatus(
@@ -288,9 +305,6 @@ public class AdminUserServiceImpl
         user.setBannedUntil(null);
 
         userRepository.save(user);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
                 user.getId(),
@@ -311,6 +325,10 @@ public class AdminUserServiceImpl
     @Override
     public void restoreUser(Long userId) {
 
+        User admin =
+                authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setIsDeleted(false);
@@ -320,9 +338,6 @@ public class AdminUserServiceImpl
         user.setAccountStatus(AccountStatus.ACTIVE);
 
         userRepository.save(user);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
                 user.getId(),
@@ -342,6 +357,10 @@ public class AdminUserServiceImpl
     @Override
     public void approveUnbanRequest(Long userId) {
 
+        User admin =
+                authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setAccountStatus(AccountStatus.ACTIVE);
@@ -355,9 +374,6 @@ public class AdminUserServiceImpl
         user.setBannedUntil(null);
 
         userRepository.save(user);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
                 user.getId(),
@@ -377,6 +393,10 @@ public class AdminUserServiceImpl
     @Override
     public void rejectUnbanRequest(Long userId) {
 
+        User admin =
+                authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setAdminNote(
@@ -384,9 +404,6 @@ public class AdminUserServiceImpl
         );
 
         userRepository.save(user);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
                 user.getId(),
@@ -406,6 +423,10 @@ public class AdminUserServiceImpl
     @Override
     public void deleteUser(Long userId) {
 
+        User admin =
+                authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
         User user = getUserById(userId);
 
         user.setIsDeleted(true);
@@ -413,9 +434,6 @@ public class AdminUserServiceImpl
         user.setIsActive(false);
 
         userRepository.save(user);
-
-        User admin =
-                authUtil.getCurrentUser();
 
         notificationService.createNotification(
                 user.getId(),

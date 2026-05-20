@@ -33,7 +33,7 @@ public class ValidateUserAccess {
             );
         }
 
-        if (Boolean.TRUE.equals(user.getAccountStatus().equals(AccountStatus.BANNED))) {
+        if (user.getAccountStatus() == AccountStatus.BANNED) {
 
             throw new OperationFailException(
                     "User account is banned"

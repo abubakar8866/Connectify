@@ -48,5 +48,13 @@ public class Report extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ReportStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_id")
+    private Chat chat;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id")
+    private Message message;
+
 }
 

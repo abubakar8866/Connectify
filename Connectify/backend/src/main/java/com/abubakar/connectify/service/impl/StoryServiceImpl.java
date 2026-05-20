@@ -79,8 +79,7 @@ public class StoryServiceImpl implements StoryService {
     // ================= CREATE STORY =================
     @Override
     public StoryResponse createStory(
-            MultipartFile file,
-            MultipartFile thumbnail
+            MultipartFile file
     ) {
 
         logger.info("Creating new story");
@@ -102,46 +101,21 @@ public class StoryServiceImpl implements StoryService {
 
         MediaType mediaType;
 
-        String thumbnailUrl;
-
         // VIDEO STORY
         if (contentType != null &&
                 contentType.startsWith("video")) {
 
             mediaType = MediaType.VIDEO;
-
-            // THUMBNAIL REQUIRED FOR VIDEO
-            if (thumbnail == null ||
-                    thumbnail.isEmpty()) {
-
-                throw new OperationFailException(
-                        "Thumbnail is required for video stories"
-                );
-            }
-
-            thumbnailUrl =
-                    fileService.uploadFile(
-                            thumbnail,
-                            currentUser.getId(),
-                            null,
-                            "story-thumbnails"
-                    );
-
         }
 
         // IMAGE STORY
         else {
 
             mediaType = MediaType.IMAGE;
-
-            // IMAGE ITSELF USED AS THUMBNAIL
-            thumbnailUrl = uploadedFile;
         }
 
         Story story = Story.builder()
                 .mediaUrl(uploadedFile)
-                .thumbnailUrl(thumbnailUrl)
-                .publicId(uploadedFile)
                 .mediaType(mediaType)
                 .expiresAt(
                         LocalDateTime.now().plusHours(24)
@@ -422,11 +396,6 @@ public class StoryServiceImpl implements StoryService {
                 "stories"
         );
 
-        fileService.deleteFile(
-                story.getThumbnailUrl(),
-                "story-thumbnails"
-        );
-
         storyRepository.delete(story);
 
         logger.info(
@@ -565,7 +534,6 @@ public class StoryServiceImpl implements StoryService {
         return StoryResponse.builder()
                 .id(story.getId())
                 .mediaUrl(story.getMediaUrl())
-                .thumbnailUrl(story.getThumbnailUrl())
                 .mediaType(story.getMediaType())
 
                 .username(

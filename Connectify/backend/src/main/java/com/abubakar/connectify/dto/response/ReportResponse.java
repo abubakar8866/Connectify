@@ -22,6 +22,10 @@ public class ReportResponse {
 
     private Long userId;
 
+    private Long chatId;
+
+    private Long messageId;
+
     private ReportReason reason;
 
     private String description;

@@ -44,6 +44,15 @@ public class ReportServiceImpl implements ReportService {
     private UserRepository userRepository;
 
     @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private ChatParticipantRepository chatParticipantRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -338,6 +347,207 @@ public class ReportServiceImpl implements ReportService {
         return mapToResponse(report);
     }
 
+    @Override
+    public ReportResponse reportChat(
+            Long chatId,
+            CreateReportRequest request
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Chat chat =
+                chatRepository.findById(chatId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Chat not found"
+                                )
+                        );
+
+        if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
+
+            throw new OperationFailException(
+                    "Chat already removed"
+            );
+        }
+
+        boolean participant =
+                chatParticipantRepository
+                        .existsByChatAndUser(
+                                chat,
+                                currentUser
+                        );
+
+        if (!participant) {
+
+            throw new OperationFailException(
+                    "You are not part of this chat"
+            );
+        }
+
+        boolean alreadyReported =
+                reportRepository
+                        .findByReportedByAndChat(
+                                currentUser,
+                                chat
+                        )
+                        .isPresent();
+
+        if (alreadyReported) {
+
+            throw new OperationFailException(
+                    "You already reported this chat"
+            );
+        }
+
+        Report report =
+                Report.builder()
+                        .reportedBy(currentUser)
+                        .chat(chat)
+                        .reason(request.getReason())
+                        .description(request.getDescription())
+                        .status(ReportStatus.PENDING)
+                        .build();
+
+        reportRepository.save(report);
+
+        return mapToResponse(report);
+    }
+
+    @Override
+    public ReportResponse reportMessage(
+            Long messageId,
+            CreateReportRequest request
+    ) {
+
+        logger.info(
+                "Reporting message | messageId: {}",
+                messageId
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Message message =
+                messageRepository.findById(messageId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Message not found"
+                                )
+                        );
+
+        // CHAT VALIDATION
+        Chat chat = message.getChat();
+
+        if (chat == null) {
+
+            throw new OperationFailException(
+                    "Chat not found"
+            );
+        }
+
+        // CHAT DELETED VALIDATION
+        if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
+
+            throw new OperationFailException(
+                    "Chat is unavailable"
+            );
+        }
+
+        // USER MUST BELONG TO CHAT
+        boolean participantExists =
+                chatParticipantRepository
+                        .existsByChatAndUser(
+                                chat,
+                                currentUser
+                        );
+
+        if (!participantExists) {
+
+            throw new OperationFailException(
+                    "You are not part of this chat"
+            );
+        }
+
+        // MESSAGE DELETED VALIDATION
+        if (Boolean.TRUE.equals(
+                message.getDeletedByAdmin()
+        )) {
+
+            throw new OperationFailException(
+                    "Message already removed"
+            );
+        }
+
+        // SELF REPORT VALIDATION
+        if (message.getSender().getId()
+                .equals(currentUser.getId())) {
+
+            throw new OperationFailException(
+                    "You cannot report your own message"
+            );
+        }
+
+        // DUPLICATE REPORT VALIDATION
+        boolean alreadyReported =
+                reportRepository
+                        .findByReportedByAndMessage(
+                                currentUser,
+                                message
+                        )
+                        .isPresent();
+
+        if (alreadyReported) {
+
+            throw new OperationFailException(
+                    "You already reported this message"
+            );
+        }
+
+        Report report = Report.builder()
+                .reportedBy(currentUser)
+                .message(message)
+                .reason(request.getReason())
+                .description(request.getDescription())
+                .status(ReportStatus.PENDING)
+                .build();
+
+        reportRepository.save(report);
+
+        // NOTIFY MESSAGE OWNER
+        notificationService.createNotification(
+                message.getSender().getId(),
+                currentUser.getId(),
+                currentUser.getUname() +
+                " reported your message",
+                NotificationType.REPORT,
+                null,
+                null
+        );
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname() +
+                        " reported a message",
+                        NotificationType.REPORT,
+                        null,
+                        null
+                )
+        );
+
+        logger.info(
+                "Message reported successfully"
+        );
+
+        return mapToResponse(report);
+    }
+
     // ================= HELPERS =================
     private ReportResponse mapToResponse(
             Report report
@@ -367,6 +577,18 @@ public class ReportServiceImpl implements ReportService {
                 .userId(
                         report.getReportedUser() != null
                                 ? report.getReportedUser().getId()
+                                : null
+                )
+
+                .chatId(
+                        report.getChat() != null
+                                ? report.getChat().getId()
+                                : null
+                )
+
+                .messageId(
+                        report.getMessage() != null
+                                ? report.getMessage().getId()
                                 : null
                 )
 

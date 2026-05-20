@@ -46,18 +46,9 @@ public class StoryCleanupScheduler {
 
             // DELETE FILE
             fileService.deleteFile(
-                    story.getPublicId(),
+                    story.getMediaUrl(),
                     "stories"
             );
-
-            if (story.getMediaType() == MediaType.VIDEO &&
-                    story.getThumbnailUrl() != null) {
-
-                fileService.deleteFile(
-                        story.getThumbnailUrl(),
-                        "story-thumbnails"
-                );
-            }
 
             // DELETE DB RECORD
             storyRepository.delete(story);

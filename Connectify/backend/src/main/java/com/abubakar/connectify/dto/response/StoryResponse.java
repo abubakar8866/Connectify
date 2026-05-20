@@ -14,8 +14,6 @@ public class StoryResponse {
 
     private String mediaUrl;
 
-    private String thumbnailUrl;
-
     private MediaType mediaType;
 
     private String username;
