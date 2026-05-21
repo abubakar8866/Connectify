@@ -4,10 +4,7 @@ import com.abubakar.connectify.dto.response.AdminDashboardResponse;
 import com.abubakar.connectify.dto.response.UserSummaryResponse;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
-import com.abubakar.connectify.repository.CommentRepository;
-import com.abubakar.connectify.repository.LikeRepository;
-import com.abubakar.connectify.repository.PostRepository;
-import com.abubakar.connectify.repository.UserRepository;
+import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.AdminDashboardService;
 
 import com.abubakar.connectify.util.AdminValidator;
@@ -18,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +39,12 @@ public class AdminDashboardServiceImpl
 
     @Autowired
     private LikeRepository likeRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Autowired
     private AuthUtil authUtil;
@@ -107,6 +111,25 @@ public class AdminDashboardServiceImpl
                 "Engagement analytics fetched successfully"
         );
 
+        // ================= CHAT ANALYTICS =================
+
+        Long totalChats =
+                chatRepository.countByDeletedByAdminFalse();
+
+        Long activeChats =
+                chatRepository.countByDeletedByAdminFalseAndIsActiveTrue();
+
+        LocalDateTime startOfDay = LocalDate.now()
+                .atStartOfDay();
+
+        Long messagesToday =
+                messageRepository
+                        .countByCreatedAtAfterAndDeletedByAdminFalse(
+                                startOfDay
+                        );
+
+        logger.info("Chat analytics fetched successfully");
+
         // ================= MOST ACTIVE USERS =================
 
         List<UserSummaryResponse> mostActiveUsers =
@@ -138,6 +161,11 @@ public class AdminDashboardServiceImpl
                 // ENGAGEMENT
                 .totalLikes(totalLikes)
                 .totalComments(totalComments)
+
+                // CHATS
+                .totalChats(totalChats)
+                .activeChats(activeChats)
+                .messagesToday(messagesToday)
 
                 // ACTIVE USERS
                 .mostActiveUsers(mostActiveUsers)

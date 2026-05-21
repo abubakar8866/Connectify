@@ -50,6 +50,11 @@ public interface AdminUserService {
             Long userId
     );
 
+    // ================= REJECT RESTORE REQUEST =================
+    void rejectRestoreRequest(
+            Long userId
+    );
+
     // Approve ban appeal
     void approveUnbanRequest(
             Long userId

@@ -29,16 +29,6 @@ public interface PostRepository extends JpaRepository<Post, Long>,
             Pageable pageable
     );
 
-    // PUBLIC FEED (NON-DELETED)
-    List<Post> findByDeletedFalseOrderByIdDesc(
-            Pageable pageable
-    );
-
-    List<Post> findByDeletedFalseAndIdLessThanOrderByIdDesc(
-            Long cursor,
-            Pageable pageable
-    );
-
     // ================= PERSONALIZED FEED =================
 
     List<Post>
@@ -82,13 +72,15 @@ public interface PostRepository extends JpaRepository<Post, Long>,
     // ================= TRENDING POSTS =================
 
     List<Post>
-    findByDeletedFalseOrderByLikeCountDescCommentCountDescIdDesc(
+    findByDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndUserAccountStatusNotOrderByLikeCountDescCommentCountDescIdDesc(
+            AccountStatus status,
             Pageable pageable
     );
 
     List<Post>
-    findByDeletedFalseAndIdLessThanOrderByLikeCountDescCommentCountDescIdDesc(
+    findByDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndIdLessThanAndUserAccountStatusNotOrderByLikeCountDescCommentCountDescIdDesc(
             Long cursor,
+            AccountStatus status,
             Pageable pageable
     );
 

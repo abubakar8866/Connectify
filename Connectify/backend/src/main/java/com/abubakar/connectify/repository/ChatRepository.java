@@ -37,15 +37,9 @@ public interface ChatRepository
             Pageable pageable
     );
 
-    // USER
-    List<Chat> findByDeletedByAdminFalseOrderByIdDesc(
-            Pageable pageable
-    );
+    Long countByDeletedByAdminFalse();
 
-    List<Chat> findByDeletedByAdminFalseAndIdLessThanOrderByIdDesc(
-            Long id,
-            Pageable pageable
-    );
+    Long countByDeletedByAdminFalseAndIsActiveTrue();
 
 }
 

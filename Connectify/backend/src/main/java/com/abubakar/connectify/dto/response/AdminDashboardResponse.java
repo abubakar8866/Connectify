@@ -30,6 +30,13 @@ public class AdminDashboardResponse {
 
     private Long totalComments;
 
+    // CHAT ANALYTICS
+    private Long totalChats;
+
+    private Long activeChats;
+
+    private Long messagesToday;
+
     // MOST ACTIVE USERS
     private List<UserSummaryResponse> mostActiveUsers;
 

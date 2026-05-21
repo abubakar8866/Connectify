@@ -58,14 +58,16 @@ public interface UserRepository extends
     List<User> findMostActiveUsers();
 
     List<User>
-    findByIdNotInOrderByFollowersCountDesc(
+    findByIdNotInAndDeletedFalseAndIsActiveTrueAndAccountStatusNotOrderByFollowersCountDesc(
             List<Long> excludedIds,
+            AccountStatus status,
             Pageable pageable
     );
 
     List<User>
-    findByIdNotInAndIdLessThanOrderByFollowersCountDesc(
+    findByIdNotInAndDeletedFalseAndIsActiveTrueAndAccountStatusNotAndIdLessThanOrderByFollowersCountDesc(
             List<Long> excludedIds,
+            AccountStatus status,
             Long cursor,
             Pageable pageable
     );

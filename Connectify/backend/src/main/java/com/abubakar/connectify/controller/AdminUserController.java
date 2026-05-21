@@ -71,6 +71,12 @@ public class AdminUserController {
 
     ) {
 
+        logger.info(
+                "Get users request received | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
 
                 adminUserService.getUsers(
@@ -122,22 +128,6 @@ public class AdminUserController {
                 "Ban user request received | userId: {}",
                 userId
         );
-
-        if (Boolean.TRUE.equals(request.getPermanent())
-                && request.getDurationInDays() != null) {
-
-            throw new OperationFailException(
-                    "Permanent ban should not have duration"
-            );
-        }
-
-        if (!Boolean.TRUE.equals(request.getPermanent())
-                && request.getDurationInDays() == null) {
-
-            throw new OperationFailException(
-                    "Duration is required for temporary ban"
-            );
-        }
 
         adminUserService.banUser(
                 userId,
@@ -194,6 +184,12 @@ public class AdminUserController {
             int size
     ) {
 
+        logger.info(
+                "Get reported users request received | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
 
                 adminUserService.getReportedUsers(
@@ -217,6 +213,26 @@ public class AdminUserController {
 
         return ResponseEntity.ok(
                 "User restored successfully"
+        );
+    }
+
+    // ================= REJECT RESTORE REQUEST =================
+    @PutMapping(
+            "/users/{userId}/reject-restore"
+    )
+    public ResponseEntity<String> rejectRestoreRequest(
+            @PathVariable Long userId
+    ) {
+
+        logger.info(
+                "Reject restore request received | userId: {}",
+                userId
+        );
+
+        adminUserService.rejectRestoreRequest(userId);
+
+        return ResponseEntity.ok(
+                "Restore request rejected successfully"
         );
     }
 

@@ -88,8 +88,6 @@ public class User extends BaseEntity implements UserDetails {
 
     private Boolean isPrivate = false;
 
-    private Boolean isDeleted = false;
-
     private Boolean isVerified = false;
 
     private LocalDateTime bannedUntil;
@@ -190,7 +188,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountStatus != AccountStatus.BANNED;
     }
 
     @Override

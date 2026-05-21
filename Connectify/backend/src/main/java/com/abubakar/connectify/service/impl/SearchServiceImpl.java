@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -195,7 +194,8 @@ public class SearchServiceImpl implements SearchService {
 
             posts =
                     postRepository
-                            .findByDeletedFalseOrderByLikeCountDescCommentCountDescIdDesc(
+                            .findByDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndUserAccountStatusNotOrderByLikeCountDescCommentCountDescIdDesc(
+                                    AccountStatus.BANNED,
                                     pageable
                             );
 
@@ -203,8 +203,9 @@ public class SearchServiceImpl implements SearchService {
 
             posts =
                     postRepository
-                            .findByDeletedFalseAndIdLessThanOrderByLikeCountDescCommentCountDescIdDesc(
+                            .findByDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndIdLessThanAndUserAccountStatusNotOrderByLikeCountDescCommentCountDescIdDesc(
                                     cursor,
+                                    AccountStatus.BANNED,
                                     pageable
                             );
         }
@@ -249,21 +250,27 @@ public class SearchServiceImpl implements SearchService {
 
         List<User> users;
 
+        // FIRST PAGE
         if (cursor == null) {
 
             users =
                     userRepository
-                            .findByIdNotInOrderByFollowersCountDesc(
+                            .findByIdNotInAndDeletedFalseAndIsActiveTrueAndAccountStatusNotOrderByFollowersCountDesc(
                                     excludedIds,
+                                    AccountStatus.BANNED,
                                     pageable
                             );
 
-        } else {
+        }
+
+        // NEXT PAGE
+        else {
 
             users =
                     userRepository
-                            .findByIdNotInAndIdLessThanOrderByFollowersCountDesc(
+                            .findByIdNotInAndDeletedFalseAndIsActiveTrueAndAccountStatusNotAndIdLessThanOrderByFollowersCountDesc(
                                     excludedIds,
+                                    AccountStatus.BANNED,
                                     cursor,
                                     pageable
                             );

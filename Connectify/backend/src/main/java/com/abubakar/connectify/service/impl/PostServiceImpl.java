@@ -364,15 +364,6 @@ public class PostServiceImpl implements PostService {
 
         postRepository.save(post);
 
-        notificationService.createNotification(
-                post.getUser().getId(),
-                currentUser.getId(),
-                "Your post was removed due to policy violation",
-                NotificationType.POST_REMOVED,
-                post.getId(),
-                null
-        );
-
         logger.info(
                 "Post soft deleted successfully"
         );

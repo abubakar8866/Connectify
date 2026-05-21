@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.abubakar.connectify.dto.request.UpdateProfileRequest;
 import com.abubakar.connectify.util.AuthUtil;
+import com.abubakar.connectify.util.ValidateUserAccess;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,9 @@ public class AuthServiceImpl implements AuthService {
 	@Autowired
 	private JavaMailSender mailSender;
 
+	@Autowired
+	private ValidateUserAccess validateUserAccess;
+
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
 	// ================= REGISTER =================
@@ -74,15 +78,31 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public AuthResponse register(RegisterRequest request) {
 
-		logger.info("Register request for email: {}", request.getEmail());
+		logger.debug(
+				"Starting register | email: {} | username: {}",
+				request.getEmail(),
+				request.getUname()
+		);
 
 		if (userRepo.existsByEmail(request.getEmail())) {
+
+			logger.warn(
+					"Registration failed - email already exists | email: {}",
+					request.getEmail()
+			);
+
 			throw new ResourceAlreadyExistsException(
 					"Email already exists"
 			);
 		}
 
 		if (userRepo.existsByUname(request.getUname())) {
+
+			logger.warn(
+					"Registration failed - username already exists | username: {}",
+					request.getUname()
+			);
+
 			throw new ResourceAlreadyExistsException(
 					"Username already exists"
 			);
@@ -111,13 +131,18 @@ public class AuthServiceImpl implements AuthService {
 			userRepo.save(user);
 
 			logger.info(
-					"User registered successfully: {}",
+					"User registered successfully | userId: {} | email: {}",
+					user.getId(),
 					user.getEmail()
 			);
 
 		} catch (DataIntegrityViolationException e) {
 
-			logger.error("Registration failed", e);
+			logger.error(
+					"Registration failed | email: {}",
+					request.getEmail(),
+					e
+			);
 
 			throw new ResourceAlreadyExistsException(
 					"User already exists"
@@ -131,7 +156,10 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public AuthResponse login(LoginRequest request) {
 
-		logger.info("Login request for: {}", request.getEmail());
+		logger.debug(
+				"Starting login | email: {}",
+				request.getEmail()
+		);
 
 		try {
 
@@ -145,11 +173,13 @@ public class AuthServiceImpl implements AuthService {
 
 			User user = (User) authentication.getPrincipal();
 
-			Objects.requireNonNull(user).setLastLoginAt(LocalDateTime.now());
+            assert user != null;
+            if (Boolean.TRUE.equals(user.getDeleted())) {
 
-			userRepo.save(user);
-
-			if (Boolean.TRUE.equals(user.getIsDeleted())) {
+				logger.warn(
+						"Login blocked - account deactivated | userId: {}",
+						user.getId()
+				);
 
 				throw new OperationFailException(
 						"Account is deactivated"
@@ -158,15 +188,25 @@ public class AuthServiceImpl implements AuthService {
 
 			if (user.getAccountStatus() == AccountStatus.BANNED) {
 
+				logger.warn(
+						"Login blocked - account banned | userId: {}",
+						user.getId()
+				);
+
 				throw new OperationFailException(
 						"Account is banned"
 				);
 			}
 
+			Objects.requireNonNull(user).setLastLoginAt(LocalDateTime.now());
+
+			userRepo.save(user);
+
 			String token = jwtUtil.generateToken(user);
 
 			logger.info(
-					"Login successful for: {}",
+					"Login successful | userId: {} | email: {}",
+					user.getId(),
 					user.getEmail()
 			);
 
@@ -175,8 +215,9 @@ public class AuthServiceImpl implements AuthService {
 		} catch (BadCredentialsException e) {
 
 			logger.error(
-					"Invalid credentials for: {}",
-					request.getEmail()
+					"Login failed unexpectedly | email: {}",
+					request.getEmail(),
+					e
 			);
 
 			throw new OperationFailException(
@@ -189,11 +230,15 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public UserResponse getCurrentUser() {
 
+		logger.debug(
+				"Fetching current user"
+		);
+
 		User user = this.authUtil.getCurrentUser();
 
 		logger.info(
-				"Current user fetched: {}",
-				user.getEmail()
+				"Current user fetched successfully | userId: {}",
+				user.getId()
 		);
 
 		return mapToResponse(user);
@@ -208,22 +253,23 @@ public class AuthServiceImpl implements AuthService {
 			MultipartFile file
 	) {
 
-		logger.info(
-				"Updating profile for userId: {}",
+		logger.debug(
+				"Starting profile update | userId: {}",
 				userId
 		);
 
-		User user = userRepo.findById(userId)
-				.orElseThrow(() ->
-						new ResourceNotFound(
-								"User not found"
-						)
-				);
+		User user = validateUserAccess.getValidUser(userId);
 
 		User currentUser = this.authUtil.getCurrentUser();
 
 		// Authorization
 		if (!user.getId().equals(currentUser.getId())) {
+
+			logger.warn(
+					"Unauthorized profile update attempt | currentUserId: {} | targetUserId: {}",
+					currentUser.getId(),
+					userId
+			);
 
 			throw new OperationFailException(
 					"Unauthorized access"
@@ -242,6 +288,11 @@ public class AuthServiceImpl implements AuthService {
 							request.getUname()
 					)
 			) {
+
+				logger.warn(
+						"Profile update failed - username already exists | username: {}",
+						request.getUname()
+				);
 
 				throw new ResourceAlreadyExistsException(
 						"Username already exists"
@@ -309,40 +360,52 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public void forgotPassword(String email) {
 
-		logger.info(
-				"Forgot password request for: {}",
+		logger.debug(
+				"Starting forgot password flow | email: {}",
 				email
 		);
 
 		User user = userRepo.findByEmail(email)
-				.orElseThrow(() ->
-						new EmailNotFound(
-								"User not found with email: " + email
-						)
+				.orElseThrow(() -> {
+							logger.warn(
+									"Forgot password failed - email not found | email: {}",
+									email
+							);
+							return new EmailNotFound(
+									"User not found with email: " + email
+							);
+						}
 				);
+
+		User validateUser = validateUserAccess.getValidUser(user.getId());
 
 		String token = UUID.randomUUID().toString();
 
-		user.setResetToken(token);
+		logger.debug(
+				"Password reset token generated | userId: {}",
+				validateUser.getId()
+		);
 
-		user.setResetTokenExpiry(
+		validateUser.setResetToken(token);
+
+		validateUser.setResetTokenExpiry(
 				LocalDateTime.now().plusMinutes(15)
 		);
 
-		userRepo.save(user);
+		userRepo.save(validateUser);
 
 		String resetUrl =
 				"http://localhost:3000/reset-password?token="
 						+ token;
 
 		sendResetEmail(
-				user.getEmail(),
+				validateUser.getEmail(),
 				resetUrl
 		);
 
 		logger.info(
-				"Password reset email sent to: {}",
-				email
+				"Password reset email sent successfully | userId: {}",
+				validateUser.getId()
 		);
 	}
 
@@ -354,11 +417,19 @@ public class AuthServiceImpl implements AuthService {
 			ResetPasswordRequest request
 	) {
 
+		logger.debug(
+				"Starting password reset"
+		);
+
 		User user = userRepo.findByResetToken(token)
-				.orElseThrow(() ->
-						new OperationFailException(
-								"Invalid reset token"
-						)
+				.orElseThrow(() -> {
+						logger.warn(
+								"Password reset failed - invalid token"
+						);
+						return new OperationFailException(
+									"Invalid reset token"
+						);
+					}
 				);
 
 		if (
@@ -366,24 +437,31 @@ public class AuthServiceImpl implements AuthService {
 						.isBefore(LocalDateTime.now())
 		) {
 
+			logger.warn(
+					"Password reset failed - token expired | userId: {}",
+					user.getId()
+			);
+
 			throw new OperationFailException(
 					"Reset token expired"
 			);
 		}
 
-		user.setPassword(
+		User validateUser = validateUserAccess.getValidUser(user.getId());
+
+		validateUser.setPassword(
 				passwordEncoder.encode(request.getPassword())
 		);
 
-		user.setResetToken(null);
+		validateUser.setResetToken(null);
 
-		user.setResetTokenExpiry(null);
+		validateUser.setResetTokenExpiry(null);
 
-		userRepo.save(user);
+		userRepo.save(validateUser);
 
 		logger.info(
-				"Password reset successful for: {}",
-				user.getEmail()
+				"Password reset successful | userId: {}",
+				validateUser.getId()
 		);
 	}
 
@@ -392,15 +470,17 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public AuthResponse createAdmin(RegisterRequest request) {
 
-		logger.info(
-				"Admin creation request for: {}",
+		logger.debug(
+				"Starting admin creation | email: {}",
 				request.getEmail()
 		);
 
 		// Check if admin already exists
 		if (userRepo.existsByRole(Role.ADMIN)) {
 
-			logger.warn("Admin already exists");
+			logger.warn(
+					"Admin creation blocked - admin already exists"
+			);
 
 			throw new OperationFailException(
 					"Admin already created. Access denied."
@@ -410,6 +490,11 @@ public class AuthServiceImpl implements AuthService {
 		// Email check
 		if (userRepo.existsByEmail(request.getEmail())) {
 
+			logger.warn(
+					"Admin creation failed - email already exists | email: {}",
+					request.getEmail()
+			);
+
 			throw new ResourceAlreadyExistsException(
 					"Email already exists"
 			);
@@ -417,6 +502,11 @@ public class AuthServiceImpl implements AuthService {
 
 		// Username check
 		if (userRepo.existsByUname(request.getUname())) {
+
+			logger.warn(
+					"Admin creation failed - username already exists | username: {}",
+					request.getUname()
+			);
 
 			throw new ResourceAlreadyExistsException(
 					"Username already exists"
@@ -446,8 +536,8 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(admin);
 
 		logger.info(
-				"Admin created successfully: {}",
-				admin.getEmail()
+				"Admin created successfully | adminId: {}",
+				admin.getId()
 		);
 
 		String token = jwtUtil.generateToken(admin);
@@ -459,49 +549,6 @@ public class AuthServiceImpl implements AuthService {
 		);
 	}
 
-	// ================= SEND RESET EMAIL =================
-	private void sendResetEmail(
-			String toEmail,
-			String resetUrl
-	) {
-
-		try {
-
-			SimpleMailMessage message =
-					new SimpleMailMessage();
-
-			message.setTo(toEmail);
-
-			message.setSubject(
-					"Connectify Password Reset"
-			);
-
-			message.setText(
-					"Click the link below to reset your password:\n\n"
-							+ resetUrl
-							+ "\n\nThis link expires in 15 minutes."
-			);
-
-			mailSender.send(message);
-
-			logger.info(
-					"Reset email sent to: {}",
-					toEmail
-			);
-
-		} catch (Exception e) {
-
-			logger.error(
-					"Failed to send reset email",
-					e
-			);
-
-			throw new OperationFailException(
-					"Failed to send reset email"
-			);
-		}
-	}
-
 	// ================= SEND EMAIL VERIFICATION =================
 	@Override
 	@Transactional
@@ -509,9 +556,19 @@ public class AuthServiceImpl implements AuthService {
 
 		User currentUser = this.authUtil.getCurrentUser();
 
+		logger.debug(
+				"Starting email verification process | userId: {}",
+				currentUser.getId()
+		);
+
 		if (Boolean.TRUE.equals(
 				currentUser.getIsEmailVerified()
 		)) {
+
+			logger.warn(
+					"Email verification skipped - already verified | userId: {}",
+					currentUser.getId()
+			);
 
 			throw new OperationFailException(
 					"Email already verified"
@@ -560,7 +617,7 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		logger.info(
-				"Verification email sent | userId: {}",
+				"Verification email sent successfully | userId: {}",
 				currentUser.getId()
 		);
 	}
@@ -570,12 +627,20 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public void verifyEmail(String token) {
 
+		logger.debug(
+				"Starting email verification"
+		);
+
 		User user =
 				userRepo.findByEmailVerificationToken(token)
-						.orElseThrow(() ->
-								new OperationFailException(
+						.orElseThrow(() -> {
+								logger.warn(
+										"Email verification failed - invalid token"
+								);
+								return new OperationFailException(
 										"Invalid verification token"
-								)
+								);
+							}
 						);
 
 		if (
@@ -583,22 +648,29 @@ public class AuthServiceImpl implements AuthService {
 						.isBefore(LocalDateTime.now())
 		) {
 
+			logger.warn(
+					"Email verification failed - token expired | userId: {}",
+					user.getId()
+			);
+
 			throw new OperationFailException(
 					"Verification token expired"
 			);
 		}
 
-		user.setIsEmailVerified(true);
+		User validateUser = validateUserAccess.getValidUser(user.getId());
 
-		user.setEmailVerificationToken(null);
+		validateUser.setIsEmailVerified(true);
 
-		user.setEmailVerificationExpiry(null);
+		validateUser.setEmailVerificationToken(null);
 
-		userRepo.save(user);
+		validateUser.setEmailVerificationExpiry(null);
+
+		userRepo.save(validateUser);
 
 		logger.info(
 				"Email verified successfully | userId: {}",
-				user.getId()
+				validateUser.getId()
 		);
 	}
 
@@ -609,8 +681,8 @@ public class AuthServiceImpl implements AuthService {
 
 		User currentUser = this.authUtil.getCurrentUser();
 
-		logger.info(
-				"Account deactivation request for userId: {}",
+		logger.debug(
+				"Starting account deactivation | userId: {}",
 				currentUser.getId()
 		);
 
@@ -627,7 +699,7 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(currentUser);
 
 		logger.info(
-				"Account deactivated successfully for userId: {}",
+				"Account deactivated successfully | userId: {}",
 				currentUser.getId()
 		);
 
@@ -640,12 +712,17 @@ public class AuthServiceImpl implements AuthService {
 
 		User currentUser = this.authUtil.getCurrentUser();
 
-		logger.info(
-				"Restore request received for userId: {}",
+		logger.debug(
+				"Starting account restore request | userId: {}",
 				currentUser.getId()
 		);
 
 		if (!Boolean.TRUE.equals(currentUser.getDeleted())) {
+
+			logger.warn(
+					"Restore request failed - account not deactivated | userId: {}",
+					currentUser.getId()
+			);
 
 			throw new OperationFailException(
 					"Account is not deactivated"
@@ -657,10 +734,9 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(currentUser);
 
 		logger.info(
-				"Restore request submitted successfully for userId: {}",
+				"Restore request submitted successfully | userId: {}",
 				currentUser.getId()
 		);
-
 
 	}
 
@@ -673,8 +749,8 @@ public class AuthServiceImpl implements AuthService {
 
 		User currentUser = this.authUtil.getCurrentUser();
 
-		logger.info(
-				"Unban appeal request for userId: {}",
+		logger.debug(
+				"Starting unban appeal request | userId: {}",
 				currentUser.getId()
 		);
 
@@ -682,6 +758,11 @@ public class AuthServiceImpl implements AuthService {
 				currentUser.getAccountStatus()
 						!= AccountStatus.BANNED
 		) {
+
+			logger.warn(
+					"Unban appeal failed - user not banned | userId: {}",
+					currentUser.getId()
+			);
 
 			throw new OperationFailException(
 					"User is not banned"
@@ -695,10 +776,53 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(currentUser);
 
 		logger.info(
-				"Unban appeal submitted successfully for userId: {}",
+				"Unban appeal submitted successfully | userId: {}",
 				currentUser.getId()
 		);
 
+	}
+
+	// ================= SEND RESET EMAIL =================
+	private void sendResetEmail(
+			String toEmail,
+			String resetUrl
+	) {
+
+		try {
+
+			SimpleMailMessage message =
+					new SimpleMailMessage();
+
+			message.setTo(toEmail);
+
+			message.setSubject(
+					"Connectify Password Reset"
+			);
+
+			message.setText(
+					"Click the link below to reset your password:\n\n"
+							+ resetUrl
+							+ "\n\nThis link expires in 15 minutes."
+			);
+
+			mailSender.send(message);
+
+			logger.info(
+					"Reset email sent to: {}",
+					toEmail
+			);
+
+		} catch (Exception e) {
+
+			logger.error(
+					"Failed to send reset email",
+					e
+			);
+
+			throw new OperationFailException(
+					"Failed to send reset email"
+			);
+		}
 	}
 
 	// ================= ENTITY TO RESPONSE =================

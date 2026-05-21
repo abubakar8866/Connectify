@@ -27,3 +27,4 @@ public class BanUserRequest {
     private Boolean permanent;
 
 }
+

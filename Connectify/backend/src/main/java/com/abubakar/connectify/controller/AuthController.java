@@ -45,11 +45,6 @@ public class AuthController {
         AuthResponse response =
                 authService.register(request);
 
-        logger.info(
-                "User registered successfully: {}",
-                request.getEmail()
-        );
-
         return new ResponseEntity<>(
                 response,
                 HttpStatus.CREATED
@@ -69,11 +64,6 @@ public class AuthController {
 
         AuthResponse response =
                 authService.login(request);
-
-        logger.info(
-                "Login successful for: {}",
-                request.getEmail()
-        );
 
         return ResponseEntity.ok(response);
     }

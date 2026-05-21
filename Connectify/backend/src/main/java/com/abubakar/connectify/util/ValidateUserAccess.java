@@ -40,7 +40,7 @@ public class ValidateUserAccess {
             );
         }
 
-        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+        if (Boolean.TRUE.equals(user.getDeleted())) {
 
             throw new ResourceNotFound(
                     "User account no longer exists"

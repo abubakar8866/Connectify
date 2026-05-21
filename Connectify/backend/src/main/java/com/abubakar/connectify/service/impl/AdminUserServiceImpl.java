@@ -8,6 +8,7 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
@@ -80,8 +81,11 @@ public class AdminUserServiceImpl
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
-        logger.info(
-                "Fetching admin users"
+        logger.debug(
+                "Fetching users for admin panel | adminId: {} | cursor: {} | size: {}",
+                admin.getId(),
+                cursor,
+                size
         );
 
         Pageable pageable =
@@ -133,6 +137,12 @@ public class AdminUserServiceImpl
                         .findAll(specification, pageable)
                         .getContent();
 
+        logger.info(
+                "Users fetched successfully | adminId: {} | resultSize: {}",
+                admin.getId(),
+                users.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 users,
                 size,
@@ -149,6 +159,13 @@ public class AdminUserServiceImpl
 
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
+
+        logger.debug(
+                "Fetching reported users | adminId: {} | cursor: {} | size: {}",
+                admin.getId(),
+                cursor,
+                size
+        );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -174,6 +191,12 @@ public class AdminUserServiceImpl
                             );
         }
 
+        logger.info(
+                "Reported users fetched successfully | adminId: {} | resultSize: {}",
+                admin.getId(),
+                users.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 users,
                 size,
@@ -190,6 +213,12 @@ public class AdminUserServiceImpl
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Fetching user details | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
 
         Long postsCount =
@@ -197,6 +226,11 @@ public class AdminUserServiceImpl
 
         Long reportsCount =
                 reportRepository.countByReportedUser(user);
+
+        logger.info(
+                "User details fetched successfully | targetUserId: {}",
+                userId
+        );
 
         return UserDetailsAdminResponse.builder()
 
@@ -233,7 +267,33 @@ public class AdminUserServiceImpl
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Ban user request received | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
+
+        validateSelfAction(admin, user, "ban");
+
+        // VALIDATION
+        if (
+                !Boolean.TRUE.equals(request.getPermanent())
+                        &&
+                        request.getDurationInDays() == null
+        ) {
+
+            logger.warn(
+                    "Ban user failed - duration missing for temporary ban | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "Ban duration is required for temporary ban"
+            );
+        }
+
 
         user.setAccountStatus(
                 AccountStatus.BANNED
@@ -277,8 +337,10 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "User banned successfully | userId: {}",
-                userId
+                "User banned successfully | adminId: {} | targetUserId: {} | permanent: {}",
+                admin.getId(),
+                userId,
+                request.getPermanent()
         );
 
     }
@@ -290,7 +352,15 @@ public class AdminUserServiceImpl
                 authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Unban user request received | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
+
+        validateSelfAction(admin, user, "unban");
 
         user.setAccountStatus(
                 AccountStatus.ACTIVE
@@ -316,7 +386,8 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "User unbanned successfully | userId: {}",
+                "User unbanned successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
                 userId
         );
 
@@ -329,14 +400,27 @@ public class AdminUserServiceImpl
                 authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Restore user request received | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
 
-        user.setIsDeleted(false);
+        validateSelfAction(admin, user, "restore");
+
+        user.setDeleted(false);
 
         user.setIsActive(true);
 
         user.setAccountStatus(AccountStatus.ACTIVE);
 
+        user.setRestoreRequested(false);
+        user.setUnbanRequested(false);
+
+        user.setUnbanAppealMessage(null);
+        user.setRestoredAt(LocalDateTime.now());
         userRepository.save(user);
 
         notificationService.createNotification(
@@ -349,7 +433,55 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "User restored successfully | userId: {}",
+                "User restored successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+    }
+
+    // ================= REJECT RESTORE REQUEST =================
+    @Override
+    public void rejectRestoreRequest(
+            Long userId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        logger.debug(
+                "Reject restore request initiated | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
+        User user = getUserById(userId);
+
+        validateSelfAction(admin, user, "reject unban request");
+
+        validateSelfAction(
+                admin,
+                user,
+                "reject restore request"
+        );
+
+        user.setRestoreRequested(false);
+
+        userRepository.save(user);
+
+        notificationService.createNotification(
+                user.getId(),
+                admin.getId(),
+                "Your account restore request has been rejected.",
+                NotificationType.RESTORE_REQUEST_REJECTED,
+                null,
+                null
+        );
+
+        logger.info(
+                "Restore request rejected successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
                 userId
         );
     }
@@ -361,7 +493,15 @@ public class AdminUserServiceImpl
                 authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Approve unban request initiated | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
+
+        validateSelfAction(admin, user, "approve unban request");
 
         user.setAccountStatus(AccountStatus.ACTIVE);
 
@@ -372,6 +512,11 @@ public class AdminUserServiceImpl
         user.setAdminNote(null);
 
         user.setBannedUntil(null);
+
+        user.setRestoreRequested(false);
+        user.setUnbanRequested(false);
+
+        user.setUnbanAppealMessage(null);
 
         userRepository.save(user);
 
@@ -385,7 +530,8 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "Unban request approved | userId: {}",
+                "Unban request approved successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
                 userId
         );
     }
@@ -397,11 +543,22 @@ public class AdminUserServiceImpl
                 authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Reject unban request initiated | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
 
         user.setAdminNote(
                 "Your unban request was rejected by admin."
         );
+
+        user.setRestoreRequested(false);
+        user.setUnbanRequested(false);
+
+        user.setUnbanAppealMessage(null);
 
         userRepository.save(user);
 
@@ -415,7 +572,8 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "Unban request rejected | userId: {}",
+                "Unban request rejected successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
                 userId
         );
     }
@@ -427,11 +585,20 @@ public class AdminUserServiceImpl
                 authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        logger.debug(
+                "Delete user request received | adminId: {} | targetUserId: {}",
+                admin.getId(),
+                userId
+        );
+
         User user = getUserById(userId);
 
-        user.setIsDeleted(true);
+        validateSelfAction(admin, user, "delete");
 
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
         user.setIsActive(false);
+        user.setAccountStatus(AccountStatus.DEACTIVATED);
 
         userRepository.save(user);
 
@@ -445,7 +612,8 @@ public class AdminUserServiceImpl
         );
 
         logger.info(
-                "User deleted successfully | userId: {}",
+                "User deleted successfully | adminId: {} | targetUserId: {}",
+                admin.getId(),
                 userId
         );
 
@@ -455,12 +623,43 @@ public class AdminUserServiceImpl
 
     private User getUserById(Long userId) {
 
+        logger.debug(
+                "Fetching user by id | userId: {}",
+                userId
+        );
+
         return userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "User not found"
-                        )
+                .orElseThrow(() -> {
+                            logger.warn(
+                                    "User not found | userId: {}",
+                                    userId
+                            );
+                            return new ResourceNotFound(
+                                    "User not found"
+                            );
+                    }
+
                 );
+    }
+
+    private void validateSelfAction(
+            User admin,
+            User targetUser,
+            String action
+    ) {
+
+        logger.warn(
+                "Admin attempted self action | adminId: {} | action: {}",
+                admin.getId(),
+                action
+        );
+
+        if (admin.getId().equals(targetUser.getId())) {
+
+            throw new OperationFailException(
+                    "Admin cannot " + action + " own account"
+            );
+        }
     }
 
     private AdminUserResponse mapToAdminUserResponse(
