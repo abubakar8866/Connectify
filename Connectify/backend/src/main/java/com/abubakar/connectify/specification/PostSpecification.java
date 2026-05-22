@@ -73,7 +73,9 @@ public class PostSpecification {
 
         return (root, query, cb) -> {
 
-            query.distinct(true);
+            if (query != null && query.getResultType() != Long.class) {
+                query.distinct(true);
+            }
 
             return cb.isNotEmpty(
                     root.get("reports")
@@ -96,6 +98,24 @@ public class PostSpecification {
             return cb.equal(
                     root.get("restoreRequested"),
                     restoreRequested
+            );
+        };
+    }
+
+    // DELETED
+    public static Specification<Post> deleted(
+            Boolean deleted
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (deleted == null) {
+                return null;
+            }
+
+            return cb.equal(
+                    root.get("deleted"),
+                    deleted
             );
         };
     }

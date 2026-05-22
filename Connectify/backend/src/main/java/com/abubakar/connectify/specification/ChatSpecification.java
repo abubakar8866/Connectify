@@ -20,7 +20,9 @@ public class ChatSpecification {
 
         return (root, query, cb) -> {
 
-            query.distinct(true);
+            if (query != null && query.getResultType() != Long.class) {
+                query.distinct(true);
+            }
 
             query.orderBy(
                     cb.desc(root.get("id"))

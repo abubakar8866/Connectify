@@ -21,6 +21,11 @@ public interface ChatRepository
         WHERE p1.user.id = :userOneId
         AND p2.user.id = :userTwoId
         AND c.deletedByAdmin = false
+        AND (
+            SELECT COUNT(cp)
+            FROM ChatParticipant cp
+            WHERE cp.chat = c
+        ) = 2
     """)
     Optional<Chat> findPrivateChatBetweenUsers(
             Long userOneId,

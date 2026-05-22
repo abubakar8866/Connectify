@@ -8,6 +8,8 @@ import com.abubakar.connectify.dto.response.AdminMessageResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 
 import com.abubakar.connectify.util.PaginationConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,11 @@ public class AdminChatController {
 
     @Autowired
     private AdminChatService adminChatService;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AdminChatController.class
+            );
 
     // ================= GET ALL CHATS =================
     @GetMapping
@@ -34,6 +41,12 @@ public class AdminChatController {
             )
             int size
     ) {
+
+        logger.info(
+                "Admin get all chats API called | cursor: {} | size: {}",
+                cursor,
+                size
+        );
 
         return ResponseEntity.ok(
 
@@ -61,6 +74,14 @@ public class AdminChatController {
             )
             int size
     ) {
+
+        logger.info(
+                "Admin get chat messages API called | chatId: {} | cursor: {} | size: {}",
+                chatId,
+                cursor,
+                size
+        );
+
 
         return ResponseEntity.ok(
 
@@ -91,6 +112,14 @@ public class AdminChatController {
             int size
     ) {
 
+        logger.info(
+                "Admin search chats API called | keyword: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                request.getKeyword(),
+                request.getDeletedByAdmin(),
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
 
                 adminChatService.searchChats(
@@ -120,6 +149,16 @@ public class AdminChatController {
             int size
     ) {
 
+        logger.info(
+                "Admin search messages API called | keyword: {} | username: {} | messageType: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                request.getKeyword(),
+                request.getUsername(),
+                request.getMessageType(),
+                request.getDeletedByAdmin(),
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
 
                 adminChatService.searchMessages(
@@ -136,6 +175,11 @@ public class AdminChatController {
             @PathVariable Long chatId
     ) {
 
+        logger.info(
+                "Admin delete chat API called | chatId: {}",
+                chatId
+        );
+
         adminChatService.adminDeleteChat(chatId);
 
         return ResponseEntity.ok(
@@ -148,6 +192,11 @@ public class AdminChatController {
     public ResponseEntity<String> adminDeleteMessage(
             @PathVariable Long messageId
     ) {
+
+        logger.info(
+                "Admin delete message API called | messageId: {}",
+                messageId
+        );
 
         adminChatService.adminDeleteMessage(messageId);
 

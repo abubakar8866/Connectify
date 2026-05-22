@@ -67,7 +67,7 @@ public class CommentServiceImpl implements CommentService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        Post post = getPostById(postId);
+        Post post = getActivePostById(postId);
 
         Comment comment = Comment.builder()
                 .content(request.getContent())
@@ -86,6 +86,31 @@ public class CommentServiceImpl implements CommentService {
             Comment parentComment =
                     getCommentById(request.getParentCommentId());
 
+            if (!parentComment.getPost().getId().equals(postId)) {
+
+                logger.warn(
+                        "Parent comment does not belong to target post | parentCommentId: {} | targetPostId: {}",
+                        parentComment.getId(),
+                        postId
+                );
+
+                throw new OperationFailException(
+                        "Parent comment does not belong to this post"
+                );
+            }
+
+            if (parentComment.getDeleted()) {
+
+                logger.warn(
+                        "Reply attempt on deleted comment | parentCommentId: {}",
+                        parentComment.getId()
+                );
+
+                throw new OperationFailException(
+                        "Cannot reply to deleted comment"
+                );
+            }
+
             comment.setParentComment(parentComment);
         }
 
@@ -93,6 +118,12 @@ public class CommentServiceImpl implements CommentService {
 
         // NORMAL COMMENT NOTIFICATION
         if (request.getParentCommentId() == null) {
+
+            logger.debug(
+                    "Creating post comment notification | receiverUserId: {} | commentId: {}",
+                    post.getUser().getId(),
+                    savedComment.getId()
+            );
 
             notificationService.createNotification(
                     post.getUser().getId(),
@@ -110,6 +141,12 @@ public class CommentServiceImpl implements CommentService {
             Comment parentComment =
                     savedComment.getParentComment();
 
+            logger.debug(
+                    "Creating reply notification | receiverUserId: {} | commentId: {}",
+                    parentComment.getUser().getId(),
+                    savedComment.getId()
+            );
+
             notificationService.createNotification(
                     parentComment.getUser().getId(),
                     currentUser.getId(),
@@ -121,8 +158,9 @@ public class CommentServiceImpl implements CommentService {
         }
 
         logger.info(
-                "Comment added successfully | commentId: {} | userId: {}",
+                "Comment created successfully | commentId: {} | postId: {} | userId: {}",
                 savedComment.getId(),
+                postId,
                 currentUser.getId()
         );
 
@@ -138,11 +176,28 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = getCommentById(commentId);
 
+        if (comment.getDeleted()) {
+
+            logger.warn(
+                    "Update attempt on deleted comment | commentId: {}",
+                    commentId
+            );
+
+            throw new OperationFailException(
+                    "Deleted comment cannot be updated"
+            );
+        }
+
         this.ownershipValidator.validate(
                     comment.getUser().getId(),
                     this.authUtil.getCurrentUser(),
                 "You are not authorized to access this comment"
                 );
+        logger.debug(
+                "Ownership validation passed | commentId: {} | userId: {}",
+                commentId,
+                authUtil.getCurrentUser().getId()
+        );
 
         comment.setContent(request.getContent());
 
@@ -167,10 +222,27 @@ public class CommentServiceImpl implements CommentService {
         Comment comment =
                 getCommentById(commentId);
 
+        if (comment.getDeleted()) {
+
+            logger.warn(
+                    "Comment already deleted | commentId: {}",
+                    commentId
+            );
+
+            throw new OperationFailException(
+                    "Comment already deleted"
+            );
+        }
+
         ownershipValidator.validate(
                 comment.getUser().getId(),
                 authUtil.getCurrentUser(),
                 "You are not authorized to access this comment"
+        );
+        logger.debug(
+                "Ownership validation passed for delete | commentId: {} | userId: {}",
+                commentId,
+                authUtil.getCurrentUser().getId()
         );
 
         comment.setDeleted(true);
@@ -178,7 +250,8 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
 
         logger.info(
-                "Comment soft deleted successfully"
+                "Comment soft deleted successfully | commentId: {}",
+                commentId
         );
     }
 
@@ -193,16 +266,37 @@ public class CommentServiceImpl implements CommentService {
         Comment comment =
                 getCommentById(commentId);
 
+        if (comment.getRestoreRequested()) {
+
+            logger.warn(
+                    "Duplicate restore request detected | commentId: {}",
+                    commentId
+            );
+
+            throw new OperationFailException(
+                    "Restore request already submitted"
+            );
+        }
+
         ownershipValidator.validate(
                 comment.getUser().getId(),
                 authUtil.getCurrentUser(),
                 "You are not authorized to access this comment"
         );
+        logger.debug(
+                "Ownership validation passed for restore request | commentId: {} | userId: {}",
+                commentId,
+                authUtil.getCurrentUser().getId()
+        );
 
         if (!comment.getDeleted()) {
 
+            logger.warn(
+                    "Comment is already deleted"
+            );
+
             throw new OperationFailException(
-                    "Comment is not deleted"
+                    "Comment is already deleted"
             );
         }
 
@@ -211,7 +305,8 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
 
         logger.info(
-                "Restore request submitted successfully"
+                "Comment restore request submitted successfully | commentId: {}",
+                commentId
         );
     }
 
@@ -230,6 +325,8 @@ public class CommentServiceImpl implements CommentService {
                 size
         );
 
+        Post post = this.getActivePostById(postId);
+
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
                         size
@@ -239,26 +336,38 @@ public class CommentServiceImpl implements CommentService {
 
         if (cursor == null) {
 
+            logger.debug(
+                    "Fetching first page comments | postId: {}",
+                    postId
+            );
+
             comments =
                     commentRepository
                             .findByPostIdAndParentCommentIsNullAndDeletedFalseOrderByIdDesc(
-                                    postId,
+                                    post.getId(),
                                     pageable
                             );
 
         } else {
 
+            logger.debug(
+                    "Fetching paginated comments | postId: {} | cursor: {}",
+                    postId,
+                    cursor
+            );
+
             comments =
                     commentRepository
                             .findByPostIdAndParentCommentIsNullAndDeletedFalseAndIdLessThanOrderByIdDesc(
-                                    postId,
+                                    post.getId(),
                                     cursor,
                                     pageable
                             );
         }
 
         logger.info(
-                "Comments fetched successfully | count: {}",
+                "Comments fetched successfully | postId: {} | fetchedCount: {}",
+                postId,
                 comments.size()
         );
 
@@ -316,11 +425,11 @@ public class CommentServiceImpl implements CommentService {
                 });
     }
 
-    private Post getPostById(Long postId) {
+    private Post getActivePostById(Long postId) {
 
         logger.debug("Fetching post with id: {}", postId);
 
-        return postRepository.findById(postId)
+        return postRepository.findByIdAndDeletedFalse(postId)
                 .orElseThrow(() -> {
 
                     logger.error(

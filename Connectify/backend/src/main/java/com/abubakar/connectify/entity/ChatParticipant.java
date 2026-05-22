@@ -34,6 +34,10 @@ public class ChatParticipant extends BaseEntity {
 
     private Boolean isMuted = false;
 
+    private Boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
     private LocalDateTime lastSeenAt;
 
     // CHAT

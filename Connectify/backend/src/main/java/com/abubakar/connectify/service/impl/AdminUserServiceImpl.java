@@ -158,6 +158,7 @@ public class AdminUserServiceImpl
     ) {
 
         User admin = authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.debug(
@@ -177,18 +178,17 @@ public class AdminUserServiceImpl
         if (cursor == null) {
 
             users =
-                    userRepository
-                            .findReportedUsers(pageable)
-                            .getContent();
+                    userRepository.findReportedUsers(
+                            pageable
+                    );
 
         } else {
 
             users =
-                    userRepository
-                            .findReportedUsersByCursor(
-                                    cursor,
-                                    pageable
-                            );
+                    userRepository.findReportedUsersByCursor(
+                            cursor,
+                            pageable
+                    );
         }
 
         logger.info(

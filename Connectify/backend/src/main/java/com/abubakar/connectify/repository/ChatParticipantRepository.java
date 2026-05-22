@@ -27,13 +27,13 @@ public interface ChatParticipantRepository
     );
 
     List<ChatParticipant>
-    findByUserOrderByChatLastMessageAtDesc(
+    findByUserAndDeletedFalseOrderByChatLastMessageAtDesc(
             User user,
             Pageable pageable
     );
 
     List<ChatParticipant>
-    findByUserAndChatIdLessThanOrderByChatLastMessageAtDesc(
+    findByUserAndDeletedFalseAndChatIdLessThanOrderByChatLastMessageAtDesc(
             User user,
             Long chatId,
             Pageable pageable

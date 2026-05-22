@@ -29,59 +29,54 @@ public class CommentController {
     @PostMapping("/post/{postId}")
     public ResponseEntity<CommentResponse> addComment(
             @PathVariable Long postId,
-            @Valid @RequestBody CreateCommentRequest request) {
+            @Valid @RequestBody CreateCommentRequest request
+    ) {
 
         logger.info(
-                "Add comment request received | postId: {}",
+                "API request received | addComment | postId: {}",
                 postId
-        );
-
-        CommentResponse response =
-                commentService.addComment(postId, request);
-
-        logger.info(
-                "Comment added successfully | commentId: {}",
-                response.getId()
         );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        commentService.addComment(
+                                postId,
+                                request
+                        )
+                );
     }
 
     @PutMapping("/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long commentId,
-            @Valid @RequestBody CreateCommentRequest request) {
+            @Valid @RequestBody CreateCommentRequest request
+    ) {
 
         logger.info(
-                "Update comment request received | commentId: {}",
+                "API request received | updateComment | commentId: {}",
                 commentId
         );
 
-        CommentResponse response =
-                commentService.updateComment(commentId, request);
-
-        logger.info(
-                "Comment updated successfully | commentId: {}",
-                response.getId()
+        return ResponseEntity.ok(
+                commentService.updateComment(
+                        commentId,
+                        request
+                )
         );
-
-        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<String> deleteComment(@PathVariable Long commentId) {
+    public ResponseEntity<String> deleteComment(
+            @PathVariable Long commentId
+    ) {
 
         logger.info(
-                "Delete comment request received | commentId: {}",
+                "API request received | deleteComment | commentId: {}",
                 commentId
         );
 
-        commentService.softDeleteComment(commentId);
-
-        logger.info(
-                "Comment deleted successfully | commentId: {}",
+        commentService.softDeleteComment(
                 commentId
         );
 
@@ -96,7 +91,7 @@ public class CommentController {
     ) {
 
         logger.info(
-                "Restore request API called | commentId: {}",
+                "API request received | requestRestoreComment | commentId: {}",
                 commentId
         );
 
@@ -110,7 +105,7 @@ public class CommentController {
     }
 
     @GetMapping("/post/{postId}")
-    public  ResponseEntity<CursorPageResponse<CommentResponse>>
+    public ResponseEntity<CursorPageResponse<CommentResponse>>
     getPostComments(
 
             @PathVariable Long postId,
@@ -118,30 +113,27 @@ public class CommentController {
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
             int size
     ) {
 
         logger.info(
-                "Get comments request | postId: {} | cursor: {} | size: {}",
+                "API request received | getPostComments | postId: {} | cursor: {} | size: {}",
                 postId,
                 cursor,
                 size
         );
 
-        CursorPageResponse<CommentResponse> response =
+        return ResponseEntity.ok(
                 commentService.getPostComments(
                         postId,
                         cursor,
                         size
-                );
-
-        logger.info(
-                "Comments fetched successfully | count: {}",
-                response.getCurrentPageData()
+                )
         );
-
-        return ResponseEntity.ok(response);
     }
 
 }

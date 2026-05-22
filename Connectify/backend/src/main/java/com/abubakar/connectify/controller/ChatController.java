@@ -37,7 +37,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Create chat API called | receiverId: {}",
+                "Create chat API request received | receiverId: {}",
                 receiverId
         );
 
@@ -64,7 +64,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Get my chats API called | cursor: {}, size: {}",
+                "Get chats API request received | cursor: {} | size: {}",
                 cursor,
                 size
         );
@@ -102,7 +102,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Send message API called | chatId: {}",
+                "Send message API request received | chatId: {}",
                 chatId
         );
 
@@ -135,7 +135,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Get messages API called | chatId: {}, cursor: {}, size: {}",
+                "Get messages API request received | chatId: {} | cursor: {} | size: {}",
                 chatId,
                 cursor,
                 size
@@ -161,7 +161,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Mark messages as seen API called | chatId: {}",
+                "Mark messages as seen API request received | chatId: {}",
                 chatId
         );
 
@@ -185,7 +185,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Edit message API called | messageId: {}",
+                "Edit message API request received | messageId: {}",
                 messageId
         );
 
@@ -208,7 +208,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Delete message for me API called | messageId: {}",
+                "Delete message for current user API request received | messageId: {}",
                 messageId
         );
 
@@ -227,7 +227,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Delete message for everyone API called | messageId: {}",
+                "Delete message for everyone API request received | messageId: {}",
                 messageId
         );
 
@@ -238,13 +238,30 @@ public class ChatController {
         );
     }
 
+    @DeleteMapping("/{chatId}/me")
+    public ResponseEntity<String> deleteChatForMe(
+            @PathVariable Long chatId
+    ) {
+
+        logger.info(
+                "Delete chat for current user API request received | chatId: {}",
+                chatId
+        );
+
+        chatService.deleteChatForMe(chatId);
+
+        return ResponseEntity.ok(
+                "Chat deleted successfully"
+        );
+    }
+
     @PostMapping("/messages/{messageId}/restore-request")
     public ResponseEntity<String> requestRestoreMessage(
             @PathVariable Long messageId
     ) {
 
         logger.info(
-                "Restore message request API called | messageId: {}",
+                "Restore message request API received | messageId: {}",
                 messageId
         );
 
@@ -263,7 +280,7 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Restore chat request API called | chatId: {}",
+                "Restore chat request API received | chatId: {}",
                 chatId
         );
 

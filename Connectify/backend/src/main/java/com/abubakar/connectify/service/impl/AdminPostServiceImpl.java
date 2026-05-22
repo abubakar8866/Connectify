@@ -7,6 +7,7 @@ import com.abubakar.connectify.entity.Media;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
@@ -65,6 +66,7 @@ public class AdminPostServiceImpl
             String hashtag,
             Boolean reportedOnly,
             Boolean restoreRequested,
+            Boolean deleted,
             Long cursor,
             int size
     ) {
@@ -73,7 +75,16 @@ public class AdminPostServiceImpl
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Searching posts with cursor pagination"
+                "Admin post search requested | adminId: {} | keyword: {} | username: {} | hashtag: {} | reportedOnly: {} | restoreRequested: {} | deleted: {} | cursor: {} | size: {}",
+                admin.getId(),
+                keyword,
+                username,
+                hashtag,
+                reportedOnly,
+                restoreRequested,
+                deleted,
+                cursor,
+                size
         );
 
         Pageable pageable =
@@ -93,11 +104,13 @@ public class AdminPostServiceImpl
                                 PostSpecification.hashtag(hashtag)
                         )
                         .and(
-                                PostSpecification.cursor(cursor)
-                        ).and(
                                 PostSpecification.restoreRequested(
                                         restoreRequested
                                 )
+                        ).and(
+                                 PostSpecification.deleted(deleted)
+                        ).and(
+                                PostSpecification.cursor(cursor)
                         );
 
         if (Boolean.TRUE.equals(reportedOnly)) {
@@ -113,6 +126,11 @@ public class AdminPostServiceImpl
                         specification,
                         pageable
                 ).getContent();
+
+        logger.info(
+                "Post search completed | resultCount: {}",
+                posts.size()
+        );
 
         return CursorPaginationUtil.buildResponse(
                 posts,
@@ -131,17 +149,12 @@ public class AdminPostServiceImpl
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Admin permanently deleting post | postId: {}",
+                "Permanent post deletion requested | adminId: {} | postId: {}",
+                admin.getId(),
                 postId
         );
 
-        Post post =
-                postRepository.findById(postId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Post not found with id: " + postId
-                                )
-                        );
+        Post post = this.getPostById(postId);
 
         // DELETE MEDIA FILES FROM STORAGE
         for (Media media : post.getMediaList()) {
@@ -151,6 +164,12 @@ public class AdminPostServiceImpl
                     "posts"
             );
         }
+
+        logger.debug(
+                "Deleting {} media files from storage | postId: {}",
+                post.getMediaList().size(),
+                postId
+        );
 
         // HARD DELETE FROM DATABASE
         postRepository.delete(post);
@@ -165,7 +184,8 @@ public class AdminPostServiceImpl
         );
 
         logger.info(
-                "Post permanently deleted successfully"
+                "Post permanently deleted successfully | postId: {}",
+                postId
         );
     }
 
@@ -178,17 +198,24 @@ public class AdminPostServiceImpl
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Admin restoring post | postId: {}",
+                "Post restore requested by admin | adminId: {} | postId: {}",
+                admin.getId(),
                 postId
         );
 
-        Post post =
-                postRepository.findById(postId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Post not found"
-                                )
-                        );
+        Post post = this.getPostById(postId);
+
+        if (!post.getDeleted()) {
+
+            logger.warn(
+                    "Post is already active"
+            );
+
+            throw new OperationFailException(
+                    "Post is already active"
+            );
+
+        }
 
         post.setDeleted(false);
 
@@ -200,17 +227,91 @@ public class AdminPostServiceImpl
                 post.getUser().getId(),
                 this.authUtil.getCurrentUser().getId(),
                 "Post restored successfully by Admin.",
-                NotificationType.POST_REMOVED,
+                NotificationType.POST_RESTORED,
                 post.getId(),
                 null
         );
 
         logger.info(
-                "Post restored successfully"
+                "Post restored successfully | postId: {}",
+                postId
         );
     }
 
-    // ================= MAP RESPONSE =================
+    @Override
+    public void rejectRestoreRequest(
+            Long postId
+    ) {
+
+        User admin = authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        logger.info(
+                "Restore rejection requested | adminId: {} | postId: {}",
+                admin.getId(),
+                postId
+        );
+
+        Post post = this.getPostById(postId);
+
+        if (!post.getDeleted()) {
+
+            logger.warn(
+                    "Reject restore failed | postId: {} | reason: Post is not deleted",
+                    postId
+            );
+
+            throw new OperationFailException(
+                    "Post is not deleted."
+            );
+        }
+
+        if (!post.getRestoreRequested()) {
+
+            logger.warn(
+                    "Restore request not found"
+            );
+
+            throw new OperationFailException(
+                    "Restore request not found"
+            );
+        }
+
+        post.setRestoreRequested(false);
+
+        postRepository.save(post);
+
+        notificationService.createNotification(
+                post.getUser().getId(),
+                admin.getId(),
+                "Your post restore request was rejected by admin.",
+                NotificationType.POST_RESTORE_REJECTED,
+                post.getId(),
+                null
+        );
+
+        logger.info(
+                "Restore request rejected successfully | postId: {}",
+                postId
+        );
+    }
+
+    // ================= Helper Method =================
+
+    private Post getPostById(Long postId){
+
+        return postRepository.findById(postId)
+                .orElseThrow(() -> {
+                        logger.warn("Post not found with id: {}", postId);
+                        return new ResourceNotFound(
+                                "Post not found with id: " + postId
+                        );
+                    }
+                );
+
+    }
+
     private AdminPostResponse mapToResponse(
             Post post
     ) {

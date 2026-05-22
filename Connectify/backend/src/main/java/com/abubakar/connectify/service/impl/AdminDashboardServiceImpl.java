@@ -58,7 +58,10 @@ public class AdminDashboardServiceImpl
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
-        logger.info("Fetching admin dashboard analytics");
+        logger.info(
+                "Fetching admin dashboard analytics | adminId: {}",
+                admin.getId()
+        );
 
         // ================= USERS =================
 
@@ -78,8 +81,12 @@ public class AdminDashboardServiceImpl
                         LocalDateTime.now().minusDays(1)
                 );
 
-        logger.info(
-                "User analytics fetched successfully"
+        logger.debug(
+                "User analytics fetched | totalUsers: {} | activeUsers: {} | bannedUsers: {} | newUsersToday: {}",
+                totalUsers,
+                activeUsers,
+                bannedUsers,
+                newUsersToday
         );
 
         // ================= POSTS =================
@@ -95,8 +102,11 @@ public class AdminDashboardServiceImpl
         Long deletedPosts =
                 postRepository.countByDeletedTrue();
 
-        logger.info(
-                "Post analytics fetched successfully"
+        logger.debug(
+                "Post analytics fetched | totalPosts: {} | postsCreatedToday: {} | deletedPosts: {}",
+                totalPosts,
+                postsCreatedToday,
+                deletedPosts
         );
 
         // ================= ENGAGEMENT =================
@@ -107,8 +117,10 @@ public class AdminDashboardServiceImpl
         Long totalComments =
                 commentRepository.countByDeletedFalse();
 
-        logger.info(
-                "Engagement analytics fetched successfully"
+        logger.debug(
+                "Engagement analytics fetched | totalLikes: {} | totalComments: {}",
+                totalLikes,
+                totalComments
         );
 
         // ================= CHAT ANALYTICS =================
@@ -128,7 +140,12 @@ public class AdminDashboardServiceImpl
                                 startOfDay
                         );
 
-        logger.info("Chat analytics fetched successfully");
+        logger.debug(
+                "Chat analytics fetched | totalChats: {} | activeChats: {} | messagesToday: {}",
+                totalChats,
+                activeChats,
+                messagesToday
+        );
 
         // ================= MOST ACTIVE USERS =================
 
@@ -139,8 +156,14 @@ public class AdminDashboardServiceImpl
                         .map(this::mapToUserSummary)
                         .toList();
 
+        logger.debug(
+                "Most active users fetched | resultSize: {}",
+                mostActiveUsers.size()
+        );
+
         logger.info(
-                "Most active users fetched successfully"
+                "Admin dashboard analytics fetched successfully | adminId: {}",
+                admin.getId()
         );
 
         // ================= FINAL RESPONSE =================

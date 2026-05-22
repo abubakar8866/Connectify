@@ -50,7 +50,12 @@ public class AdminCommentController {
     ) {
 
         logger.info(
-                "Admin get comments request"
+                "API request received | getComments | keyword: {} | reportedOnly: {} | restoreRequested: {} | cursor: {} | size: {}",
+                keyword,
+                reportedOnly,
+                restoreRequested,
+                cursor,
+                size
         );
 
         return ResponseEntity.ok(
@@ -73,7 +78,7 @@ public class AdminCommentController {
     ) {
 
         logger.info(
-                "Restore comment request | commentId: {}",
+                "API request received | restoreComment | commentId: {}",
                 commentId
         );
 
@@ -95,7 +100,7 @@ public class AdminCommentController {
     ) {
 
         logger.info(
-                "Permanent delete request | commentId: {}",
+                "API request received | permanentlyDeleteComment | commentId: {}",
                 commentId
         );
 

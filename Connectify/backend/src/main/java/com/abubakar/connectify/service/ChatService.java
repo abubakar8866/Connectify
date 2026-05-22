@@ -39,6 +39,8 @@ public interface ChatService {
 
     void deleteMessageForEveryone(Long messageId);
 
+    void deleteChatForMe(Long chatId);
+
     // ================= RESTORE REQUESTS =================
 
     void requestRestoreMessage(

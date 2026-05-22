@@ -46,12 +46,30 @@ public interface UserRepository extends
         SELECT DISTINCT r.reportedUser
         FROM Report r
         WHERE r.reportedUser IS NOT NULL
+        ORDER BY r.reportedUser.id DESC
     """)
-    Page<User> findReportedUsers(Pageable pageable);
+    List<User> findReportedUsers(
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT DISTINCT r.reportedUser
+        FROM Report r
+        WHERE r.reportedUser IS NOT NULL
+        AND r.reportedUser.id < :cursor
+        ORDER BY r.reportedUser.id DESC
+    """)
+    List<User> findReportedUsersByCursor(
+            Long cursor,
+            Pageable pageable
+    );
 
     @Query("""
         SELECT u
         FROM User u
+        WHERE u.deleted = false
+        AND u.isActive = true
+        AND u.accountStatus <> com.abubakar.connectify.enums.AccountStatus.BANNED
         ORDER BY
             (u.followersCount + u.followingCount) DESC
     """)
@@ -68,18 +86,6 @@ public interface UserRepository extends
     findByIdNotInAndDeletedFalseAndIsActiveTrueAndAccountStatusNotAndIdLessThanOrderByFollowersCountDesc(
             List<Long> excludedIds,
             AccountStatus status,
-            Long cursor,
-            Pageable pageable
-    );
-
-    @Query("""
-        SELECT DISTINCT r.reportedUser
-        FROM Report r
-        WHERE r.reportedUser IS NOT NULL
-        AND r.reportedUser.id < :cursor
-        ORDER BY r.reportedUser.id DESC
-    """)
-    List<User> findReportedUsersByCursor(
             Long cursor,
             Pageable pageable
     );

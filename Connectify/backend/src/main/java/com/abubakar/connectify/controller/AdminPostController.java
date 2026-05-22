@@ -44,6 +44,9 @@ public class AdminPostController {
             Boolean restoreRequested,
 
             @RequestParam(required = false)
+            Boolean deleted,
+
+            @RequestParam(required = false)
             Long cursor,
 
             @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
@@ -52,7 +55,15 @@ public class AdminPostController {
     ) {
 
         logger.info(
-                "Admin post search request"
+                "Admin post search API initiated | keyword: {} | username: {} | hashtag: {} | reportedOnly: {} | restoreRequested: {} | deleted: {} | cursor: {} | size: {}",
+                keyword,
+                username,
+                hashtag,
+                reportedOnly,
+                restoreRequested,
+                deleted,
+                cursor,
+                size
         );
 
         return ResponseEntity.ok(
@@ -62,6 +73,7 @@ public class AdminPostController {
                         hashtag,
                         reportedOnly,
                         restoreRequested,
+                        deleted,
                         cursor,
                         size
                 )
@@ -95,7 +107,8 @@ public class AdminPostController {
     ) {
 
         logger.info(
-                "Admin restore post API called"
+                "Admin restore post API called | postId: {}",
+                postId
         );
 
         adminPostService.restorePost(
@@ -104,6 +117,26 @@ public class AdminPostController {
 
         return ResponseEntity.ok(
                 "Post restored successfully"
+        );
+    }
+
+    @PutMapping("/{postId}/restore/reject")
+    public ResponseEntity<String>
+    rejectRestoreRequest(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin reject restore request API called | postId: {}",
+                postId
+        );
+
+        adminPostService.rejectRestoreRequest(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Restore request rejected successfully"
         );
     }
 

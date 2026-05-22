@@ -37,15 +37,12 @@ public class PostController {
             List<MultipartFile> files
     ) {
 
-        logger.info("Create post API called");
+        logger.info(
+                "Create post API initiated"
+        );
 
         PostResponse response =
                 postService.createPost(request, files);
-
-        logger.info(
-                "Post created successfully with id: {}",
-                response.getId()
-        );
 
         return ResponseEntity.ok(response);
     }
@@ -59,11 +56,12 @@ public class PostController {
             List<MultipartFile> files
     ) {
 
-        logger.info("Update post API called for postId: {}",postId);
+        logger.info(
+                "Update post API called | postId: {}",
+                postId
+        );
 
         PostResponse response =postService.updatePost(postId,request,files);
-
-        logger.info("Post updated successfully with id: {}",postId);
 
         return ResponseEntity.ok(response);
     }
@@ -75,7 +73,8 @@ public class PostController {
     ) {
 
         logger.info(
-                "Get single post API called"
+                "Get single post API called | postId: {}",
+                postId
         );
 
         return ResponseEntity.ok(
@@ -102,7 +101,10 @@ public class PostController {
     ) {
 
         logger.info(
-                "Get user posts API called"
+                "Get user posts API called | userId: {} | cursor: {} | size: {}",
+                userId,
+                cursor,
+                size
         );
 
         return ResponseEntity.ok(
@@ -151,11 +153,12 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId) {
 
-        logger.info("Delete post API called for postId: {}",postId);
+        logger.info(
+                "Soft delete post API called | postId: {}",
+                postId
+        );
 
         postService.softDeletePost(postId);
-
-        logger.info("Post deleted successfully with id: {}",postId);
 
         return ResponseEntity.ok("Post deleted successfully");
     }
@@ -168,7 +171,8 @@ public class PostController {
     ) {
 
         logger.info(
-                "Restore request API called"
+                "Restore post request API called | postId: {}",
+                postId
         );
 
         postService.requestRestorePost(

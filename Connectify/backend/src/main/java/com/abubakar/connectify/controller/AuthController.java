@@ -38,7 +38,7 @@ public class AuthController {
     ) {
 
         logger.info(
-                "Register request received for: {}",
+                "Register Api initiated for : {}",
                 request.getEmail()
         );
 
@@ -58,7 +58,7 @@ public class AuthController {
     ) {
 
         logger.info(
-                "Login request received for: {}",
+                "Login Api initiated for: {}",
                 request.getEmail()
         );
 
@@ -72,7 +72,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser() {
 
-        logger.info("Fetching current authenticated user");
+        logger.info("Fetching Current User Api initiated.");
 
         UserResponse response =
                 authService.getCurrentUser();
@@ -89,7 +89,7 @@ public class AuthController {
             @RequestPart(value = "file", required = false) MultipartFile file
     ) {
 
-        logger.info("Combined profile update request for userId: {}",userId);
+        logger.info("Profile Api initiated for userId: {}",userId);
 
         UserResponse response =authService.updateProfile(userId,request,file);
 
@@ -103,7 +103,7 @@ public class AuthController {
     ) {
 
         logger.info(
-                "Forgot password request for: {}",
+                "Forgot password api initiated for: {}",
                 request.getEmail()
         );
 
@@ -124,7 +124,7 @@ public class AuthController {
             @Valid @RequestBody ResetPasswordRequest request
     ) {
 
-        logger.info("Reset password request received");
+        logger.info("Reset password Api initiated");
 
         authService.resetPassword(
                 token,
@@ -164,7 +164,7 @@ public class AuthController {
     public ResponseEntity<String> sendEmailVerification() {
 
         logger.info(
-                "Send verification email request received"
+                "Send verification email api initiated"
         );
 
         authService.sendEmailVerification();
@@ -181,7 +181,7 @@ public class AuthController {
     ) {
 
         logger.info(
-                "Verify email request received"
+                "Verify email api initiated"
         );
 
         authService.verifyEmail(token);
@@ -196,7 +196,7 @@ public class AuthController {
     public ResponseEntity<?> deactivateMyAccount() {
 
         logger.info(
-                "Deactivate account request received"
+                "Deactivate account api initiated"
         );
 
         authService.deactivateMyAccount();
@@ -215,7 +215,7 @@ public class AuthController {
     public ResponseEntity<?> requestAccountRestore() {
 
         logger.info(
-                "Account restore request received"
+                "Account restore api initiated"
         );
 
         authService.requestAccountRestore();
@@ -236,7 +236,7 @@ public class AuthController {
     ) {
 
         logger.info(
-                "Unban appeal request received"
+                "Unban appeal api initiated"
         );
 
         authService.requestUnbanAppeal(

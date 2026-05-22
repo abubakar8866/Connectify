@@ -27,18 +27,12 @@ public class AdminDashboardController {
     getDashboardData() {
 
         logger.info(
-                "Admin dashboard request received"
+                "Admin dashboard API called"
         );
 
-        AdminDashboardResponse response =
-                adminDashboardService
-                        .getDashboardData();
-
-        logger.info(
-                "Admin dashboard data fetched successfully"
+        return ResponseEntity.ok(
+                adminDashboardService.getDashboardData()
         );
-
-        return ResponseEntity.ok(response);
     }
 
 }

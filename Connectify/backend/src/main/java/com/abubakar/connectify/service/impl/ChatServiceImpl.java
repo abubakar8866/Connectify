@@ -70,6 +70,8 @@ public class ChatServiceImpl implements ChatService {
     private static final Logger logger =
             LoggerFactory.getLogger(ChatServiceImpl.class);
 
+    private static final long ONLINE_THRESHOLD_MINUTES = 2;
+
     // ================= CREATE CHAT =================
     @Override
     public ChatResponse createChat(
@@ -84,12 +86,22 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Create chat request received | currentUserId: {} | targetUserId: {}",
+                currentUser.getId(),
+                userId
+        );
+
         updateUserLastSeen(currentUser);
 
         User otherUser =
                 validateUserAccess.getValidUser(userId);
 
         if (currentUser.getId().equals(otherUser.getId())) {
+
+            logger.warn(
+                    "You cannot chat with yourself"
+            );
 
             throw new OperationFailException(
                     "You cannot chat with yourself"
@@ -105,8 +117,10 @@ public class ChatServiceImpl implements ChatService {
         if (existingChat != null) {
 
             logger.info(
-                    "Existing chat found | chatId: {}",
-                    existingChat.getId()
+                    "Existing private chat found | chatId: {} | currentUserId: {} | targetUserId: {}",
+                    existingChat.getId(),
+                    currentUser.getId(),
+                    otherUser.getId()
             );
 
             return mapToChatResponse(
@@ -147,8 +161,10 @@ public class ChatServiceImpl implements ChatService {
         chatParticipantRepository.save(otherParticipant);
 
         logger.info(
-                "Chat created successfully | chatId: {}",
-                savedChat.getId()
+                "Private chat created successfully | chatId: {} | participantOneId: {} | participantTwoId: {}",
+                savedChat.getId(),
+                currentUser.getId(),
+                otherUser.getId()
         );
 
         return mapToChatResponse(
@@ -172,6 +188,13 @@ public class ChatServiceImpl implements ChatService {
 
         User currentUser =
                 authUtil.getCurrentUser();
+
+        logger.info(
+                "Send message request received | chatId: {} | senderId: {} | messageType: {}",
+                chatId,
+                currentUser.getId(),
+                request.getMessageType()
+        );
 
         Chat chat =
                 getActiveChatById(chatId);
@@ -197,6 +220,10 @@ public class ChatServiceImpl implements ChatService {
 
             if (mediaFile == null || mediaFile.isEmpty()) {
 
+                logger.warn(
+                        "Media file is required"
+                );
+
                 throw new OperationFailException(
                         "Media file is required"
                 );
@@ -209,6 +236,22 @@ public class ChatServiceImpl implements ChatService {
                             null,
                             "messages"
                     );
+
+            // VALIDATE MEDIA UPLOAD
+            if (mediaUrl == null || mediaUrl.isBlank()) {
+
+                logger.error(
+                        "Media upload failed | chatId: {} | senderId: {} | messageType: {}",
+                        chatId,
+                        currentUser.getId(),
+                        messageType
+                );
+
+                throw new OperationFailException(
+                        "Media upload failed"
+                );
+            }
+
         }
 
         // TEXT MESSAGE
@@ -217,6 +260,10 @@ public class ChatServiceImpl implements ChatService {
                         &&
                         (content == null || content.isBlank())
         ) {
+
+            logger.warn(
+                    "Text message content required"
+            );
 
             throw new OperationFailException(
                     "Text message content required"
@@ -239,8 +286,26 @@ public class ChatServiceImpl implements ChatService {
                             .equals(chat.getId())
             ) {
 
+                logger.error(
+                        "Reply message does not belong to this chat"
+                );
+
                 throw new OperationFailException(
                         "Reply message does not belong to this chat"
+                );
+            }
+
+            // DELETED MESSAGE CHECK
+            if (Boolean.TRUE.equals(
+                    replyMessage.getDeletedForEveryone()
+            )) {
+
+                logger.error(
+                        "Cannot reply to deleted message"
+                );
+
+                throw new OperationFailException(
+                        "Cannot reply to deleted message"
                 );
             }
         }
@@ -282,12 +347,21 @@ public class ChatServiceImpl implements ChatService {
 
         chatRepository.save(chat);
 
-        // UPDATE UNREAD COUNT
+        // UPDATE PARTICIPANTS
         List<ChatParticipant> participants =
                 chatParticipantRepository.findByChat(chat);
 
         for (ChatParticipant participant : participants) {
 
+            // RESTORE CHAT IF USER HAD DELETED IT
+            if (Boolean.TRUE.equals(participant.getDeleted())) {
+
+                participant.setDeleted(false);
+
+                participant.setDeletedAt(null);
+            }
+
+            // INCREMENT UNREAD COUNT FOR RECEIVER
             if (
                     !participant.getUser()
                             .getId()
@@ -296,10 +370,6 @@ public class ChatServiceImpl implements ChatService {
 
                 participant.setUnreadCount(
                         participant.getUnreadCount() + 1
-                );
-
-                chatParticipantRepository.save(
-                        participant
                 );
 
                 notificationService.createNotification(
@@ -314,11 +384,17 @@ public class ChatServiceImpl implements ChatService {
                         null
                 );
             }
+
         }
 
+        chatParticipantRepository.saveAll(participants);
+
         logger.info(
-                "Message sent successfully | messageId: {}",
-                savedMessage.getId()
+                "Message sent successfully | messageId: {} | chatId: {} | senderId: {} | messageType: {}",
+                savedMessage.getId(),
+                chatId,
+                currentUser.getId(),
+                messageType
         );
 
         return mapToMessageResponse(
@@ -329,6 +405,7 @@ public class ChatServiceImpl implements ChatService {
 
     // ================= GET MY CHATS =================
     @Override
+    @Transactional(readOnly = true)
     public CursorPageResponse<ChatResponse> getMyChats(
             Long cursor,
             int size
@@ -338,6 +415,13 @@ public class ChatServiceImpl implements ChatService {
 
         User currentUser =
                 authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching chats for user | userId: {} | cursor: {} | size: {}",
+                currentUser.getId(),
+                cursor,
+                size
+        );
 
         updateUserLastSeen(currentUser);
 
@@ -350,7 +434,7 @@ public class ChatServiceImpl implements ChatService {
 
             participants =
                     chatParticipantRepository
-                            .findByUserOrderByChatLastMessageAtDesc(
+                            .findByUserAndDeletedFalseOrderByChatLastMessageAtDesc(
                                     currentUser,
                                     pageable
                             );
@@ -359,12 +443,18 @@ public class ChatServiceImpl implements ChatService {
 
             participants =
                     chatParticipantRepository
-                            .findByUserAndChatIdLessThanOrderByChatLastMessageAtDesc(
+                            .findByUserAndDeletedFalseAndChatIdLessThanOrderByChatLastMessageAtDesc(
                                     currentUser,
                                     cursor,
                                     pageable
                             );
         }
+
+        logger.debug(
+                "Chats fetched successfully | userId: {} | totalChats: {}",
+                currentUser.getId(),
+                participants.size()
+        );
 
         return CursorPaginationUtil.buildResponse(
                 participants,
@@ -381,6 +471,7 @@ public class ChatServiceImpl implements ChatService {
 
     // ================= GET CHAT MESSAGES =================
     @Override
+    @Transactional(readOnly = true)
     public CursorPageResponse<MessageResponse> getMessages(
             Long chatId,
             Long cursor,
@@ -394,6 +485,14 @@ public class ChatServiceImpl implements ChatService {
 
         User currentUser =
                 authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching chat messages | chatId: {} | userId: {} | cursor: {} | size: {}",
+                chatId,
+                currentUser.getId(),
+                cursor,
+                size
+        );
 
         updateUserLastSeen(currentUser);
 
@@ -432,6 +531,12 @@ public class ChatServiceImpl implements ChatService {
                             );
         }
 
+        logger.debug(
+                "Messages fetched successfully | chatId: {} | fetchedCount: {}",
+                chatId,
+                messages.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 messages,
                 size,
@@ -457,6 +562,12 @@ public class ChatServiceImpl implements ChatService {
 
         User currentUser =
                 authUtil.getCurrentUser();
+
+        logger.info(
+                "Mark messages as seen request received | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
+        );
 
         updateUserLastSeen(currentUser);
 
@@ -507,7 +618,10 @@ public class ChatServiceImpl implements ChatService {
         chatParticipantRepository.save(participant);
 
         logger.info(
-                "Messages marked as seen successfully"
+                "Messages marked as seen successfully | chatId: {} | userId: {} | updatedMessages: {}",
+                chatId,
+                currentUser.getId(),
+                unseenMessages.size()
         );
     }
 
@@ -526,6 +640,12 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Edit message request received | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
+        );
+
         Message message =
                 getActiveMessageById(messageId);
 
@@ -535,6 +655,10 @@ public class ChatServiceImpl implements ChatService {
                         .equals(currentUser.getId())
         ) {
 
+            logger.error(
+                    "You can edit only your own messages"
+            );
+
             throw new OperationFailException(
                     "You can edit only your own messages"
             );
@@ -542,8 +666,25 @@ public class ChatServiceImpl implements ChatService {
 
         if (message.getMessageType() != MessageType.TEXT) {
 
+            logger.error(
+                    "Only text messages can be edited"
+            );
+
             throw new OperationFailException(
                     "Only text messages can be edited"
+            );
+        }
+
+        if (Boolean.TRUE.equals(
+                message.getDeletedForEveryone()
+        )) {
+
+            logger.error(
+                    "Deleted message cannot be edited"
+            );
+
+            throw new OperationFailException(
+                    "Deleted message cannot be edited"
             );
         }
 
@@ -559,8 +700,9 @@ public class ChatServiceImpl implements ChatService {
                 messageRepository.save(message);
 
         logger.info(
-                "Message edited successfully | messageId: {}",
-                messageId
+                "Message edited successfully | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
         );
 
         return mapToMessageResponse(
@@ -583,6 +725,12 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Delete message for self request received | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
+        );
+
         Message message =
                 getActiveMessageById(messageId);
 
@@ -602,6 +750,12 @@ public class ChatServiceImpl implements ChatService {
 
         if (alreadyDeleted) {
 
+            logger.warn(
+                    "Message already deleted for user | messageId: {} | userId: {}",
+                    messageId,
+                    currentUser.getId()
+            );
+
             throw new OperationFailException(
                     "Message already deleted for you"
             );
@@ -613,7 +767,9 @@ public class ChatServiceImpl implements ChatService {
         messageRepository.save(message);
 
         logger.info(
-                "Message deleted for current user successfully"
+                "Message deleted for current user successfully | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
         );
     }
 
@@ -631,6 +787,12 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Delete message for everyone request received | messageId: {} | senderId: {}",
+                messageId,
+                currentUser.getId()
+        );
+
         Message message =
                 getActiveMessageById(messageId);
 
@@ -641,8 +803,29 @@ public class ChatServiceImpl implements ChatService {
                         .equals(currentUser.getId())
         ) {
 
+            logger.warn(
+                    "You can delete only your own messages attempt | messageId: {} | requestedBy: {}",
+                    messageId,
+                    currentUser.getId()
+            );
+
             throw new OperationFailException(
                     "You can delete only your own messages"
+            );
+        }
+
+        if (Boolean.TRUE.equals(
+                message.getDeletedForEveryone()
+        )) {
+
+            logger.warn(
+                    "Unauthorized delete for everyone attempt | messageId: {} | requestedBy: {}",
+                    messageId,
+                    currentUser.getId()
+            );
+
+            throw new OperationFailException(
+                    "Message already deleted"
             );
         }
 
@@ -663,12 +846,72 @@ public class ChatServiceImpl implements ChatService {
         // CLEAR PARENT REPLY
         message.setReplyToMessage(null);
 
+        message.setIsEdited(false);
+        message.setEditedAt(null);
+
         messageRepository.save(message);
 
         logger.info(
-                "Message deleted for everyone successfully | messageId: {}",
-                messageId
+                "Message deleted for everyone successfully | messageId: {} | senderId: {}",
+                messageId,
+                currentUser.getId()
         );
+    }
+
+    // ================= DELETE CHAT FOR ME =================
+    @Override
+    public void deleteChatForMe(
+            Long chatId
+    ) {
+
+        logger.info(
+                "Deleting chat for current user | chatId: {}",
+                chatId
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Chat chat =
+                getChatById(chatId);
+
+        ChatParticipant participant =
+                chatParticipantRepository
+                        .findByChatAndUser(
+                                chat,
+                                currentUser
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Participant not found"
+                                )
+                        );
+
+        if (Boolean.TRUE.equals(
+                participant.getDeleted()
+        )) {
+
+            throw new OperationFailException(
+                    "Chat already deleted for you"
+            );
+        }
+
+        participant.setDeleted(true);
+
+        participant.setDeletedAt(
+                LocalDateTime.now()
+        );
+
+        participant.setUnreadCount(0L);
+
+        chatParticipantRepository.save(participant);
+
+        logger.info(
+                "Chat deleted for current user successfully | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
+        );
+
     }
 
     // ================= REQUEST RESTORE MESSAGE =================
@@ -685,12 +928,24 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Message restore request received | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
+        );
+
         Message message =
                 getMessageById(messageId);
 
         if (Boolean.TRUE.equals(
                 message.getDeletedForEveryone()
         )) {
+
+            logger.warn(
+                    "Deleted message restore request detected | messageId: {} | userId: {}",
+                    messageId,
+                    currentUser.getId()
+            );
 
             throw new OperationFailException(
                     "Deleted message cannot be restored"
@@ -701,6 +956,12 @@ public class ChatServiceImpl implements ChatService {
         if (!Boolean.TRUE.equals(
                 message.getDeletedByAdmin()
         )) {
+
+            logger.warn(
+                    "This message was not deleted by admin request detected | messageId: {} | role: {}",
+                    messageId,
+                    currentUser.getRole()
+            );
 
             throw new OperationFailException(
                     "This message was not deleted by admin"
@@ -714,6 +975,12 @@ public class ChatServiceImpl implements ChatService {
                         .equals(currentUser.getId())
         ) {
 
+            logger.warn(
+                    "request restore only for your own message request detected | messageId: {} | userId: {}",
+                    messageId,
+                    currentUser.getId()
+            );
+
             throw new OperationFailException(
                     "You can request restore only for your own message"
             );
@@ -723,6 +990,12 @@ public class ChatServiceImpl implements ChatService {
         if (Boolean.TRUE.equals(
                 message.getRestoreRequested()
         )) {
+
+            logger.warn(
+                    "Duplicate message restore request detected | messageId: {} | userId: {}",
+                    messageId,
+                    currentUser.getId()
+            );
 
             throw new OperationFailException(
                     "Restore request already submitted"
@@ -753,7 +1026,9 @@ public class ChatServiceImpl implements ChatService {
                 );
 
         logger.info(
-                "Message restore request submitted successfully"
+                "Message restore request submitted successfully | messageId: {} | userId: {}",
+                messageId,
+                currentUser.getId()
         );
     }
 
@@ -771,12 +1046,24 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Chat restore request received | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
+        );
+
         Chat chat = getChatById(chatId);
 
         // CHAT MUST BE ADMIN DELETED
         if (!Boolean.TRUE.equals(
                 chat.getDeletedByAdmin()
         )) {
+
+            logger.warn(
+                    "This chat was not deleted by admin request detected | chatId: {} | role: {}",
+                    chat.getId(),
+                    currentUser.getRole()
+            );
 
             throw new OperationFailException(
                     "This chat was not deleted by admin"
@@ -793,6 +1080,12 @@ public class ChatServiceImpl implements ChatService {
         if (Boolean.TRUE.equals(
                 chat.getRestoreRequested()
         )) {
+
+            logger.warn(
+                    "Restore request already submitted request detected | chatId: {} | chat status: {}",
+                    chat.getId(),
+                    chat.getRestoreRequested()
+            );
 
             throw new OperationFailException(
                     "Restore request already submitted"
@@ -823,7 +1116,9 @@ public class ChatServiceImpl implements ChatService {
                 );
 
         logger.info(
-                "Chat restore request submitted successfully"
+                "Chat restore request submitted successfully | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
         );
     }
 
@@ -953,7 +1248,7 @@ public class ChatServiceImpl implements ChatService {
 
         return user.getLastSeenAt()
                 .isAfter(
-                        LocalDateTime.now().minusMinutes(2)
+                        LocalDateTime.now().minusMinutes(ONLINE_THRESHOLD_MINUTES)
                 );
     }
 
@@ -964,14 +1259,14 @@ public class ChatServiceImpl implements ChatService {
 
         return switch (messageType) {
 
-            case TEXT ->
-                    username + " sent you a message";
-
             case IMAGE ->
                     username + " sent you an image";
 
             case VIDEO ->
                     username + " sent you a video";
+
+            default ->
+                    username + " sent you a message";
         };
     }
 

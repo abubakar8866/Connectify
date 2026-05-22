@@ -198,6 +198,11 @@ public class PostServiceImpl implements PostService {
 
         Post post = this.getPostById(postId);
 
+        logger.debug(
+                "Post fetched successfully | postId: {}",
+                postId
+        );
+
         return mapToResponse(post);
     }
 
@@ -216,10 +221,23 @@ public class PostServiceImpl implements PostService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Fetching personalized feed | userId: {} | cursor: {} | size: {}",
+                currentUser.getId(),
+                cursor,
+                size
+        );
+
         List<Follow> following =
                 followRepository.findByFollower(
                         currentUser
                 );
+
+        logger.debug(
+                "Collected following users | userId: {} | followingCount: {}",
+                currentUser.getId(),
+                following.size()
+        );
 
         List<User> users =
                 new ArrayList<>();
@@ -245,6 +263,10 @@ public class PostServiceImpl implements PostService {
         // FIRST PAGE
         if (cursor == null) {
 
+            logger.debug(
+                    "Fetching first page of feed"
+            );
+
             posts =
                     postRepository
                             .findByUserInAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
@@ -258,6 +280,11 @@ public class PostServiceImpl implements PostService {
         // NEXT PAGE
         else {
 
+            logger.debug(
+                    "Fetching next page of feed | cursor: {}",
+                    cursor
+            );
+
             posts =
                     postRepository
                             .findByUserInAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
@@ -267,6 +294,11 @@ public class PostServiceImpl implements PostService {
                                     pageable
                             );
         }
+
+        logger.info(
+                "Feed fetched successfully | resultCount: {}",
+                posts.size()
+        );
 
         return CursorPaginationUtil.buildResponse(
                 posts,
@@ -286,16 +318,20 @@ public class PostServiceImpl implements PostService {
     ) {
 
         logger.info(
-                "Fetching user posts | userId: {}",
-                userId
+                "Fetching user posts | targetUserId: {} | cursor: {} | size: {}",
+                userId,
+                cursor,
+                size
         );
 
         User user =
                 userRepository.findById(userId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "User not found"
-                                )
+                            .orElseThrow(() -> {
+                                logger.debug("User not found with Id = {}", userId);
+                                return new ResourceNotFound(
+                                        "User not found with Id = "+ userId
+                                );
+                            }
                         );
 
         Pageable pageable =
@@ -307,6 +343,10 @@ public class PostServiceImpl implements PostService {
 
         // FIRST PAGE
         if (cursor == null) {
+
+            logger.debug(
+                    "Fetching first page of user posts"
+            );
 
             posts =
                     postRepository
@@ -321,6 +361,11 @@ public class PostServiceImpl implements PostService {
         // NEXT PAGE
         else {
 
+            logger.debug(
+                    "Fetching next page of user posts | cursor: {}",
+                    cursor
+            );
+
             posts =
                     postRepository
                             .findByUserAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
@@ -330,6 +375,12 @@ public class PostServiceImpl implements PostService {
                                     pageable
                             );
         }
+
+        logger.info(
+                "User posts fetched successfully | userId: {} | resultCount: {}",
+                userId,
+                posts.size()
+        );
 
         return CursorPaginationUtil.buildResponse(
                 posts,
@@ -359,13 +410,19 @@ public class PostServiceImpl implements PostService {
                 currentUser,
                 "You are not authorized to delete this post"
         );
+        logger.debug(
+                "Ownership validation passed | userId: {} | postId: {}",
+                currentUser.getId(),
+                postId
+        );
 
         post.setDeleted(true);
 
         postRepository.save(post);
 
         logger.info(
-                "Post soft deleted successfully"
+                "Post soft deleted successfully | postId: {}",
+                postId
         );
     }
 
@@ -382,7 +439,7 @@ public class PostServiceImpl implements PostService {
         User currentUser =
                 authUtil.getCurrentUser();
 
-        Post post = this.getPostById(postId);
+        Post post = this.getPostIncludingDeleted(postId);
 
         // OWNERSHIP CHECK
         ownershipValidator.validate(
@@ -390,12 +447,34 @@ public class PostServiceImpl implements PostService {
                 currentUser,
                 "You are not authorized"
         );
+        logger.debug(
+                "Ownership validation passed for restore request | userId: {} | postId: {}",
+                currentUser.getId(),
+                postId
+        );
 
         if (!post.getDeleted()) {
+
+            logger.warn(
+                    "Restore request failed | postId: {} | reason: Post is not deleted",
+                    postId
+            );
 
             throw new OperationFailException(
                     "Post is not deleted."
             );
+        }
+
+        if (post.getRestoreRequested()) {
+
+            logger.warn(
+                    "Restore request already submitted"
+            );
+
+            throw new OperationFailException(
+                    "Restore request already submitted"
+            );
+
         }
 
         post.setRestoreRequested(true);
@@ -403,7 +482,8 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
 
         logger.info(
-                "Restore request submitted"
+                "Restore request created successfully | postId: {}",
+                postId
         );
     }
 
@@ -466,8 +546,30 @@ public class PostServiceImpl implements PostService {
 
     private Post getPostById(Long postId){
 
+        logger.debug(
+                "Fetching active post by id | postId: {}",
+                postId
+        );
+
         return postRepository
                 .findByIdAndDeletedFalse(postId)
+                .orElseThrow(() ->
+                        new ResourceNotFound(
+                                "Post not found with id: " + postId
+                        )
+                );
+    }
+
+    private Post getPostIncludingDeleted(
+            Long postId
+    ) {
+
+        logger.debug(
+                "Fetching post including deleted | postId: {}",
+                postId
+        );
+
+        return postRepository.findById(postId)
                 .orElseThrow(() ->
                         new ResourceNotFound(
                                 "Post not found with id: " + postId
@@ -514,9 +616,20 @@ public class PostServiceImpl implements PostService {
             Post post
     ) {
 
+        logger.debug(
+                "Uploading media files | postId: {}",
+                post.getId()
+        );
+
         List<Media> mediaList = new ArrayList<>();
 
         if (files == null || files.isEmpty()) {
+
+            logger.debug(
+                    "No media files provided | postId: {}",
+                    post.getId()
+            );
+
             return mediaList;
         }
 
@@ -551,6 +664,12 @@ public class PostServiceImpl implements PostService {
 
             mediaList.add(
                     mediaRepository.save(media)
+            );
+
+            logger.debug(
+                    "Media uploaded successfully | postId: {} | mediaType: {}",
+                    post.getId(),
+                    media.getType()
             );
         }
 

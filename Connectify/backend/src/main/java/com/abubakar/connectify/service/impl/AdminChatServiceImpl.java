@@ -64,6 +64,12 @@ public class AdminChatServiceImpl
             int size
     ) {
 
+        logger.info(
+                "Fetching all chats | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
         User admin = authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
@@ -89,6 +95,11 @@ public class AdminChatServiceImpl
             );
         }
 
+        logger.info(
+                "Chats fetched successfully | totalChats: {}",
+                chats.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 chats,
                 size,
@@ -104,6 +115,13 @@ public class AdminChatServiceImpl
             Long cursor,
             int size
     ) {
+
+        logger.info(
+                "Fetching chat messages | chatId: {} | cursor: {} | size: {}",
+                chatId,
+                cursor,
+                size
+        );
 
         User admin = authUtil.getCurrentUser();
 
@@ -137,6 +155,12 @@ public class AdminChatServiceImpl
                             );
         }
 
+        logger.info(
+                "Chat messages fetched successfully | chatId: {} | totalMessages: {}",
+                chatId,
+                messages.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 messages,
                 size,
@@ -152,6 +176,14 @@ public class AdminChatServiceImpl
             Long cursor,
             int size
     ) {
+
+        logger.info(
+                "Searching chats | keyword: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                request.getKeyword(),
+                request.getDeletedByAdmin(),
+                cursor,
+                size
+        );
 
         User admin = authUtil.getCurrentUser();
 
@@ -173,6 +205,11 @@ public class AdminChatServiceImpl
                         pageable
                 ).getContent();
 
+        logger.info(
+                "Chat search completed successfully | totalChats: {}",
+                chats.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 chats,
                 size,
@@ -188,6 +225,16 @@ public class AdminChatServiceImpl
             Long cursor,
             int size
     ) {
+
+        logger.info(
+                "Searching messages | keyword: {} | username: {} | messageType: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                request.getKeyword(),
+                request.getUsername(),
+                request.getMessageType(),
+                request.getDeletedByAdmin(),
+                cursor,
+                size
+        );
 
         User admin = authUtil.getCurrentUser();
 
@@ -211,6 +258,11 @@ public class AdminChatServiceImpl
                         pageable
                 ).getContent();
 
+        logger.info(
+                "Message search completed successfully | totalMessages: {}",
+                messages.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 messages,
                 size,
@@ -225,12 +277,31 @@ public class AdminChatServiceImpl
             Long chatId
     ) {
 
+        logger.info(
+                "Admin deleting chat | chatId: {}",
+                chatId
+        );
+
         User admin = authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
         Chat chat =
                 getChat(chatId);
+
+        if (Boolean.TRUE.equals(
+                chat.getDeletedByAdmin()
+        )) {
+
+            logger.warn(
+                    "Chat already deleted by admin | chatId: {}",
+                    chatId
+            );
+
+            throw new OperationFailException(
+                    "Chat already deleted by admin"
+            );
+        }
 
         chat.setDeletedByAdmin(true);
 
@@ -280,12 +351,35 @@ public class AdminChatServiceImpl
             Long messageId
     ) {
 
+        logger.info(
+                "Admin deleting message | messageId: {}",
+                messageId
+        );
+
         User admin = authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
         Message message =
                 getMessage(messageId);
+
+        if (Boolean.TRUE.equals(
+                message.getDeletedByAdmin()
+        )) {
+
+            logger.warn(
+                    "Message already deleted by admin | messageId: {}",
+                    messageId
+            );
+
+            throw new OperationFailException(
+                    "Message already deleted by admin"
+            );
+        }
+
+        // STORE ORIGINAL CONTENT
+        String originalContent =
+                message.getContent();
 
         message.setDeletedByAdmin(true);
 
@@ -315,6 +409,39 @@ public class AdminChatServiceImpl
 
         // CLEAR PARENT REPLY
         message.setReplyToMessage(null);
+
+        message.setIsEdited(false);
+        message.setEditedAt(null);
+
+        // ================= CHAT LAST MESSAGE SYNC =================
+        Chat chat =
+                message.getChat();
+
+        if (
+                chat.getLastMessage() != null
+                        &&
+                        originalContent != null
+                        &&
+                        chat.getLastMessage().equals(
+                                originalContent
+                        )
+        ) {
+
+            chat.setLastMessage(
+                    "Message removed by admin"
+            );
+
+            chat.setLastMessageAt(
+                    LocalDateTime.now()
+            );
+
+            chatRepository.save(chat);
+
+            logger.info(
+                    "Chat last message synced after admin deletion | chatId: {}",
+                    chat.getId()
+            );
+        }
 
         messageRepository.save(message);
 

@@ -22,6 +22,10 @@ public class MessageSpecification {
 
         return (root, query, cb) -> {
 
+            if (query != null && query.getResultType() != Long.class) {
+                query.distinct(true);
+            }
+
             query.orderBy(
                     cb.desc(root.get("id"))
             );

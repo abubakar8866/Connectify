@@ -6,7 +6,6 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.Gender;
-import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.service.AdminUserService;
 import com.abubakar.connectify.util.PaginationConstants;
 import jakarta.validation.Valid;
@@ -72,7 +71,18 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Get users request received | cursor: {} | size: {}",
+                "Admin user search API initiated | keyword: {} | verified: {} | emailVerified: {} | private: {} | active: {} | status: {} | city: {} | gender: {} | minFollowers: {} | restoreRequested: {} | unbanRequested: {} | cursor: {} | size: {}",
+                keyword,
+                verified,
+                emailVerified,
+                isPrivate,
+                active,
+                status,
+                city,
+                gender,
+                minFollowers,
+                restoreRequested,
+                unbanRequested,
                 cursor,
                 size
         );
@@ -104,7 +114,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Get user details request | userId: {}",
+                "Admin get user details API initiated | userId: {}",
                 userId
         );
 
@@ -125,8 +135,10 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Ban user request received | userId: {}",
-                userId
+                "Admin ban user API initiated | userId: {} | reason: {} | durationDays: {}",
+                userId,
+                request.getReason(),
+                request.getDurationInDays()
         );
 
         adminUserService.banUser(
@@ -145,7 +157,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Unban user request received | userId: {}",
+                "Admin unban user API initiated | userId: {}",
                 userId
         );
 
@@ -162,7 +174,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Delete user request received | userId: {}",
+                "Admin delete user API initiated | userId: {}",
                 userId
         );
 
@@ -185,7 +197,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Get reported users request received | cursor: {} | size: {}",
+                "Admin get reported users API initiated | cursor: {} | size: {}",
                 cursor,
                 size
         );
@@ -205,7 +217,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Restore user request received | userId: {}",
+                "Admin restore user API initiated | userId: {}",
                 userId
         );
 
@@ -217,15 +229,13 @@ public class AdminUserController {
     }
 
     // ================= REJECT RESTORE REQUEST =================
-    @PutMapping(
-            "/users/{userId}/reject-restore"
-    )
+    @PutMapping("/{userId}/reject-restore")
     public ResponseEntity<String> rejectRestoreRequest(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Reject restore request received | userId: {}",
+                "Admin reject restore request API initiated | userId: {}",
                 userId
         );
 
@@ -242,7 +252,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Approve unban request | userId: {}",
+                "Admin approve unban request API initiated | userId: {}",
                 userId
         );
 
@@ -259,7 +269,7 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Reject unban request | userId: {}",
+                "Admin reject unban request API initiated | userId: {}",
                 userId
         );
 

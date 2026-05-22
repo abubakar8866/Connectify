@@ -15,7 +15,7 @@ public interface AdminPostService {
             String hashtag,
             Boolean reportedOnly,
             Boolean restoreRequested,
-
+            Boolean deleted,
             Long cursor,
             int size
     );
@@ -30,6 +30,9 @@ public interface AdminPostService {
     void restorePost(
             Long postId
     );
+
+    //Admin reject restore post
+    void rejectRestoreRequest(Long postId);
 
 }
 
