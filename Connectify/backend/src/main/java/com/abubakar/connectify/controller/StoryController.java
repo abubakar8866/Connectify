@@ -245,6 +245,7 @@ public class StoryController {
 
     }
 
+    // ================= GET ACTIVE USER STORY =================
     @GetMapping("/user/{userId}")
     public ResponseEntity<
             CursorPageResponse<StoryResponse>
@@ -280,6 +281,7 @@ public class StoryController {
 
     }
 
+    // ================= RESTORE STORY REQUEST =================
     @PutMapping("/{storyId}/restore-request")
     public ResponseEntity<String>
     requestRestoreStory(

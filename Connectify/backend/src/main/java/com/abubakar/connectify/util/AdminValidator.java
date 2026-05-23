@@ -15,7 +15,7 @@ public class AdminValidator {
         if (user.getRole() != Role.ADMIN) {
 
             throw new UnauthorizedException(
-                    "Admin access required"
+                    "Only Admin can access."
             );
         }
     }

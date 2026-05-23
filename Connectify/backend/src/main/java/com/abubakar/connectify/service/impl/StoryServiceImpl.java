@@ -10,7 +10,6 @@ import com.abubakar.connectify.entity.StoryReaction;
 import com.abubakar.connectify.entity.StoryReply;
 import com.abubakar.connectify.entity.StoryView;
 import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
@@ -685,6 +684,7 @@ public class StoryServiceImpl implements StoryService {
         );
     }
 
+    // ================= GET Active User STORY =================
     @Override
     @Transactional(readOnly = true)
     public CursorPageResponse<StoryResponse>
