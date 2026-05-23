@@ -2,6 +2,7 @@ package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.request.CreatePostRequest;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
+import com.abubakar.connectify.dto.response.PostCountResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.service.PostService;
 
@@ -145,6 +146,28 @@ public class PostController {
         logger.info(
                 "Feed fetched successfully"
         );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // ================= POST COUNT =================
+    @GetMapping("/count")
+    public ResponseEntity<PostCountResponse>
+    getPostCount(
+
+            @RequestParam(required = false)
+            Long userId
+    ) {
+
+        logger.info(
+                "Post count API called | userId: {}",
+                userId
+        );
+
+        PostCountResponse response =
+                postService.getPostCount(
+                        userId
+                );
 
         return ResponseEntity.ok(response);
     }

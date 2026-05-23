@@ -3,6 +3,7 @@ package com.abubakar.connectify.service;
 import java.util.List;
 
 import com.abubakar.connectify.dto.response.CursorPageResponse;
+import com.abubakar.connectify.dto.response.PostCountResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,6 +42,11 @@ public interface PostService {
             Long userId,
             Long cursor,
             int size
+    );
+
+    // ================= GET POSTS COUNT=================
+    PostCountResponse getPostCount(
+            Long userId
     );
 
     // ================= SOFT DELETE POST =================

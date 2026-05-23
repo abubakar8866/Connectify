@@ -1,6 +1,7 @@
 package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.response.CursorCountResponse;
+import com.abubakar.connectify.dto.response.FollowCountResponse;
 import com.abubakar.connectify.dto.response.FollowResponse;
 import com.abubakar.connectify.dto.response.UserPreviewResponse;
 import com.abubakar.connectify.service.FollowService;
@@ -29,18 +30,12 @@ public class FollowController {
             @PathVariable Long userId) {
 
         logger.info(
-                "Toggle follow request received | targetUserId: {}",
+                "Toggle follow API called | targetUserId: {}",
                 userId
         );
 
         FollowResponse response =
                 followService.toggleFollow(userId);
-
-        logger.info(
-                "Toggle follow completed successfully | targetUserId: {} | following: {}",
-                userId,
-                response.getFollowing()
-        );
 
         return ResponseEntity.ok(response);
     }
@@ -80,14 +75,8 @@ public class FollowController {
                         size
                 );
 
-        logger.info(
-                "Followers fetched successfully | userId: {}",
-                userId
-        );
-
         return ResponseEntity.ok(response);
     }
-
 
     // GET FOLLOWING
     @GetMapping("/{userId}/following")
@@ -124,10 +113,26 @@ public class FollowController {
                         size
                 );
 
+        return ResponseEntity.ok(response);
+    }
+
+    // ================= FOLLOW COUNTS =================
+    @GetMapping("/counts")
+    public ResponseEntity<FollowCountResponse>
+    getFollowCounts(
+            @RequestParam(required = false)
+            Long userId
+    ) {
+
         logger.info(
-                "Following fetched successfully | userId: {}",
+                "Follow count API called | userId: {}",
                 userId
         );
+
+        FollowCountResponse response =
+                followService.getFollowCounts(
+                        userId
+                );
 
         return ResponseEntity.ok(response);
     }

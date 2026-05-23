@@ -35,5 +35,16 @@ public interface StoryService {
             int size
     );
 
+    CursorPageResponse<StoryResponse>
+    getUserActiveStories(
+            Long userId,
+            Long cursor,
+            int size
+    );
+
+    void requestRestoreStory(
+            Long storyId
+    );
+
 }
 

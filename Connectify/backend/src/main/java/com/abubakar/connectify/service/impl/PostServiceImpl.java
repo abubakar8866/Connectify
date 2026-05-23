@@ -2,6 +2,7 @@ package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.CreatePostRequest;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
+import com.abubakar.connectify.dto.response.PostCountResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.AccountStatus;
@@ -62,6 +63,9 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private OwnershipValidator ownershipValidator;
+
+    @Autowired
+    private ValidateUserAccess validateUserAccess;
 
     private static final Logger logger =
             LoggerFactory.getLogger(PostServiceImpl.class);
@@ -388,6 +392,68 @@ public class PostServiceImpl implements PostService {
                 Post::getId,
                 this::mapToResponse
         );
+    }
+
+    // ================= GET POST COUNT =================
+    @Override
+    @Transactional(readOnly = true)
+    public PostCountResponse getPostCount(
+            Long userId
+    ) {
+
+        logger.info(
+                "Fetching post count | requestedUserId: {}",
+                userId
+        );
+
+        User targetUser;
+
+        // CURRENT USER
+        if (userId == null) {
+
+            targetUser =
+                    authUtil.getCurrentUser();
+
+            logger.info(
+                    "Fetching post count for current user | userId: {}",
+                    targetUser.getId()
+            );
+
+        }
+
+        // TARGET USER
+        else {
+
+            targetUser =
+                    validateUserAccess.getValidUser(
+                            userId
+                    );
+
+            logger.info(
+                    "Fetching post count for target user | userId: {}",
+                    targetUser.getId()
+            );
+        }
+
+        Long postCount =
+                postRepository.countByUserAndDeletedFalse(
+                        targetUser
+                );
+
+        logger.info(
+                """
+                Post count fetched successfully
+                | userId: {}
+                | postCount: {}
+                """,
+                targetUser.getId(),
+                postCount
+        );
+
+        return PostCountResponse.builder()
+                .userId(targetUser.getId())
+                .postCount(postCount)
+                .build();
     }
 
     @Override

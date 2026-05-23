@@ -96,5 +96,6 @@ public interface PostRepository extends JpaRepository<Post, Long>,
             User user
     );
 
+    Long countByUserAndDeletedFalse(User targetUser);
 }
 

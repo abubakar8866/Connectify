@@ -30,6 +30,10 @@ public class Story extends BaseEntity {
 
     private Boolean isActive = true;
 
+    private Boolean deleted = false;
+
+    private Boolean restoreRequested = false;
+
     private Long viewCount = 0L;
 
     private Long reactionCount = 0L;

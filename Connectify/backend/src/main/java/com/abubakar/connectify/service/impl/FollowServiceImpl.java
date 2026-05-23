@@ -4,10 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.abubakar.connectify.dto.response.CursorCountResponse;
-import com.abubakar.connectify.dto.response.CursorPageResponse;
-import com.abubakar.connectify.dto.response.FollowResponse;
-import com.abubakar.connectify.dto.response.UserPreviewResponse;
+import com.abubakar.connectify.dto.response.*;
 import com.abubakar.connectify.entity.Follow;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
@@ -69,7 +66,7 @@ public class FollowServiceImpl implements FollowService {
         if (Objects.equals(currentUser.getId(), targetUser.getId())) {
 
             logger.warn(
-                    "User attempted to follow himself | userId: {}",
+                    "User attempted self follow | userId: {}",
                     currentUser.getId()
             );
 
@@ -84,10 +81,7 @@ public class FollowServiceImpl implements FollowService {
                         targetUser
                 );
 
-        // =========================================
         // UNFOLLOW
-        // =========================================
-
         if (existingFollow.isPresent()) {
 
             logger.info(
@@ -105,7 +99,10 @@ public class FollowServiceImpl implements FollowService {
             updateVerificationBadge(targetUser);
 
             currentUser.setFollowingCount(
-                    currentUser.getFollowingCount() - 1
+                    Math.max(
+                            0,
+                            currentUser.getFollowingCount() - 1
+                    )
             );
 
             userRepository.save(targetUser);
@@ -124,10 +121,7 @@ public class FollowServiceImpl implements FollowService {
                     .build();
         }
 
-        // =========================================
         // FOLLOW
-        // =========================================
-
         Follow follow = Follow.builder()
                 .follower(currentUser)
                 .following(targetUser)
@@ -139,11 +133,11 @@ public class FollowServiceImpl implements FollowService {
                 targetUser.getFollowersCount() + 1
         );
 
-        updateVerificationBadge(targetUser);
-
         currentUser.setFollowingCount(
                 currentUser.getFollowingCount() + 1
         );
+
+        updateVerificationBadge(targetUser);
 
         userRepository.save(targetUser);
         userRepository.save(currentUser);
@@ -159,9 +153,15 @@ public class FollowServiceImpl implements FollowService {
         );
 
         logger.info(
-                "User followed successfully | followerId: {} | followingId: {}",
+                """
+                User unfollowed successfully
+                | followerId: {}
+                | followingId: {}
+                | followersCount: {}
+                """,
                 currentUser.getId(),
-                targetUser.getId()
+                targetUser.getId(),
+                targetUser.getFollowersCount()
         );
 
         return FollowResponse.builder()
@@ -180,8 +180,15 @@ public class FollowServiceImpl implements FollowService {
     )  {
 
         logger.info(
-                "Fetching followers list | userId: {}",
-                userId
+                """
+                Fetching followers
+                | userId: {}
+                | cursor: {}
+                | size: {}
+                """,
+                userId,
+                cursor,
+                size
         );
 
         User targetUser = this.validateUserAccess.getValidUser(userId);
@@ -214,7 +221,12 @@ public class FollowServiceImpl implements FollowService {
         }
 
         logger.info(
-                "Total followers fetched: {}",
+                """
+                Followers fetched successfully
+                | userId: {}
+                | resultSize: {}
+                """,
+                userId,
                 followers.size()
         );
 
@@ -242,11 +254,8 @@ public class FollowServiceImpl implements FollowService {
     @Override
     public CursorCountResponse<UserPreviewResponse>
     getFollowing(
-
             Long userId,
-
             Long cursor,
-
             int size
     ) {
 
@@ -296,7 +305,12 @@ public class FollowServiceImpl implements FollowService {
         }
 
         logger.info(
-                "Following fetched successfully | count: {}",
+                """
+                Following fetched successfully
+                | userId: {}
+                | resultSize: {}
+                """,
+                userId,
                 following.size()
         );
 
@@ -316,6 +330,72 @@ public class FollowServiceImpl implements FollowService {
                 .page(page)
                 .totalCount(targetUser.getFollowingCount())
                 .build();
+    }
+
+    // ================= GET FOLLOW COUNTS =================
+    @Override
+    public FollowCountResponse getFollowCounts(
+            Long userId
+    ) {
+
+        logger.info(
+                "Fetching follow counts | requestedUserId: {}",
+                userId
+        );
+
+        User targetUser;
+
+        // CURRENT USER
+        if (userId == null) {
+
+            targetUser =
+                    authUtil.getCurrentUser();
+
+            logger.info(
+                    "Fetching follow counts for current user | userId: {}",
+                    targetUser.getId()
+            );
+
+        }
+
+        // TARGET USER
+        else {
+
+            targetUser =
+                    validateUserAccess.getValidUser(
+                            userId
+                    );
+
+            logger.info(
+                    "Fetching follow counts for target user | userId: {}",
+                    targetUser.getId()
+            );
+        }
+
+        FollowCountResponse response =
+                FollowCountResponse.builder()
+                        .userId(targetUser.getId())
+                        .followersCount(
+                                targetUser.getFollowersCount()
+                        )
+                        .followingCount(
+                                targetUser.getFollowingCount()
+                        )
+                        .build();
+
+        logger.info(
+                """
+                Follow counts fetched successfully
+                | userId: {}
+                | followersCount: {}
+                | followingCount: {}
+                """,
+                targetUser.getId(),
+                targetUser.getFollowersCount(),
+                targetUser.getFollowingCount()
+        );
+
+        return response;
     }
 
     // PRIVATE METHODS

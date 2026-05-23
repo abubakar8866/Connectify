@@ -13,12 +13,12 @@ import java.util.List;
 public interface StoryRepository
         extends JpaRepository<Story, Long> {
 
-    List<Story> findByExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+    List<Story> findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
             LocalDateTime now,
             Pageable pageable
     );
 
-    List<Story> findByExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+    List<Story> findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
             LocalDateTime now,
             Long cursor,
             Pageable pageable
@@ -28,13 +28,16 @@ public interface StoryRepository
             LocalDateTime now
     );
 
-    List<Story> findByUserAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+    // USER ACTIVE STORIES
+    List<Story>
+    findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
             User user,
             LocalDateTime now,
             Pageable pageable
     );
 
-    List<Story> findByUserAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+    List<Story>
+    findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
             User user,
             LocalDateTime now,
             Long cursor,

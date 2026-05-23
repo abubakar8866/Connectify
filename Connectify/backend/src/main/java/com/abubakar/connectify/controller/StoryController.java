@@ -39,15 +39,13 @@ public class StoryController {
             MultipartFile file
     ) {
 
-        logger.info("Create story request received");
+        logger.info(
+                "Create story Api request received | fileName: {}",
+                file.getOriginalFilename()
+        );
 
         StoryResponse response =
                 storyService.createStory(file);
-
-        logger.info(
-                "Story created successfully | storyId: {}",
-                response.getId()
-        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -65,18 +63,17 @@ public class StoryController {
             int size
     ) {
 
-        logger.info("Get active stories request received");
+        logger.info(
+                "Get active stories api request received | cursor: {} | size: {}",
+                cursor,
+                size
+        );
 
         CursorPageResponse<StoryResponse> responses =
                 storyService.getActiveStories(
                         cursor,
                         size
                 );
-
-        logger.info(
-                "Stories fetched successfully | totalStories: {}",
-                responses.getCurrentPageData()
-        );
 
         return ResponseEntity.ok(responses);
     }
@@ -88,7 +85,7 @@ public class StoryController {
     ) {
 
         logger.info(
-                "View story request received | storyId: {}",
+                "View story api request received | storyId: {}",
                 storyId
         );
 
@@ -112,7 +109,7 @@ public class StoryController {
     ) {
 
         logger.info(
-                "React story request received | storyId: {}",
+                "React story api request received | storyId: {}",
                 storyId
         );
 
@@ -139,7 +136,7 @@ public class StoryController {
     ) {
 
         logger.info(
-                "Reply story request received | storyId: {}",
+                "Reply story api request received | storyId: {}",
                 storyId
         );
 
@@ -165,7 +162,7 @@ public class StoryController {
     ) {
 
         logger.info(
-                "Delete story request received | storyId: {}",
+                "Delete story api request received | storyId: {}",
                 storyId
         );
 
@@ -195,8 +192,10 @@ public class StoryController {
     ) {
 
         logger.info(
-                "Get story viewers request received | storyId: {}",
-                storyId
+                "Get story viewers request received | storyId: {} | cursor: {} | size: {}",
+                storyId,
+                cursor,
+                size
         );
 
         CursorPageResponse<UserResponse> viewers =
@@ -230,11 +229,74 @@ public class StoryController {
             int size
     ) {
 
-        return ResponseEntity.ok(
+        logger.info(
+                "Get my stories request received | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        CursorPageResponse<StoryResponse> response =
                 storyService.getMyStories(
                         cursor,
                         size
-                )
+                );
+
+        return ResponseEntity.ok(response);
+
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<
+            CursorPageResponse<StoryResponse>
+            > getUserActiveStories(
+
+            @PathVariable Long userId,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        logger.info(
+                "Get user active stories request received | userId: {} | cursor: {} | size: {}",
+                userId,
+                cursor,
+                size
+        );
+
+        CursorPageResponse<StoryResponse> response =
+                storyService.getUserActiveStories(
+                        userId,
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(response);
+
+    }
+
+    @PutMapping("/{storyId}/restore-request")
+    public ResponseEntity<String>
+    requestRestoreStory(
+            @PathVariable Long storyId
+    ) {
+
+        logger.info(
+                "Restore story request received | storyId: {}",
+                storyId
+        );
+
+        storyService.requestRestoreStory(
+                storyId
+        );
+
+        return ResponseEntity.ok(
+                "Story restore request submitted successfully"
         );
     }
 
