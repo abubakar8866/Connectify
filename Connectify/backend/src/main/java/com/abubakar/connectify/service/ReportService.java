@@ -30,5 +30,10 @@ public interface ReportService {
             CreateReportRequest request
     );
 
+    ReportResponse reportStory(
+            Long storyId,
+            CreateReportRequest request
+    );
+
 }
 

@@ -39,6 +39,11 @@ public interface ReportRepository
 
     List<Report> findByCommentIsNotNull();
 
+    Optional<Report> findByReportedByAndStory(
+            User reportedBy,
+            Story story
+    );
+
     @Query("""
         SELECT DISTINCT r.comment
         FROM Report r

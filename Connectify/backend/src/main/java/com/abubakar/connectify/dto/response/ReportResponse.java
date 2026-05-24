@@ -26,6 +26,8 @@ public class ReportResponse {
 
     private Long messageId;
 
+    private Long storyId;
+
     private ReportReason reason;
 
     private String description;

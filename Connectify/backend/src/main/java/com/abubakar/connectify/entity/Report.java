@@ -56,5 +56,9 @@ public class Report extends BaseEntity {
     @JoinColumn(name = "message_id")
     private Message message;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "story_id")
+    private Story story;
+
 }
 

@@ -31,7 +31,7 @@ public class ReportController {
     ) {
 
         logger.info(
-                "Report post request received | postId: {}",
+                "Report post API called | postId: {}",
                 postId
         );
 
@@ -53,7 +53,7 @@ public class ReportController {
     ) {
 
         logger.info(
-                "Report comment request received | commentId: {}",
+                "Report comment API called | commentId: {}",
                 commentId
         );
 
@@ -75,7 +75,7 @@ public class ReportController {
     ) {
 
         logger.info(
-                "Report user request received | userId: {}",
+                "Report user API called | userId: {}",
                 userId
         );
 
@@ -97,7 +97,7 @@ public class ReportController {
     ) {
 
         logger.info(
-                "Report chat request received | chatId: {}",
+                "Report chat API called | chatId: {}",
                 chatId
         );
 
@@ -119,7 +119,7 @@ public class ReportController {
     ) {
 
         logger.info(
-                "Report message request received | messageId: {}",
+                "Report message API called | messageId: {}",
                 messageId
         );
 
@@ -132,6 +132,31 @@ public class ReportController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/stories/{storyId}")
+    public ResponseEntity<ReportResponse>
+    reportStory(
+            @PathVariable Long storyId,
+
+            @Valid
+            @RequestBody
+            CreateReportRequest request
+    ) {
+
+        logger.info(
+                "Report story API called | storyId: {}",
+                storyId
+        );
+
+        ReportResponse response =
+                reportService.reportStory(
+                        storyId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+
     }
 
 }

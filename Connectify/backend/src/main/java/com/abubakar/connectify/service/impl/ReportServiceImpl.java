@@ -53,6 +53,9 @@ public class ReportServiceImpl implements ReportService {
     private MessageRepository messageRepository;
 
     @Autowired
+    private StoryRepository storyRepository;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -74,15 +77,32 @@ public class ReportServiceImpl implements ReportService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
+        logger.info(
+                "Reporting post | postId: {} | reporterId: {}",
+                postId,
+                currentUser.getId()
+        );
+
         Post post = postRepository.findById(postId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Post not found"
-                        )
-                );
+                .orElseThrow(() -> {
+
+                    logger.warn(
+                            "Report failed | post not found | postId: {}",
+                            postId
+                    );
+
+                    return new ResourceNotFound(
+                            "Post not found with id = "+postId
+                    );
+                });
 
         // DELETED POST VALIDATION
         if (Boolean.TRUE.equals(post.getDeleted())) {
+
+            logger.warn(
+                    "Report failed | deleted post | postId: {}",
+                    postId
+            );
 
             throw new OperationFailException(
                     "Deleted post cannot be reported"
@@ -93,14 +113,54 @@ public class ReportServiceImpl implements ReportService {
         if (post.getUser().getAccountStatus()
                 == AccountStatus.BANNED) {
 
+            logger.warn(
+                    "Report failed | banned post owner | postId: {} | ownerId: {}",
+                    postId,
+                    post.getUser().getId()
+            );
+
             throw new OperationFailException(
-                    "This post is unavailable"
+                    "This post owner is banned"
+            );
+        }
+
+        // DELETED OWNER VALIDATION
+        if (Boolean.TRUE.equals(post.getUser().getDeleted())) {
+
+            logger.warn(
+                    "Report failed | deleted post owner | postId: {} | ownerId: {}",
+                    postId,
+                    post.getUser().getId()
+            );
+
+            throw new OperationFailException(
+                    "This post owner is deleted"
+            );
+        }
+
+        // ACTIVE OWNER VALIDATION
+        if (Boolean.FALSE.equals(post.getUser().getIsActive())) {
+
+            logger.warn(
+                    "Report failed | inactive post owner | postId: {} | ownerId: {}",
+                    postId,
+                    post.getUser().getId()
+            );
+
+            throw new OperationFailException(
+                    "This post owner is not active"
             );
         }
 
         // SELF REPORT VALIDATION
         if (post.getUser().getId()
                 .equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Self report blocked | reporterId: {} | postId: {}",
+                    currentUser.getId(),
+                    postId
+            );
 
             throw new OperationFailException(
                     "You cannot report your own post"
@@ -117,6 +177,12 @@ public class ReportServiceImpl implements ReportService {
                         .isPresent();
 
         if (alreadyReported) {
+
+            logger.warn(
+                    "Duplicate post report blocked | reporterId: {} | postId: {}",
+                    currentUser.getId(),
+                    postId
+            );
 
             throw new OperationFailException(
                     "You already reported this post"
@@ -139,7 +205,7 @@ public class ReportServiceImpl implements ReportService {
                 currentUser.getId(),                   // sender
                 currentUser.getUname() +
                         " reported your post",
-                NotificationType.REPORT,
+                NotificationType.POST_REPORTED,
                 post.getId(),
                 null
         );
@@ -154,14 +220,16 @@ public class ReportServiceImpl implements ReportService {
                         currentUser.getId(),
                         currentUser.getUname() +
                                 " reported a post",
-                        NotificationType.REPORT,
+                        NotificationType.POST_REPORTED,
                         post.getId(),
                         null
                 )
         );
 
         logger.info(
-                "Post reported successfully"
+                "Post reported successfully | postId: {} | reporterId: {}",
+                postId,
+                currentUser.getId()
         );
 
         return mapToResponse(report);
@@ -180,16 +248,33 @@ public class ReportServiceImpl implements ReportService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
+        logger.info(
+                "Reporting comment | commentId: {} | reporterId: {}",
+                commentId,
+                currentUser.getId()
+        );
+
         Comment comment =
                 commentRepository.findById(commentId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Comment not found"
-                                )
-                        );
+                        .orElseThrow(() -> {
+
+                            logger.warn(
+                                    "Report failed | comment not found | commentId: {}",
+                                    commentId
+                            );
+
+                            return new ResourceNotFound(
+                                    "Post not found with id = "+commentId
+                            );
+                        });
 
         // DELETED COMMENT VALIDATION
         if (Boolean.TRUE.equals(comment.getDeleted())) {
+
+            logger.warn(
+                    "Report failed | deleted comment | commentId: {}",
+                    commentId
+            );
 
             throw new OperationFailException(
                     "Deleted comment cannot be reported"
@@ -200,14 +285,54 @@ public class ReportServiceImpl implements ReportService {
         if (comment.getUser().getAccountStatus()
                 == AccountStatus.BANNED) {
 
+            logger.warn(
+                    "Report failed | banned comment owner | commentId: {} | ownerId: {}",
+                    commentId,
+                    comment.getUser().getId()
+            );
+
             throw new OperationFailException(
-                    "This comment is unavailable"
+                    "This comment owner is banned."
+            );
+        }
+
+        // DELETE OWNER VALIDATION
+        if (Boolean.TRUE.equals(comment.getUser().getDeleted())) {
+
+            logger.warn(
+                    "Report failed | deleted comment owner | commentId: {} | ownerId: {}",
+                    commentId,
+                    comment.getUser().getId()
+            );
+
+            throw new OperationFailException(
+                    "This comment owner is deleted."
+            );
+        }
+
+        // ACTIVE OWNER VALIDATION
+        if (Boolean.FALSE.equals(comment.getUser().getIsActive())) {
+
+            logger.warn(
+                    "Report failed | inactive comment owner | commentId: {} | ownerId: {}",
+                    commentId,
+                    comment.getUser().getId()
+            );
+
+            throw new OperationFailException(
+                    "This comment owner is not active"
             );
         }
 
         // SELF REPORT VALIDATION
         if (comment.getUser().getId()
                 .equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Self comment report blocked | reporterId: {} | commentId: {}",
+                    currentUser.getId(),
+                    commentId
+            );
 
             throw new OperationFailException(
                     "You cannot report your own comment"
@@ -223,6 +348,12 @@ public class ReportServiceImpl implements ReportService {
                         .isPresent();
 
         if (alreadyReported) {
+
+            logger.warn(
+                    "Duplicate comment report blocked | reporterId: {} | commentId: {}",
+                    currentUser.getId(),
+                    commentId
+            );
 
             throw new OperationFailException(
                     "You already reported this comment"
@@ -245,7 +376,7 @@ public class ReportServiceImpl implements ReportService {
                 currentUser.getId(),
                 currentUser.getUname() +
                         " reported your comment",
-                NotificationType.REPORT,
+                NotificationType.COMMENT_REPORTED,
                 comment.getPost().getId(),
                 comment.getId()
         );
@@ -260,14 +391,16 @@ public class ReportServiceImpl implements ReportService {
                         currentUser.getId(),
                         currentUser.getUname() +
                                 " reported a comment",
-                        NotificationType.REPORT,
+                        NotificationType.COMMENT_REPORTED,
                         comment.getPost().getId(),
                         comment.getId()
                 )
         );
 
         logger.info(
-                "Comment reported successfully"
+                "Comment reported successfully | commentId: {} | reporterId: {}",
+                commentId,
+                currentUser.getId()
         );
 
         return mapToResponse(report);
@@ -288,6 +421,24 @@ public class ReportServiceImpl implements ReportService {
 
         User user = this.validateUserAccess.getValidUser(userId);
 
+        if (user.getId().equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Duplicate user report blocked | reporterId: {} | targetUserId: {}",
+                    currentUser.getId(),
+                    userId
+            );
+
+            logger.warn(
+                    "Self report blocked | userId: {}",
+                    currentUser.getId()
+            );
+
+            throw new OperationFailException(
+                    "You cannot report yourself"
+            );
+        }
+
         boolean alreadyReported =
                 reportRepository
                         .findByReportedByAndReportedUser(
@@ -297,6 +448,12 @@ public class ReportServiceImpl implements ReportService {
                         .isPresent();
 
         if (alreadyReported) {
+
+            logger.warn(
+                    "You already reported this user | reporterId: {} | userId: {}",
+                    currentUser.getId(),
+                    userId
+            );
 
             throw new OperationFailException(
                     "You already reported this user"
@@ -319,7 +476,7 @@ public class ReportServiceImpl implements ReportService {
                 currentUser.getId(),
                 currentUser.getUname() +
                         " reported your profile",
-                NotificationType.REPORT,
+                NotificationType.USER_REPORTED,
                 null,
                 null
         );
@@ -334,14 +491,16 @@ public class ReportServiceImpl implements ReportService {
                         currentUser.getId(),
                         currentUser.getUname() +
                                 " reported a user",
-                        NotificationType.REPORT,
+                        NotificationType.USER_REPORTED,
                         null,
                         null
                 )
         );
 
         logger.info(
-                "User reported successfully"
+                "User reported successfully | targetUserId: {} | reporterId: {}",
+                userId,
+                currentUser.getId()
         );
 
         return mapToResponse(report);
@@ -356,15 +515,35 @@ public class ReportServiceImpl implements ReportService {
         User currentUser =
                 authUtil.getCurrentUser();
 
+        logger.info(
+                "Reporting chat | chatId: {} | reporterId: {}",
+                chatId,
+                currentUser.getId()
+        );
+
         Chat chat =
                 chatRepository.findById(chatId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Chat not found"
-                                )
-                        );
+                        .orElseThrow(() ->{
+
+                            logger.info(
+                                    "Reporting chat | chatId: {} | reporterId: {}",
+                                    chatId,
+                                    currentUser.getId()
+                            );
+
+                            return new ResourceNotFound(
+                                    "Chat not found"
+                            );
+
+                        });
 
         if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
+
+            logger.info(
+                    "Chat is already removed | chatId: {} | Deleted: {}",
+                    chatId,
+                    chat.getDeletedByAdmin()
+            );
 
             throw new OperationFailException(
                     "Chat already removed"
@@ -379,6 +558,12 @@ public class ReportServiceImpl implements ReportService {
                         );
 
         if (!participant) {
+
+            logger.warn(
+                    "Unauthorized chat report blocked | reporterId: {} | chatId: {}",
+                    currentUser.getId(),
+                    chatId
+            );
 
             throw new OperationFailException(
                     "You are not part of this chat"
@@ -395,6 +580,12 @@ public class ReportServiceImpl implements ReportService {
 
         if (alreadyReported) {
 
+            logger.warn(
+                    "You already reported this chat blocked | reporterId: {} | chatId: {}",
+                    currentUser.getId(),
+                    chatId
+            );
+
             throw new OperationFailException(
                     "You already reported this chat"
             );
@@ -410,6 +601,28 @@ public class ReportServiceImpl implements ReportService {
                         .build();
 
         reportRepository.save(report);
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname()
+                                + " reported a chat",
+                        NotificationType.CHAT_REPORTED,
+                        null,
+                        null
+                )
+        );
+
+        logger.info(
+                "Chat reported successfully | chatId: {} | reporterId: {}",
+                chatId,
+                currentUser.getId()
+        );
 
         return mapToResponse(report);
     }
@@ -441,6 +654,11 @@ public class ReportServiceImpl implements ReportService {
 
         if (chat == null) {
 
+            logger.warn(
+                    "Report failed | chat missing for message | messageId: {}",
+                    messageId
+            );
+
             throw new OperationFailException(
                     "Chat not found"
             );
@@ -449,8 +667,57 @@ public class ReportServiceImpl implements ReportService {
         // CHAT DELETED VALIDATION
         if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
 
+            logger.warn(
+                    "Report failed | deleted chat for message | messageId: {} | chatId: {}",
+                    messageId,
+                    chat.getId()
+            );
+
             throw new OperationFailException(
                     "Chat is unavailable"
+            );
+        }
+
+        // BANNED OWNER VALIDATION
+        if (message.getSender().getAccountStatus()
+                == AccountStatus.BANNED) {
+
+            logger.warn(
+                    "Report failed | banned message sender | messageId: {} | senderId: {}",
+                    messageId,
+                    message.getSender().getId()
+            );
+
+            throw new OperationFailException(
+                    "This message owner is banned."
+            );
+        }
+
+        // DELETE OWNER VALIDATION
+        if (Boolean.TRUE.equals(message.getSender().getDeleted())) {
+
+            logger.warn(
+                    "Report failed | deleted message sender | messageId: {} | senderId: {}",
+                    messageId,
+                    message.getSender().getId()
+            );
+
+            throw new OperationFailException(
+                    "This message owner is deleted."
+            );
+        }
+
+        // ACTIVE OWNER VALIDATION
+        if (Boolean.FALSE.equals(message.getSender().getIsActive())) {
+
+            logger.warn(
+                    "Report failed | inactive message sender | messageId: {} | senderId: {}",
+                    messageId,
+                    message.getSender().getId()
+            );
+
+            throw new OperationFailException(
+                    "This message owner is not active"
             );
         }
 
@@ -464,6 +731,12 @@ public class ReportServiceImpl implements ReportService {
 
         if (!participantExists) {
 
+            logger.warn(
+                    "Unauthorized message report blocked | reporterId: {} | messageId: {}",
+                    currentUser.getId(),
+                    messageId
+            );
+
             throw new OperationFailException(
                     "You are not part of this chat"
             );
@@ -474,6 +747,11 @@ public class ReportServiceImpl implements ReportService {
                 message.getDeletedByAdmin()
         )) {
 
+            logger.warn(
+                    "Report failed | deleted message | messageId: {}",
+                    messageId
+            );
+
             throw new OperationFailException(
                     "Message already removed"
             );
@@ -482,6 +760,12 @@ public class ReportServiceImpl implements ReportService {
         // SELF REPORT VALIDATION
         if (message.getSender().getId()
                 .equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Self message report blocked | reporterId: {} | messageId: {}",
+                    currentUser.getId(),
+                    messageId
+            );
 
             throw new OperationFailException(
                     "You cannot report your own message"
@@ -498,6 +782,12 @@ public class ReportServiceImpl implements ReportService {
                         .isPresent();
 
         if (alreadyReported) {
+
+            logger.warn(
+                    "Duplicate message report blocked | reporterId: {} | messageId: {}",
+                    currentUser.getId(),
+                    messageId
+            );
 
             throw new OperationFailException(
                     "You already reported this message"
@@ -520,7 +810,7 @@ public class ReportServiceImpl implements ReportService {
                 currentUser.getId(),
                 currentUser.getUname() +
                 " reported your message",
-                NotificationType.REPORT,
+                NotificationType.MESSAGE_REPORTED,
                 null,
                 null
         );
@@ -535,14 +825,181 @@ public class ReportServiceImpl implements ReportService {
                         currentUser.getId(),
                         currentUser.getUname() +
                         " reported a message",
-                        NotificationType.REPORT,
+                        NotificationType.MESSAGE_REPORTED,
                         null,
                         null
                 )
         );
 
         logger.info(
-                "Message reported successfully"
+                "Message reported successfully | messageId: {} | reporterId: {}",
+                messageId,
+                currentUser.getId()
+        );
+
+        return mapToResponse(report);
+    }
+
+    @Override
+    public ReportResponse reportStory(
+            Long storyId,
+            CreateReportRequest request
+    ) {
+
+        logger.info(
+                "Reporting story | storyId: {}",
+                storyId
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Story story =
+                storyRepository.findById(storyId)
+                        .orElseThrow(() ->
+                                new ResourceNotFound(
+                                        "Story not found"
+                                )
+                        );
+
+        // DELETED STORY VALIDATION
+        if (Boolean.TRUE.equals(
+                story.getDeleted()
+        )) {
+
+            logger.warn(
+                    "Report failed | deleted story | storyId: {}",
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "Deleted story cannot be reported"
+            );
+        }
+
+        // STORY OWNER BANNED
+        if (story.getUser().getAccountStatus()
+                == AccountStatus.BANNED) {
+
+            logger.warn(
+                    "Report failed | banned story owner | storyId: {}",
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "This story is unavailable"
+            );
+        }
+
+        // STORY OWNER DELETED
+        if (Boolean.TRUE.equals(
+                story.getUser().getDeleted()
+        )) {
+
+            logger.warn(
+                    "Report failed | deleted story owner | storyId: {}",
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "This story is unavailable"
+            );
+        }
+
+        // STORY OWNER INACTIVE
+        if (Boolean.FALSE.equals(
+                story.getUser().getIsActive()
+        )) {
+
+            logger.warn(
+                    "Report failed | inactive story owner | storyId: {}",
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "This story is unavailable"
+            );
+        }
+
+        // SELF REPORT VALIDATION
+        if (story.getUser().getId()
+                .equals(currentUser.getId())) {
+
+            logger.warn(
+                    "Self report blocked | userId: {} | storyId: {}",
+                    currentUser.getId(),
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "You cannot report your own story"
+            );
+        }
+
+        // DUPLICATE REPORT VALIDATION
+        boolean alreadyReported =
+                reportRepository
+                        .findByReportedByAndStory(
+                                currentUser,
+                                story
+                        )
+                        .isPresent();
+
+        if (alreadyReported) {
+
+            logger.warn(
+                    "Duplicate story report blocked | userId: {} | storyId: {}",
+                    currentUser.getId(),
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this story"
+            );
+        }
+
+        Report report =
+                Report.builder()
+                        .reportedBy(currentUser)
+                        .story(story)
+                        .reason(request.getReason())
+                        .description(request.getDescription())
+                        .status(ReportStatus.PENDING)
+                        .build();
+
+        reportRepository.save(report);
+
+        // NOTIFY STORY OWNER
+        notificationService.createNotification(
+                story.getUser().getId(),
+                currentUser.getId(),
+                currentUser.getUname()
+                        + " reported your story",
+                NotificationType.STORY_REPORTED,
+                null,
+                null
+        );
+
+        // NOTIFY ADMIN
+        userRepository.findByRole(
+                Role.ADMIN
+        ).ifPresent(admin ->
+
+                notificationService.createNotification(
+                        admin.getId(),
+                        currentUser.getId(),
+                        currentUser.getUname()
+                                + " reported a story",
+                        NotificationType.STORY_REPORTED,
+                        null,
+                        null
+                )
+        );
+
+        logger.info(
+                "Story reported successfully | storyId: {} | reporterId: {}",
+                storyId,
+                currentUser.getId()
         );
 
         return mapToResponse(report);
@@ -589,6 +1046,12 @@ public class ReportServiceImpl implements ReportService {
                 .messageId(
                         report.getMessage() != null
                                 ? report.getMessage().getId()
+                                : null
+                )
+
+                .storyId(
+                        report.getStory() != null
+                                ? report.getStory().getId()
                                 : null
                 )
 
