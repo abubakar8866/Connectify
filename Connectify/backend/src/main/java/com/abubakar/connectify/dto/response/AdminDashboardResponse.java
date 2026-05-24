@@ -37,6 +37,21 @@ public class AdminDashboardResponse {
 
     private Long messagesToday;
 
+    // STORY ANALYTICS
+    private Long totalStories;
+
+    private Long activeStories;
+
+    private Long deletedStories;
+
+    private Long expiredStories;
+
+    private Long restoreRequestsCount;
+
+    private List<StorySummaryResponse> topViewedStories;
+
+    private List<StorySummaryResponse> topReactedStories;
+
     // MOST ACTIVE USERS
     private List<UserSummaryResponse> mostActiveUsers;
 

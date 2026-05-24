@@ -4,8 +4,6 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.NotificationResponse;
 import com.abubakar.connectify.enums.NotificationType;
 
-import java.util.List;
-
 public interface NotificationService {
 
     void createNotification(

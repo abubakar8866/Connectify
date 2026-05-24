@@ -61,5 +61,29 @@ public interface StoryRepository
             Pageable pageable
     );
 
+    // ================= ANALYTICS =================
+
+    Long countByDeletedFalse();
+
+    Long countByDeletedTrue();
+
+    Long countByDeletedFalseAndIsActiveTrueAndExpiresAtAfter(
+            LocalDateTime now
+    );
+
+    Long countByExpiresAtBefore(
+            LocalDateTime now
+    );
+
+    Long countByRestoreRequestedTrue();
+
+    // TOP VIEWED STORIES
+    List<Story>
+    findTop10ByDeletedFalseOrderByViewCountDescIdDesc();
+
+    // TOP REACTED STORIES
+    List<Story>
+    findTop10ByDeletedFalseOrderByReactionCountDescIdDesc();
+
 }
 

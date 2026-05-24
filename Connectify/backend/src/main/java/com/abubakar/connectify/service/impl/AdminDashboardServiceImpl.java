@@ -1,7 +1,9 @@
 package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.response.AdminDashboardResponse;
+import com.abubakar.connectify.dto.response.StorySummaryResponse;
 import com.abubakar.connectify.dto.response.UserSummaryResponse;
+import com.abubakar.connectify.entity.Story;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.repository.*;
@@ -47,6 +49,9 @@ public class AdminDashboardServiceImpl
     private MessageRepository messageRepository;
 
     @Autowired
+    private StoryRepository storyRepository;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -64,7 +69,6 @@ public class AdminDashboardServiceImpl
         );
 
         // ================= USERS =================
-
         Long totalUsers =
                 userRepository.count();
 
@@ -90,7 +94,6 @@ public class AdminDashboardServiceImpl
         );
 
         // ================= POSTS =================
-
         Long totalPosts =
                 postRepository.count();
 
@@ -110,7 +113,6 @@ public class AdminDashboardServiceImpl
         );
 
         // ================= ENGAGEMENT =================
-
         Long totalLikes =
                 likeRepository.count();
 
@@ -124,7 +126,6 @@ public class AdminDashboardServiceImpl
         );
 
         // ================= CHAT ANALYTICS =================
-
         Long totalChats =
                 chatRepository.countByDeletedByAdminFalse();
 
@@ -145,6 +146,62 @@ public class AdminDashboardServiceImpl
                 totalChats,
                 activeChats,
                 messagesToday
+        );
+
+        // ================= STORY ANALYTICS =================
+        Long totalStories =
+                storyRepository.countByDeletedFalse();
+
+        Long deletedStories =
+                storyRepository.countByDeletedTrue();
+
+        Long activeStories =
+                storyRepository
+                        .countByDeletedFalseAndIsActiveTrueAndExpiresAtAfter(
+                                LocalDateTime.now()
+                        );
+
+        Long expiredStories =
+                storyRepository.countByExpiresAtBefore(
+                        LocalDateTime.now()
+                );
+
+        Long restoreRequestsCount =
+                storyRepository.countByRestoreRequestedTrue();
+
+        logger.debug(
+                "Story analytics fetched | totalStories: {} | activeStories: {} | deletedStories: {} | expiredStories: {} | restoreRequests: {}",
+                totalStories,
+                activeStories,
+                deletedStories,
+                expiredStories,
+                restoreRequestsCount
+        );
+
+        // ================= TOP VIEWED STORIES =================
+        List<StorySummaryResponse> topViewedStories =
+                storyRepository
+                        .findTop10ByDeletedFalseOrderByViewCountDescIdDesc()
+                        .stream()
+                        .map(this::mapToStorySummary)
+                        .toList();
+
+        logger.debug(
+                "Top viewed stories fetched | count: {}",
+                topViewedStories.size()
+        );
+
+        // ================= TOP REACTED STORIES =================
+        List<StorySummaryResponse> topReactedStories =
+                storyRepository
+                        .findTop10ByDeletedFalseOrderByReactionCountDescIdDesc()
+                        .stream()
+                        .map(this::mapToStorySummary)
+                        .toList();
+
+        logger.debug(
+                "Top reacted stories fetched | count: {}",
+                topReactedStories.size()
         );
 
         // ================= MOST ACTIVE USERS =================
@@ -190,6 +247,15 @@ public class AdminDashboardServiceImpl
                 .activeChats(activeChats)
                 .messagesToday(messagesToday)
 
+                // STORY ANALYTICS
+                .totalStories(totalStories)
+                .activeStories(activeStories)
+                .deletedStories(deletedStories)
+                .expiredStories(expiredStories)
+                .restoreRequestsCount(restoreRequestsCount)
+                .topViewedStories(topViewedStories)
+                .topReactedStories(topReactedStories)
+
                 // ACTIVE USERS
                 .mostActiveUsers(mostActiveUsers)
 
@@ -216,6 +282,30 @@ public class AdminDashboardServiceImpl
                 )
                 .postsCount(
                         (long) user.getPosts().size()
+                )
+                .build();
+    }
+
+    private StorySummaryResponse mapToStorySummary(
+            Story story
+    ) {
+
+        return StorySummaryResponse.builder()
+                .id(story.getId())
+                .username(
+                        story.getUser().getUname()
+                )
+                .mediaUrl(
+                        story.getMediaUrl()
+                )
+                .mediaType(
+                        story.getMediaType()
+                )
+                .viewCount(
+                        story.getViewCount()
+                )
+                .reactionCount(
+                        story.getReactionCount()
                 )
                 .build();
     }
