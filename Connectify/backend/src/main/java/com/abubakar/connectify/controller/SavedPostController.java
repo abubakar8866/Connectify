@@ -1,7 +1,5 @@
 package com.abubakar.connectify.controller;
 
-import java.util.List;
-
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.SavePostResponse;
@@ -31,18 +29,12 @@ public class SavedPostController {
     ) {
 
         logger.info(
-                "Toggle save post request received | postId: {}",
+                "Toggle save post request api received | postId: {}",
                 postId
         );
 
         SavePostResponse response =
                 savedPostService.toggleSavePost(postId);
-
-        logger.info(
-                "Toggle save completed | postId: {} | saved: {}",
-                postId,
-                response.getSaved()
-        );
 
         return ResponseEntity.ok(response);
     }
@@ -60,7 +52,7 @@ public class SavedPostController {
     ) {
 
         logger.info(
-                "Get saved posts request | cursor: {} | size: {}",
+                "Get saved posts request api received | cursor: {} | size: {}",
                 cursor,
                 size
         );
@@ -70,12 +62,6 @@ public class SavedPostController {
                         cursor,
                         size
                 );
-
-
-        logger.info(
-                "Saved posts fetched successfully | count: {}",
-                response.getCurrentPageData()
-        );
 
         return ResponseEntity.ok(response);
     }

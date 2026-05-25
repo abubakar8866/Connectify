@@ -23,7 +23,7 @@ public interface SavedPostRepository
 
     // ================= FIRST PAGE =================
     List<SavedPost>
-    findByUserAndPostDeletedFalseAndPostUserAccountStatusNotOrderByIdDesc(
+    findByUserAndPostDeletedFalseAndPostUserDeletedFalseAndPostUserIsActiveTrueAndPostUserAccountStatusNotOrderByIdDesc(
             User user,
             AccountStatus accountStatus,
             Pageable pageable
@@ -31,7 +31,7 @@ public interface SavedPostRepository
 
     // ================= CURSOR PAGINATION =================
     List<SavedPost>
-    findByUserAndPostDeletedFalseAndPostUserAccountStatusNotAndIdLessThanOrderByIdDesc(
+    findByUserAndPostDeletedFalseAndPostUserDeletedFalseAndPostUserIsActiveTrueAndPostUserAccountStatusNotAndIdLessThanOrderByIdDesc(
             User user,
             AccountStatus accountStatus,
             Long cursor,

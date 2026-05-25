@@ -581,7 +581,10 @@ public class PostServiceImpl implements PostService {
                 .commentCount(post.getCommentCount())
 
                 .liked(
-                        isPostLikedByCurrentUser(post)
+                        isPostLikedByCurrentUser(
+                                post,
+                                currentUser
+                        )
                 )
 
                 .mine(
@@ -592,6 +595,8 @@ public class PostServiceImpl implements PostService {
                 .createdAt(post.getCreatedAt())
 
                 .updatedAt(post.getUpdatedAt())
+
+                .savedAt(post.getCreatedAt())
 
                 .mediaUrls(
                         post.getMediaList()
@@ -742,13 +747,15 @@ public class PostServiceImpl implements PostService {
         return mediaList;
     }
 
-    private Boolean isPostLikedByCurrentUser(Post post) {
+    private Boolean isPostLikedByCurrentUser(
+            Post post,
+            User currentUser
+    ) {
 
-        User currentUser = this.authUtil.getCurrentUser();
-
-        return likeRepository
-                .findByUserAndPost(currentUser, post)
-                .isPresent();
+        return likeRepository.existsByUserAndPost(
+                currentUser,
+                post
+        );
     }
 
 }

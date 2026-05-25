@@ -34,6 +34,8 @@ public class PostResponse {
 
     private LocalDateTime createdAt;
 
+    private LocalDateTime savedAt;
+
     private LocalDateTime updatedAt;
 
     private List<String> mediaUrls;
