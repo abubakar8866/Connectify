@@ -55,7 +55,7 @@ public class PostServiceImpl implements PostService {
     private OwnershipValidator ownershipValidator;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(PostServiceImpl.class);
@@ -375,7 +375,7 @@ public class PostServiceImpl implements PostService {
                 size
         );
 
-        User user = this.validateUserAccess.getValidUser(userId);
+        User user = this.userAccessValidator.getValidUser(userId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -481,7 +481,7 @@ public class PostServiceImpl implements PostService {
         else {
 
             targetUser =
-                    validateUserAccess.getValidUser(
+                    userAccessValidator.getValidUser(
                             userId
                     );
 

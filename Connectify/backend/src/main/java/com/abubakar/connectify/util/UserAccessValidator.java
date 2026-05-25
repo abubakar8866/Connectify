@@ -11,14 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ValidateUserAccess {
+public class UserAccessValidator {
 
     @Autowired
     private UserRepository userRepository;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
-                    ValidateUserAccess.class
+                    UserAccessValidator.class
             );
 
     public User getValidUser(
@@ -45,11 +45,21 @@ public class ValidateUserAccess {
 
                         });
 
+        logger.debug(
+                "User validation successful | userId: {}",
+                userId
+        );
+
+        return user;
+    }
+
+    public void validateActiveUser(User user){
+
         if (Boolean.TRUE.equals(user.getDeleted())) {
 
             logger.warn(
                     "User validation failed | deleted account | userId: {}",
-                    userId
+                    user.getId()
             );
 
             throw new ResourceNotFound(
@@ -61,7 +71,7 @@ public class ValidateUserAccess {
 
             logger.warn(
                     "User validation failed | inactive account | userId: {}",
-                    userId
+                    user.getId()
             );
 
             throw new OperationFailException(
@@ -73,7 +83,7 @@ public class ValidateUserAccess {
 
             logger.warn(
                     "User validation failed | banned account | userId: {}",
-                    userId
+                    user.getId()
             );
 
             throw new OperationFailException(
@@ -81,12 +91,6 @@ public class ValidateUserAccess {
             );
         }
 
-        logger.debug(
-                "User validation successful | userId: {}",
-                userId
-        );
-
-        return user;
     }
 
 }

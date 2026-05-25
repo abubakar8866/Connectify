@@ -11,10 +11,7 @@ import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
 import com.abubakar.connectify.service.NotificationService;
-import com.abubakar.connectify.util.AdminValidator;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +38,9 @@ public class AdminCommentServiceImpl
 
     @Autowired
     private ReportRepository reportRepository;
+
+    @Autowired
+    private CommentAccessValidator commentAccessValidator;
 
     @Autowired
     private NotificationService notificationService;
@@ -211,20 +211,7 @@ public class AdminCommentServiceImpl
                 commentId
         );
 
-        Comment comment =
-                getCommentById(commentId);
-
-        if (!comment.getDeleted()) {
-
-            logger.warn(
-                    "Restore failed | comment already active | commentId: {}",
-                    commentId
-            );
-
-            throw new OperationFailException(
-                    "Comment already restored."
-            );
-        }
+        Comment comment = commentAccessValidator.getComment(commentId);
 
         comment.setDeleted(false);
 
@@ -282,8 +269,7 @@ public class AdminCommentServiceImpl
                 commentId
         );
 
-        Comment comment =
-                getCommentById(commentId);
+        Comment comment = commentAccessValidator.getComment(commentId);
 
         notificationService.createNotification(
 
@@ -316,29 +302,6 @@ public class AdminCommentServiceImpl
     }
 
     // ================= HELPER =================
-    private Comment getCommentById(
-            Long commentId
-    ) {
-
-        logger.debug(
-                "Fetching comment by id: {}",
-                commentId
-        );
-
-        return commentRepository.findById(commentId)
-                .orElseThrow(() -> {
-                    logger.error(
-                            "Comment not found | commentId: {}",
-                            commentId
-                    );
-                    return new ResourceNotFound(
-                            "Comment not found"
-                    );
-                }
-
-                );
-    }
-
     private AdminCommentResponse mapToResponse(
             Comment comment
     ) {

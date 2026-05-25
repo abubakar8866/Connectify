@@ -14,13 +14,11 @@ import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.ReportService;
 
 import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.ValidateUserAccess;
+import com.abubakar.connectify.util.UserAccessValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +60,7 @@ public class ReportServiceImpl implements ReportService {
     private NotificationService notificationService;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     @Override
     public ReportResponse reportPost(
@@ -419,7 +417,7 @@ public class ReportServiceImpl implements ReportService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        User user = this.validateUserAccess.getValidUser(userId);
+        User user = this.userAccessValidator.getValidUser(userId);
 
         if (user.getId().equals(currentUser.getId())) {
 

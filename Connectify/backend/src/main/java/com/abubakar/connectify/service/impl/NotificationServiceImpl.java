@@ -54,7 +54,7 @@ public class NotificationServiceImpl
     private OwnershipValidator ownershipValidator;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     // ================= CREATE NOTIFICATION =================
     @Override
@@ -84,9 +84,9 @@ public class NotificationServiceImpl
             return;
         }
 
-        User receiver = validateUserAccess.getValidUser(receiverId);
+        User receiver = userAccessValidator.getValidUser(receiverId);
 
-        User sender = validateUserAccess.getValidUser(senderId);
+        User sender = userAccessValidator.getValidUser(senderId);
 
         Notification notification =
                 Notification.builder()

@@ -17,10 +17,7 @@ import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.PostSpecification;
 
-import com.abubakar.connectify.util.AdminValidator;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +51,9 @@ public class AdminPostServiceImpl
 
     @Autowired
     private AdminValidator adminValidator;
+
+    @Autowired
+    private PostAccessValidator postAccessValidator;
 
     @Autowired
     private NotificationService notificationService;
@@ -158,7 +158,7 @@ public class AdminPostServiceImpl
                 postId
         );
 
-        Post post = this.getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         // DELETE MEDIA FILES FROM STORAGE
         for (Media media : post.getMediaList()) {
@@ -207,7 +207,7 @@ public class AdminPostServiceImpl
                 postId
         );
 
-        Post post = this.getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         if (!post.getDeleted()) {
 
@@ -266,7 +266,7 @@ public class AdminPostServiceImpl
                 postId
         );
 
-        Post post = this.getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         if (!post.getDeleted()) {
 
@@ -311,20 +311,6 @@ public class AdminPostServiceImpl
     }
 
     // ================= Helper Method =================
-
-    private Post getPostById(Long postId){
-
-        return postRepository.findById(postId)
-                .orElseThrow(() -> {
-                        logger.warn("Post not found with id: {}", postId);
-                        return new ResourceNotFound(
-                                "Post not found with id: " + postId
-                        );
-                    }
-                );
-
-    }
-
     private AdminPostResponse mapToResponse(
             Post post
     ) {

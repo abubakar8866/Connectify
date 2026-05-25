@@ -16,7 +16,7 @@ import java.util.Objects;
 public class AuthUtil {
 
     @Autowired
-    private  ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
@@ -59,7 +59,7 @@ public class AuthUtil {
                 user.getId()
         );
 
-        return this.validateUserAccess.getValidUser(user.getId());
+        return this.userAccessValidator.getValidUser(user.getId());
     }
 
 }

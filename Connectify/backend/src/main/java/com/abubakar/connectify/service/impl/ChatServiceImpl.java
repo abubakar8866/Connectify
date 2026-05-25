@@ -21,10 +21,7 @@ import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.ChatService;
 import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.NotificationService;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
-import com.abubakar.connectify.util.ValidateUserAccess;
+import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +62,13 @@ public class ChatServiceImpl implements ChatService {
     private AuthUtil authUtil;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
+
+    @Autowired
+    private ChatAccessValidator chatAccessValidator;
+
+    @Autowired
+    private MessageAccessValidator messageAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(ChatServiceImpl.class);
@@ -95,7 +98,7 @@ public class ChatServiceImpl implements ChatService {
         updateUserLastSeen(currentUser);
 
         User otherUser =
-                validateUserAccess.getValidUser(userId);
+                userAccessValidator.getValidUser(userId);
 
         if (currentUser.getId().equals(otherUser.getId())) {
 
@@ -196,8 +199,7 @@ public class ChatServiceImpl implements ChatService {
                 request.getMessageType()
         );
 
-        Chat chat =
-                getActiveChatById(chatId);
+        Chat chat = chatAccessValidator.getActiveChat(chatId);
 
         validateChatParticipant(
                 chat,
@@ -274,10 +276,8 @@ public class ChatServiceImpl implements ChatService {
 
         if (request.getReplyToMessageId() != null) {
 
-            replyMessage =
-                    getActiveMessageById(
-                            request.getReplyToMessageId()
-                    );
+            replyMessage = messageAccessValidator
+                    .getActiveMessage(request.getReplyToMessageId());
 
             // SECURITY CHECK
             if (
@@ -496,8 +496,7 @@ public class ChatServiceImpl implements ChatService {
 
         updateUserLastSeen(currentUser);
 
-        Chat chat =
-                getActiveChatById(chatId);
+        Chat chat = chatAccessValidator.getActiveChat(chatId);
 
         validateChatParticipant(
                 chat,
@@ -571,8 +570,7 @@ public class ChatServiceImpl implements ChatService {
 
         updateUserLastSeen(currentUser);
 
-        Chat chat =
-                getActiveChatById(chatId);
+        Chat chat = chatAccessValidator.getActiveChat(chatId);
 
         validateChatParticipant(
                 chat,
@@ -646,8 +644,7 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Message message =
-                getActiveMessageById(messageId);
+        Message message = messageAccessValidator.getActiveMessage(messageId);
 
         if (
                 !message.getSender()
@@ -731,8 +728,7 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Message message =
-                getActiveMessageById(messageId);
+        Message message = messageAccessValidator.getActiveMessage(messageId);
 
         validateChatParticipant(
                 message.getChat(),
@@ -793,8 +789,7 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Message message =
-                getActiveMessageById(messageId);
+        Message message = messageAccessValidator.getActiveMessage(messageId);
 
         // ONLY SENDER CAN DELETE FOR EVERYONE
         if (
@@ -872,8 +867,7 @@ public class ChatServiceImpl implements ChatService {
         User currentUser =
                 authUtil.getCurrentUser();
 
-        Chat chat =
-                getChatById(chatId);
+        Chat chat = chatAccessValidator.getChat(chatId);
 
         ChatParticipant participant =
                 chatParticipantRepository
@@ -934,8 +928,7 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Message message =
-                getMessageById(messageId);
+        Message message = messageAccessValidator.getMessage(messageId);
 
         if (Boolean.TRUE.equals(
                 message.getDeletedForEveryone()
@@ -1052,7 +1045,7 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Chat chat = getChatById(chatId);
+        Chat chat = chatAccessValidator.getChat(chatId);
 
         // CHAT MUST BE ADMIN DELETED
         if (!Boolean.TRUE.equals(
@@ -1123,77 +1116,6 @@ public class ChatServiceImpl implements ChatService {
     }
 
     // ================= PRIVATE METHODS =================
-
-    private Chat getChatById(
-            Long chatId
-    ) {
-
-        return chatRepository.findById(chatId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Chat not found"
-                        )
-                );
-    }
-
-    private Chat getActiveChatById(
-            Long chatId
-    ) {
-
-        Chat chat =
-                chatRepository.findById(chatId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Chat not found"
-                                )
-                        );
-
-        if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
-
-            throw new ResourceNotFound(
-                    "Chat not found"
-            );
-        }
-
-        return chat;
-    }
-
-    private Message getMessageById(
-            Long messageId
-    ) {
-
-        return  messageRepository.findById(messageId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Message not found with id: " + messageId
-                        )
-                );
-
-    }
-
-    private Message getActiveMessageById(
-            Long messageId
-    ) {
-
-        Message message =  messageRepository.findById(messageId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Message not found with id: " + messageId
-                        )
-                );
-
-        if (Boolean.TRUE.equals(
-                message.getChat().getDeletedByAdmin()
-        )) {
-
-            throw new ResourceNotFound(
-                    "Message not found"
-            );
-        }
-
-        return  message;
-    }
-
     private void validateChatParticipant(
             Chat chat,
             User currentUser

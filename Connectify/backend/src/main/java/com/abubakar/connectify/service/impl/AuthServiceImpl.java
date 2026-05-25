@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.abubakar.connectify.dto.request.UpdateProfileRequest;
 import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.ValidateUserAccess;
+import com.abubakar.connectify.util.UserAccessValidator;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,6 @@ import com.abubakar.connectify.enums.Role;
 import com.abubakar.connectify.exception.EmailNotFound;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceAlreadyExistsException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.security.JwtUtils;
 import com.abubakar.connectify.service.AuthService;
@@ -69,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
 	private JavaMailSender mailSender;
 
 	@Autowired
-	private ValidateUserAccess validateUserAccess;
+	private UserAccessValidator userAccessValidator;
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
@@ -174,29 +173,7 @@ public class AuthServiceImpl implements AuthService {
 			User user = (User) authentication.getPrincipal();
 
             assert user != null;
-            if (Boolean.TRUE.equals(user.getDeleted())) {
-
-				logger.warn(
-						"Login blocked - account deactivated | userId: {}",
-						user.getId()
-				);
-
-				throw new OperationFailException(
-						"Account is deactivated"
-				);
-			}
-
-			if (user.getAccountStatus() == AccountStatus.BANNED) {
-
-				logger.warn(
-						"Login blocked - account banned | userId: {}",
-						user.getId()
-				);
-
-				throw new OperationFailException(
-						"Account is banned"
-				);
-			}
+            userAccessValidator.validateActiveUser(user);
 
 			Objects.requireNonNull(user).setLastLoginAt(LocalDateTime.now());
 
@@ -258,7 +235,7 @@ public class AuthServiceImpl implements AuthService {
 				userId
 		);
 
-		User user = validateUserAccess.getValidUser(userId);
+		User user = userAccessValidator.getValidUser(userId);
 
 		User currentUser = this.authUtil.getCurrentUser();
 
@@ -377,7 +354,7 @@ public class AuthServiceImpl implements AuthService {
 						}
 				);
 
-		User validateUser = validateUserAccess.getValidUser(user.getId());
+		User validateUser = userAccessValidator.getValidUser(user.getId());
 
 		String token = UUID.randomUUID().toString();
 
@@ -447,7 +424,7 @@ public class AuthServiceImpl implements AuthService {
 			);
 		}
 
-		User validateUser = validateUserAccess.getValidUser(user.getId());
+		User validateUser = userAccessValidator.getValidUser(user.getId());
 
 		validateUser.setPassword(
 				passwordEncoder.encode(request.getPassword())
@@ -658,7 +635,7 @@ public class AuthServiceImpl implements AuthService {
 			);
 		}
 
-		User validateUser = validateUserAccess.getValidUser(user.getId());
+		User validateUser = userAccessValidator.getValidUser(user.getId());
 
 		validateUser.setIsEmailVerified(true);
 

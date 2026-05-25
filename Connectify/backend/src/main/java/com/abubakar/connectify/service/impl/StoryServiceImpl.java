@@ -74,7 +74,7 @@ public class StoryServiceImpl implements StoryService {
     private OwnershipValidator ownershipValidator;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(StoryServiceImpl.class);
@@ -232,7 +232,7 @@ public class StoryServiceImpl implements StoryService {
                 "Validating story owner account status | ownerId: {}",
                 story.getUser().getId()
         );
-        validateUserAccess.getValidUser(story.getUser().getId());
+        userAccessValidator.getValidUser(story.getUser().getId());
 
         if (story.getUser().getId()
                 .equals(currentUser.getId())) {
@@ -295,7 +295,7 @@ public class StoryServiceImpl implements StoryService {
                 "Validating story owner account before reaction | ownerId: {}",
                 story.getUser().getId()
         );
-        validateUserAccess.getValidUser(story.getUser().getId());
+        userAccessValidator.getValidUser(story.getUser().getId());
 
         if (story.getUser().getId()
                 .equals(currentUser.getId())) {
@@ -396,7 +396,7 @@ public class StoryServiceImpl implements StoryService {
                 "Validating story owner account before reply | ownerId: {}",
                 story.getUser().getId()
         );
-        validateUserAccess.getValidUser(story.getUser().getId());
+        userAccessValidator.getValidUser(story.getUser().getId());
 
         if (story.getUser().getId()
                 .equals(currentUser.getId())) {
@@ -701,7 +701,7 @@ public class StoryServiceImpl implements StoryService {
                 size
         );
 
-        User user = this.validateUserAccess.getValidUser(userId);
+        User user = this.userAccessValidator.getValidUser(userId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(size);

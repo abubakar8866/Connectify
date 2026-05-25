@@ -15,13 +15,9 @@ import com.abubakar.connectify.entity.Chat;
 import com.abubakar.connectify.entity.ChatParticipant;
 import com.abubakar.connectify.entity.Message;
 import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.ChatRepository;
 import com.abubakar.connectify.repository.MessageRepository;
-import com.abubakar.connectify.util.AdminValidator;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +49,12 @@ public class AdminChatServiceImpl
 
     @Autowired
     private AdminValidator adminValidator;
+
+    @Autowired
+    private ChatAccessValidator chatAccessValidator;
+
+    @Autowired
+    private MessageAccessValidator messageAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(AdminChatServiceImpl.class);
@@ -127,8 +129,7 @@ public class AdminChatServiceImpl
 
         adminValidator.validateAdmin(admin);
 
-        Chat chat =
-                getChat(chatId);
+        Chat chat = chatAccessValidator.getChat(chatId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(size);
@@ -286,22 +287,7 @@ public class AdminChatServiceImpl
 
         adminValidator.validateAdmin(admin);
 
-        Chat chat =
-                getChat(chatId);
-
-        if (Boolean.TRUE.equals(
-                chat.getDeletedByAdmin()
-        )) {
-
-            logger.warn(
-                    "Chat already deleted by admin | chatId: {}",
-                    chatId
-            );
-
-            throw new OperationFailException(
-                    "Chat already deleted by admin"
-            );
-        }
+        Chat chat = chatAccessValidator.getActiveChat(chatId);
 
         chat.setDeletedByAdmin(true);
 
@@ -360,22 +346,7 @@ public class AdminChatServiceImpl
 
         adminValidator.validateAdmin(admin);
 
-        Message message =
-                getMessage(messageId);
-
-        if (Boolean.TRUE.equals(
-                message.getDeletedByAdmin()
-        )) {
-
-            logger.warn(
-                    "Message already deleted by admin | messageId: {}",
-                    messageId
-            );
-
-            throw new OperationFailException(
-                    "Message already deleted by admin"
-            );
-        }
+        Message message = messageAccessValidator.getActiveMessage(messageId);
 
         // STORE ORIGINAL CONTENT
         String originalContent =
@@ -466,31 +437,6 @@ public class AdminChatServiceImpl
                 messageId
         );
 
-    }
-
-    // ================= REUSABLE METHODS =================
-    private Chat getChat(
-            Long chatId
-    ) {
-
-        return chatRepository.findById(chatId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Chat not found with id: " + chatId
-                        )
-                );
-    }
-
-    private Message getMessage(
-            Long messageId
-    ) {
-
-        return messageRepository.findById(messageId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Message not found with id: " + messageId
-                        )
-                );
     }
 
     // ================= DTO MAPPERS =================

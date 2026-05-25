@@ -17,7 +17,7 @@ import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.PaginationUtil;
-import com.abubakar.connectify.util.ValidateUserAccess;
+import com.abubakar.connectify.util.UserAccessValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class FollowServiceImpl implements FollowService {
     private NotificationService notificationService;
 
     @Autowired
-    private ValidateUserAccess validateUserAccess;
+    private UserAccessValidator userAccessValidator;
 
     // TOGGLE FOLLOW
     @Override
@@ -60,7 +60,7 @@ public class FollowServiceImpl implements FollowService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        User targetUser = this.validateUserAccess.getValidUser(userId);
+        User targetUser = this.userAccessValidator.getValidUser(userId);
 
         // SELF FOLLOW CHECK
         if (Objects.equals(currentUser.getId(), targetUser.getId())) {
@@ -191,7 +191,7 @@ public class FollowServiceImpl implements FollowService {
                 size
         );
 
-        User targetUser = this.validateUserAccess.getValidUser(userId);
+        User targetUser = this.userAccessValidator.getValidUser(userId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -271,7 +271,7 @@ public class FollowServiceImpl implements FollowService {
                 size
         );
 
-        User targetUser = this.validateUserAccess.getValidUser(userId);
+        User targetUser = this.userAccessValidator.getValidUser(userId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -362,7 +362,7 @@ public class FollowServiceImpl implements FollowService {
         else {
 
             targetUser =
-                    validateUserAccess.getValidUser(
+                    userAccessValidator.getValidUser(
                             userId
                     );
 

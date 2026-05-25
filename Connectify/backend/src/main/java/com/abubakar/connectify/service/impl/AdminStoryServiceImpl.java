@@ -6,14 +6,10 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Story;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.service.AdminStoryService;
 import com.abubakar.connectify.specification.StorySpecification;
-import com.abubakar.connectify.util.AdminValidator;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +37,9 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
     @Autowired
     private AdminValidator adminValidator;
+
+    @Autowired
+    private StoryAccessValidator storyAccessValidator;
 
     @Autowired
     private AuthUtil authUtil;
@@ -99,7 +98,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         validateAdminAccess();
 
-        Story story = getStory(storyId);
+        Story story = storyAccessValidator.getStory(storyId);
 
         logger.info(
                 "Story fetched successfully | storyId: {}",
@@ -120,7 +119,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         validateAdminAccess();
 
-        Story story = getStory(storyId);
+        Story story = storyAccessValidator.getStory(storyId);
 
         if (Boolean.TRUE.equals(story.getDeleted())) {
 
@@ -156,7 +155,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         validateAdminAccess();
 
-        Story story = getStory(storyId);
+        Story story = storyAccessValidator.getStory(storyId);
 
         if (!Boolean.TRUE.equals(story.getRestoreRequested())) {
             throw new OperationFailException(
@@ -225,7 +224,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         validateAdminAccess();
 
-        Story story = getStory(storyId);
+        Story story = storyAccessValidator.getStory(storyId);
 
         if (!Boolean.TRUE.equals(story.getRestoreRequested())) {
 
@@ -260,7 +259,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         validateAdminAccess();
 
-        Story story = getStory(storyId);
+        Story story = storyAccessValidator.getStory(storyId);
 
         if (story.getExpiresAt()
                 .isBefore(LocalDateTime.now())) {
@@ -344,22 +343,6 @@ public class AdminStoryServiceImpl implements AdminStoryService {
     }
 
     // ================= PRIVATE HELPER METHODS =================
-    private Story getStory(Long storyId) {
-
-        return storyRepository.findById(storyId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Story not found | storyId: {}",
-                            storyId
-                    );
-
-                    return new ResourceNotFound(
-                            "Story not found with id: " +
-                                    storyId
-                    );
-                });
-    }
 
     private AdminStoryResponse mapToResponse(
             Story story
