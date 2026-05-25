@@ -22,6 +22,10 @@ public class Hashtag {
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Long postCount = 0L;
+
     @ManyToMany(mappedBy = "hashtags")
     private List<Post> posts = new ArrayList<>();
 

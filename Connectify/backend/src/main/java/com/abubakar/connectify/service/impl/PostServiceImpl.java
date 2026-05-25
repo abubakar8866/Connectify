@@ -7,23 +7,16 @@ import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.MediaType;
-import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.exception.UnauthorizedException;
-import com.abubakar.connectify.exception.UserNotAuthenticatedException;
 import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.FileService;
-import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.PostService;
 import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,9 +47,6 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private AuthUtil authUtil;
@@ -95,7 +85,7 @@ public class PostServiceImpl implements PostService {
         post.setHashtags(extractedTags);
 
         logger.info(
-                "Extracted hashtags: {}",
+                "Extracted hashtags inside Create Post: {}",
                 extractedTags.stream()
                         .map(Hashtag::getName)
                         .toList()
@@ -117,7 +107,14 @@ public class PostServiceImpl implements PostService {
         post = postRepository.save(post);
 
         logger.info("Post creation completed successfully");
-        return mapToResponse(post);
+
+        Set<Long> likedPostIds = this.buildSingleLikedPostSet(post,user);
+
+        return mapToResponse(
+                post,
+                likedPostIds,
+                user
+        );
     }
 
     @Override
@@ -145,14 +142,31 @@ public class PostServiceImpl implements PostService {
         // Update Caption
         post.setCaption(request.getCaption());
 
-        // Re-extract hashtags
+        // OLD HASHTAGS
+        List<Hashtag> oldTags =
+                post.getHashtags();
+
+        // DECREMENT OLD COUNTS
+        for (Hashtag hashtag : oldTags) {
+
+            hashtag.setPostCount(
+                    Math.max(
+                            0,
+                            hashtag.getPostCount() - 1
+                    )
+            );
+
+            hashtagRepository.save(hashtag);
+        }
+
+        // NEW TAGS
         List<Hashtag> extractedTags =
                 processHashtags(request.getCaption());
 
         post.setHashtags(extractedTags);
 
         logger.info(
-                "Extracted hashtags: {}",
+                "Extracted hashtags inside Update post method: {}",
                 extractedTags.stream()
                         .map(Hashtag::getName)
                         .toList()
@@ -186,7 +200,15 @@ public class PostServiceImpl implements PostService {
 
         post = postRepository.save(post);
         logger.info("Post updated successfully with id: {}", postId);
-        return mapToResponse(post);
+
+        Set<Long> likedPostIds = this.buildSingleLikedPostSet(post,currentUser);
+
+        return mapToResponse(
+                post,
+                likedPostIds,
+                currentUser
+        );
+
     }
 
     @Override
@@ -194,6 +216,8 @@ public class PostServiceImpl implements PostService {
     public PostResponse getSinglePost(
             Long postId
     ) {
+
+        User user = this.authUtil.getCurrentUser();
 
         logger.info(
                 "Fetching single post | postId: {}",
@@ -207,7 +231,13 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
-        return mapToResponse(post);
+        Set<Long> likedPostIds = this.buildSingleLikedPostSet(post,user);
+
+        return mapToResponse(
+                post,
+                likedPostIds,
+                user
+        );
     }
 
     @Override
@@ -304,11 +334,28 @@ public class PostServiceImpl implements PostService {
                 posts.size()
         );
 
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Set<Long> likedPostIds =
+                postIds.isEmpty()
+                        ? Set.of()
+                        : likeRepository.findLikedPostIdsByUserAndPostIds(
+                        currentUser,
+                        postIds
+                );
+
         return CursorPaginationUtil.buildResponse(
                 posts,
                 size,
                 Post::getId,
-                this::mapToResponse
+                post -> mapToResponse(
+                        post,
+                        likedPostIds,
+                        currentUser
+                )
         );
     }
 
@@ -328,15 +375,7 @@ public class PostServiceImpl implements PostService {
                 size
         );
 
-        User user =
-                userRepository.findById(userId)
-                            .orElseThrow(() -> {
-                                logger.debug("User not found with Id = {}", userId);
-                                return new ResourceNotFound(
-                                        "User not found with Id = "+ userId
-                                );
-                            }
-                        );
+        User user = this.validateUserAccess.getValidUser(userId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -386,11 +425,28 @@ public class PostServiceImpl implements PostService {
                 posts.size()
         );
 
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Set<Long> likedPostIds =
+                postIds.isEmpty()
+                        ? Set.of()
+                        : likeRepository.findLikedPostIdsByUserAndPostIds(
+                        user,
+                        postIds
+                );
+
         return CursorPaginationUtil.buildResponse(
                 posts,
                 size,
                 Post::getId,
-                this::mapToResponse
+                post -> mapToResponse(
+                        post,
+                        likedPostIds,
+                        user
+                )
         );
     }
 
@@ -482,6 +538,18 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
+        for (Hashtag hashtag : post.getHashtags()) {
+
+            hashtag.setPostCount(
+                    Math.max(
+                            0,
+                            hashtag.getPostCount() - 1
+                    )
+            );
+
+            hashtagRepository.save(hashtag);
+        }
+
         post.setDeleted(true);
 
         postRepository.save(post);
@@ -554,9 +622,11 @@ public class PostServiceImpl implements PostService {
     }
 
     //private method
-    private PostResponse mapToResponse(Post post) {
-
-        User currentUser = authUtil.getCurrentUser();
+    private PostResponse mapToResponse(
+            Post post,
+            Set<Long> likedPostIds,
+            User currentUser
+    ) {
 
         return PostResponse.builder()
 
@@ -581,10 +651,7 @@ public class PostServiceImpl implements PostService {
                 .commentCount(post.getCommentCount())
 
                 .liked(
-                        isPostLikedByCurrentUser(
-                                post,
-                                currentUser
-                        )
+                        likedPostIds.contains(post.getId())
                 )
 
                 .mine(
@@ -664,13 +731,23 @@ public class PostServiceImpl implements PostService {
 
             if (existing.isPresent()) {
 
-                hashtags.add(existing.get());
+                Hashtag hashtag = existing.get();
+
+                hashtag.setPostCount(
+                        hashtag.getPostCount() + 1
+                );
+
+                hashtags.add(
+                        hashtagRepository.save(hashtag)
+                );
 
             } else {
 
                 Hashtag hashtag = new Hashtag();
 
                 hashtag.setName(tagName);
+
+                hashtag.setPostCount(1L);
 
                 hashtags.add(
                         hashtagRepository.save(hashtag)
@@ -747,7 +824,7 @@ public class PostServiceImpl implements PostService {
         return mediaList;
     }
 
-    private Boolean isPostLikedByCurrentUser(
+    private Set<Long> buildSingleLikedPostSet(
             Post post,
             User currentUser
     ) {
@@ -755,7 +832,9 @@ public class PostServiceImpl implements PostService {
         return likeRepository.existsByUserAndPost(
                 currentUser,
                 post
-        );
+        )
+                ? Set.of(post.getId())
+                : Set.of();
     }
 
 }

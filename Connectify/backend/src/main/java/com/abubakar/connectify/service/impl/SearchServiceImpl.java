@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -42,6 +43,9 @@ public class SearchServiceImpl implements SearchService {
     private FollowRepository followRepository;
 
     @Autowired
+    private LikeRepository likeRepository;
+
+    @Autowired
     private AuthUtil authUtil;
 
     private static final Logger logger =
@@ -55,8 +59,6 @@ public class SearchServiceImpl implements SearchService {
             Boolean verified,
             Boolean emailVerified,
             Boolean isPrivate,
-            Boolean active,
-            AccountStatus status,
             String city,
             Gender gender,
             Long minFollowers,
@@ -64,10 +66,20 @@ public class SearchServiceImpl implements SearchService {
             int size
     ) {
 
-        logger.info("Searching users with cursor pagination");
+        logger.info(
+                "Search users request | keyword: {} | cursor: {} | size: {}",
+                keyword,
+                cursor,
+                size
+        );
 
         User currentUser =
                 authUtil.getCurrentUser();
+
+        logger.info(
+                "Authenticated user for search | userId: {}",
+                currentUser.getId()
+        );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -92,12 +104,6 @@ public class SearchServiceImpl implements SearchService {
                                 UserSpecification.hasPrivateAccount(isPrivate)
                         )
                         .and(
-                                UserSpecification.hasActive(active)
-                        )
-                        .and(
-                                UserSpecification.hasAccountStatus(status)
-                        )
-                        .and(
                                 UserSpecification.hasCity(city)
                         )
                         .and(
@@ -113,6 +119,14 @@ public class SearchServiceImpl implements SearchService {
                         )
                         .and(
                                 UserSpecification.cursor(cursor)
+                        ).and(
+                                UserSpecification.hasDeleted(false)
+                        )
+                        .and(
+                                UserSpecification.hasActive(true)
+                        )
+                        .and(
+                                UserSpecification.hasAccountStatus(AccountStatus.ACTIVE)
                         );
 
         Page<User> users =
@@ -121,15 +135,39 @@ public class SearchServiceImpl implements SearchService {
                         pageable
                 );
 
+        List<User> userList = users.getContent();
+
+        logger.info(
+                "Users fetched successfully | count: {}",
+                userList.size()
+        );
+
+        List<Long> userIds =
+                userList.stream()
+                        .map(User::getId)
+                        .toList();
+
+        Set<Long> followingIds =
+                userIds.isEmpty()
+                        ? Set.of()
+                        : followRepository.findFollowingIds(
+                        currentUser,
+                        userIds
+                );
+
+        logger.debug(
+                "Following IDs fetched inside search User method | count: {}",
+                followingIds.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
-                users.getContent(),
+                userList,
                 size,
                 User::getId,
-                user ->
-                        mapToUserSearchResponse(
-                                user,
-                                currentUser
-                        )
+                user -> mapToUserSearchResponse(
+                        user,
+                        followingIds
+                )
         );
     }
 
@@ -140,6 +178,13 @@ public class SearchServiceImpl implements SearchService {
             Long cursor,
             int size
     ) {
+
+        logger.info(
+                "Search hashtags request | keyword: {} | cursor: {} | size: {}",
+                keyword,
+                cursor,
+                size
+        );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -168,6 +213,11 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
+        logger.info(
+                "Hashtags fetched successfully | count: {}",
+                hashtags.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 hashtags,
                 size,
@@ -182,6 +232,20 @@ public class SearchServiceImpl implements SearchService {
             Long cursor,
             int size
     ) {
+
+        logger.info(
+                "Fetching trending posts | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Authenticated user for trending posts | userId: {}",
+                currentUser.getId()
+        );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -210,11 +274,38 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
+        logger.info(
+                "Trending posts fetched successfully | count: {}",
+                posts.size()
+        );
+
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Set<Long> likedPostIds =
+                postIds.isEmpty()
+                        ? Set.of()
+                        : likeRepository.findLikedPostIdsByUserAndPostIds(
+                        currentUser,
+                        postIds
+                );
+
+        logger.debug(
+                "Liked post IDs fetched | count: {}",
+                likedPostIds.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 posts,
                 size,
                 Post::getId,
-                this::mapToPostResponse
+                post -> mapToPostResponse(
+                        post,
+                        likedPostIds,
+                        currentUser
+                )
         );
     }
 
@@ -225,23 +316,33 @@ public class SearchServiceImpl implements SearchService {
             int size
     ) {
 
+        logger.info(
+                "Fetching suggested users | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
         User currentUser =
                 authUtil.getCurrentUser();
 
-        List<Follow> following =
-                followRepository.findByFollower(currentUser);
+        logger.info(
+                "Authenticated user for suggestions | userId: {}",
+                currentUser.getId()
+        );
 
         List<Long> excludedIds =
-                new ArrayList<>();
+                new ArrayList<>(
+                        followRepository.findFollowingIdsByFollower(
+                                currentUser
+                        )
+                );
 
         excludedIds.add(currentUser.getId());
 
-        for (Follow follow : following) {
-
-            excludedIds.add(
-                    follow.getFollowing().getId()
-            );
-        }
+        logger.debug(
+                "Excluded user IDs prepared | count: {}",
+                excludedIds.size()
+        );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -260,7 +361,6 @@ public class SearchServiceImpl implements SearchService {
                                     AccountStatus.BANNED,
                                     pageable
                             );
-
         }
 
         // NEXT PAGE
@@ -276,32 +376,50 @@ public class SearchServiceImpl implements SearchService {
                             );
         }
 
+        logger.info(
+                "Suggested users fetched successfully | count: {}",
+                users.size()
+        );
+
+        List<Long> userIds =
+                users.stream()
+                        .map(User::getId)
+                        .toList();
+
+        Set<Long> followingIds =
+                userIds.isEmpty()
+                    ? Set.of()
+                    : followRepository.findFollowingIds(
+                        currentUser,
+                        userIds
+                    );
+
+        logger.debug(
+                "Following IDs fetched | count: {}",
+                followingIds.size()
+        );
+
         return CursorPaginationUtil.buildResponse(
                 users,
                 size,
                 User::getId,
-                user ->
-                        mapToUserSearchResponse(
-                                user,
-                                currentUser
-                        )
+                user -> mapToUserSearchResponse(
+                        user,
+                        followingIds
+                )
         );
     }
 
     // ================= PRIVATE METHODS =================
-
     private UserSearchResponse mapToUserSearchResponse(
             User user,
-            User currentUser
+            Set<Long> followingIds
     ) {
 
         boolean following =
-                followRepository
-                        .findByFollowerAndFollowing(
-                                currentUser,
-                                user
-                        )
-                        .isPresent();
+                followingIds.contains(
+                        user.getId()
+                );
 
         return UserSearchResponse.builder()
                 .id(user.getId())
@@ -320,40 +438,70 @@ public class SearchServiceImpl implements SearchService {
         return HashtagResponse.builder()
                 .id(hashtag.getId())
                 .name(hashtag.getName())
-                .postCount((long) hashtag.getPosts().size())
+                .postCount(hashtag.getPostCount())
                 .build();
     }
 
     private PostResponse mapToPostResponse(
-            Post post
+            Post post,
+            Set<Long> likedPostIds,
+            User currentUser
     ) {
 
-        boolean liked =
-                post.getLikes()
-                        .stream()
-                        .anyMatch(like ->
-                                like.getUser()
-                                        .getId()
-                                        .equals(
-                                                authUtil
-                                                        .getCurrentUser()
-                                                        .getId()
-                                        )
-                        );
-
         return PostResponse.builder()
+
                 .id(post.getId())
+
                 .caption(post.getCaption())
-                .likeCount(post.getLikeCount())
-                .commentCount(post.getCommentCount())
-                .liked(liked)
-                .username(post.getUser().getUname())
-                .createdAt(post.getCreatedAt())
+
+                .userId(
+                        post.getUser().getId()
+                )
+
+                .username(
+                        post.getUser().getUname()
+                )
+
+                .userProfileImage(
+                        post.getUser().getProfileImageUrl()
+                )
+
+                .isVerified(
+                        post.getUser().getIsVerified()
+                )
+
+                .likeCount(
+                        post.getLikeCount()
+                )
+
+                .commentCount(
+                        post.getCommentCount()
+                )
+
+                .liked(
+                        likedPostIds.contains(
+                                post.getId()
+                        )
+                )
+
+                .mine(
+                        post.getUser()
+                                .getId()
+                                .equals(currentUser.getId())
+                )
+
+                .createdAt(
+                        post.getCreatedAt()
+                )
+
+                .updatedAt(
+                        post.getUpdatedAt()
+                )
 
                 .mediaUrls(
                         post.getMediaList()
                                 .stream()
-                                .map(media -> media.getUrl())
+                                .map(Media::getUrl)
                                 .toList()
                 )
 

@@ -247,5 +247,23 @@ public class UserSpecification {
         };
     }
 
+    // ================= DELETE REQUEST =================
+    public static Specification<User> hasDeleted(
+            Boolean deleted
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (deleted == null) {
+                return cb.conjunction();
+            }
+
+            return cb.equal(
+                    root.get("deleted"),
+                    deleted
+            );
+        };
+    }
+
 }
 

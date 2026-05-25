@@ -15,7 +15,7 @@ public class PostSpecification {
         return (root, query, cb) -> {
 
             if (keyword == null || keyword.isBlank()) {
-                return null;
+                return cb.conjunction();
             }
 
             return cb.like(
@@ -33,7 +33,7 @@ public class PostSpecification {
         return (root, query, cb) -> {
 
             if (username == null || username.isBlank()) {
-                return null;
+                return cb.conjunction();
             }
 
             return cb.like(
@@ -53,7 +53,7 @@ public class PostSpecification {
         return (root, query, cb) -> {
 
             if (hashtag == null || hashtag.isBlank()) {
-                return null;
+                return cb.conjunction();
             }
 
             query.distinct(true);
@@ -92,7 +92,7 @@ public class PostSpecification {
 
             if (restoreRequested == null) {
 
-                return null;
+                return cb.conjunction();
             }
 
             return cb.equal(
@@ -110,7 +110,7 @@ public class PostSpecification {
         return (root, query, cb) -> {
 
             if (deleted == null) {
-                return null;
+                return cb.conjunction();
             }
 
             return cb.equal(
@@ -129,7 +129,7 @@ public class PostSpecification {
 
             if (cursor == null) {
 
-                return null;
+                return cb.conjunction();
             }
 
             return cb.lessThan(

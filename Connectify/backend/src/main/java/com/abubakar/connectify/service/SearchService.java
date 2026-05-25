@@ -15,8 +15,6 @@ public interface SearchService {
             Boolean verified,
             Boolean emailVerified,
             Boolean isPrivate,
-            Boolean active,
-            AccountStatus status,
             String city,
             Gender gender,
             Long minFollowers,

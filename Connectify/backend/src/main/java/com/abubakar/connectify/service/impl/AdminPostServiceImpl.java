@@ -9,6 +9,7 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
+import com.abubakar.connectify.repository.HashtagRepository;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminPostService;
@@ -41,6 +42,9 @@ public class AdminPostServiceImpl
 
     @Autowired
     private ReportRepository reportRepository;
+
+    @Autowired
+    private HashtagRepository hashtagRepository;
 
     @Autowired
     private FileService fileService;
@@ -221,11 +225,20 @@ public class AdminPostServiceImpl
 
         post.setRestoreRequested(false);
 
+        // INCREMENT HASHTAG COUNTS
+        for (Hashtag hashtag : post.getHashtags()) {
+
+            hashtag.setPostCount(
+                    hashtag.getPostCount() + 1
+            );
+        }
+        hashtagRepository.saveAll(post.getHashtags());
+
         postRepository.save(post);
 
         notificationService.createNotification(
                 post.getUser().getId(),
-                this.authUtil.getCurrentUser().getId(),
+                admin.getId(),
                 "Post restored successfully by Admin.",
                 NotificationType.POST_RESTORED,
                 post.getId(),

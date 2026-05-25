@@ -44,12 +44,6 @@ public class SearchController {
             Boolean isPrivate,
 
             @RequestParam(required = false)
-            Boolean active,
-
-            @RequestParam(required = false)
-            AccountStatus status,
-
-            @RequestParam(required = false)
             String city,
 
             @RequestParam(required = false)
@@ -66,6 +60,30 @@ public class SearchController {
 
     ) {
 
+        logger.info(
+                """
+                Search users API called
+                | keyword: {}
+                | verified: {}
+                | emailVerified: {}
+                | isPrivate: {}
+                | city: {}
+                | gender: {}
+                | minFollowers: {}
+                | cursor: {}
+                | size: {}
+                """,
+                keyword,
+                verified,
+                emailVerified,
+                isPrivate,
+                city,
+                gender,
+                minFollowers,
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
 
                 searchService.searchUsers(
@@ -73,8 +91,6 @@ public class SearchController {
                         verified,
                         emailVerified,
                         isPrivate,
-                        active,
-                        status,
                         city,
                         gender,
                         minFollowers,
@@ -98,6 +114,18 @@ public class SearchController {
             int size
     ) {
 
+        logger.info(
+                """
+                Search hashtags API called
+                | keyword: {}
+                | cursor: {}
+                | size: {}
+                """,
+                keyword,
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
                 searchService.searchHashtags(
                         keyword,
@@ -119,6 +147,16 @@ public class SearchController {
             int size
     ) {
 
+        logger.info(
+                """
+                Trending posts API called
+                | cursor: {}
+                | size: {}
+                """,
+                cursor,
+                size
+        );
+
         return ResponseEntity.ok(
                 searchService.getTrendingPosts(
                         cursor,
@@ -138,6 +176,16 @@ public class SearchController {
             @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
+
+        logger.info(
+                """
+                Suggested users API called
+                | cursor: {}
+                | size: {}
+                """,
+                cursor,
+                size
+        );
 
         return ResponseEntity.ok(
                 searchService.getSuggestedUsers(

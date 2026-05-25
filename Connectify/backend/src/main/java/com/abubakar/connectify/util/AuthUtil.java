@@ -3,6 +3,8 @@ package com.abubakar.connectify.util;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.exception.UserNotAuthenticatedException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +17,11 @@ public class AuthUtil {
 
     @Autowired
     private  ValidateUserAccess validateUserAccess;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AuthUtil.class
+            );
 
     public User getCurrentUser() {
 
@@ -34,6 +41,10 @@ public class AuthUtil {
                         )
         ) {
 
+            logger.warn(
+                    "Authentication failed | anonymous or invalid session"
+            );
+
             throw new UserNotAuthenticatedException(
                     "User not authenticated"
             );
@@ -41,6 +52,12 @@ public class AuthUtil {
 
         User user =
                 (User) authentication.getPrincipal();
+
+        assert user != null;
+        logger.debug(
+                "Authenticated user fetched successfully | userId: {}",
+                user.getId()
+        );
 
         return this.validateUserAccess.getValidUser(user.getId());
     }
