@@ -26,6 +26,8 @@ public class AdminStoryResponse {
 
     private Boolean restoreRequested;
 
+    private Long reportCount;
+
     private Long viewCount;
 
     private Long reactionCount;

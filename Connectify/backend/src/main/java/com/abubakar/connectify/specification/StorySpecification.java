@@ -122,6 +122,15 @@ public class StorySpecification {
                 );
             }
 
+            if (Boolean.TRUE.equals(request.getReportedOnly())) {
+
+                predicates.add(
+                        criteriaBuilder.isNotEmpty(
+                                root.get("reports")
+                        )
+                );
+            }
+
             // CURSOR PAGINATION
             if (cursor != null) {
 

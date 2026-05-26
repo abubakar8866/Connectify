@@ -52,7 +52,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
     @Override
     @Transactional(readOnly = true)
     public CursorPageResponse<AdminStoryResponse>
-    getAllStories(
+    getStories(
             AdminStoryFilterRequest request,
             Long cursor,
             int size
@@ -112,30 +112,149 @@ public class AdminStoryServiceImpl implements AdminStoryService {
         return mapToResponse(story);
     }
 
-    // ================= DELETE STORY =================
     @Override
-    public void deleteStory(Long storyId) {
+    public void moderateStory(
+            Long storyId
+    ) {
 
         logger.info(
-                "Admin deleting story | storyId: {}",
+                "Admin moderating story | storyId: {}",
                 storyId
         );
 
         validateAdminAccess();
 
-        Story story = storyAccessValidator.getStory(storyId);
+        Story story =
+                storyAccessValidator.getStory(
+                        storyId
+                );
 
-        // DELETE MEDIA IF EXISTS
+        if (story.getDeleted()) {
+
+            throw new OperationFailException(
+                    "Story already moderated"
+            );
+        }
+
+        story.setDeleted(true);
+
+        story.setIsActive(false);
+
+        story.setRestoreRequested(false);
+
+        storyRepository.save(story);
+
+        logger.info(
+                "Story moderated successfully | storyId: {}",
+                storyId
+        );
+    }
+
+    @Override
+    public void approveStoryRestore(
+            Long storyId
+    ) {
+
+        logger.info(
+                "Admin approving story restore | storyId: {}",
+                storyId
+        );
+
+        validateAdminAccess();
+
+        Story story =
+                storyAccessValidator.getStory(
+                        storyId
+                );
+
+        if (!story.getDeleted()) {
+
+            throw new OperationFailException(
+                    "Story is not deleted"
+            );
+        }
+
+        if (!story.getRestoreRequested()) {
+
+            throw new OperationFailException(
+                    "Restore request not found"
+            );
+        }
+
+        story.setDeleted(false);
+
+        story.setIsActive(true);
+
+        story.setRestoreRequested(false);
+
+        story.setExpiresAt(
+                LocalDateTime.now().plusHours(24)
+        );
+
+        storyRepository.save(story);
+
+        logger.info(
+                "Story restore approved successfully | storyId: {}",
+                storyId
+        );
+    }
+
+    @Override
+    public void rejectStoryRestore(
+            Long storyId
+    ) {
+
+        logger.info(
+                "Admin rejecting story restore | storyId: {}",
+                storyId
+        );
+
+        validateAdminAccess();
+
+        Story story =
+                storyAccessValidator.getStory(
+                        storyId
+                );
+
+        if (!story.getRestoreRequested()) {
+
+            throw new OperationFailException(
+                    "Restore request not found"
+            );
+        }
+
+        story.setRestoreRequested(false);
+
+        storyRepository.save(story);
+
+        logger.info(
+                "Story restore rejected successfully | storyId: {}",
+                storyId
+        );
+    }
+
+    @Override
+    public void permanentlyDeleteStory(
+            Long storyId
+    ) {
+
+        logger.info(
+                "Admin permanently deleting story | storyId: {}",
+                storyId
+        );
+
+        validateAdminAccess();
+
+        Story story =
+                storyAccessValidator.getStory(
+                        storyId
+                );
+
         if (
                 story.getMediaUrl() != null
                         &&
                         !story.getMediaUrl().isBlank()
         ) {
-
-            logger.info(
-                    "Deleting story media | storyId: {}",
-                    storyId
-            );
 
             fileService.deleteFile(
                     story.getMediaUrl(),
@@ -146,118 +265,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
         storyRepository.delete(story);
 
         logger.info(
-                "Updating story status to deleted | storyId: {}",
-                storyId
-        );
-
-        storyRepository.save(story);
-
-        logger.info(
-                "Admin deleted story successfully | storyId: {}",
-                storyId
-        );
-    }
-
-    // ================= RESTORE STORY =================
-    @Override
-    public void restoreStory(Long storyId) {
-
-        logger.info(
-                "Admin restoring story | storyId: {}",
-                storyId
-        );
-
-        validateAdminAccess();
-
-        Story story = storyAccessValidator.getStory(storyId);
-
-        if (!Boolean.TRUE.equals(story.getRestoreRequested())) {
-            throw new OperationFailException(
-                    "Restore request not found"
-            );
-        }
-
-        if (!Boolean.TRUE.equals(story.getDeleted())) {
-
-            throw new OperationFailException(
-                    "Story is not deleted"
-            );
-        }
-
-        // RESET STORY STATE
-        story.setDeleted(false);
-        story.setIsActive(true);
-        story.setRestoreRequested(false);
-
-        // GIVE FRESH 24 HOUR LIFECYCLE
-        story.setExpiresAt(
-                LocalDateTime.now().plusHours(24)
-        );
-
-        logger.info(
-                "Restoring story with fresh lifecycle | storyId: {} | newExpiresAt: {}",
-                storyId,
-                story.getExpiresAt()
-        );
-
-        storyRepository.save(story);
-
-        logger.info(
-                "Admin restored story successfully | storyId: {} | expiresAt: {}",
-                storyId,
-                story.getExpiresAt()
-        );
-    }
-
-    // ================= APPROVE RESTORE REQUEST =================
-    @Override
-    public void approveRestoreRequest(Long storyId) {
-
-        logger.info(
-                "Admin approving restore request | storyId: {}",
-                storyId
-        );
-
-        validateAdminAccess();
-
-        restoreStory(storyId);
-        logger.info(
-                "Restore request approved successfully | storyId: {}",
-                storyId
-        );
-    }
-
-    // ================= REJECT RESTORE REQUEST =================
-    @Override
-    public void rejectRestoreRequest(Long storyId) {
-
-        logger.info(
-                "Admin rejecting restore request | storyId: {}",
-                storyId
-        );
-
-        validateAdminAccess();
-
-        Story story = storyAccessValidator.getStory(storyId);
-
-        if (!Boolean.TRUE.equals(story.getRestoreRequested())) {
-
-            throw new OperationFailException(
-                    "Restore request not found"
-            );
-        }
-
-        story.setRestoreRequested(false);
-
-        logger.info(
-                "Removing restore request flag | storyId: {}",
-                storyId
-        );
-
-        storyRepository.save(story);
-
-        logger.info(
-                "Restore request rejected successfully | storyId: {}",
+                "Story permanently deleted successfully | storyId: {}",
                 storyId
         );
     }
@@ -302,62 +310,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
         );
     }
 
-    // ================= RESTORE REQUEST =================
-    @Override
-    @Transactional(readOnly = true)
-    public CursorPageResponse<AdminStoryResponse>
-    getRestoreRequests(
-            Long cursor,
-            int size
-    ) {
-
-        logger.info(
-                "Admin fetching restore requests | cursor: {} | size: {}",
-                cursor,
-                size
-        );
-
-        validateAdminAccess();
-
-        Pageable pageable =
-                PaginationUtil.createCursorPageable(size);
-
-        List<Story> stories;
-
-        if (cursor == null) {
-
-            stories =
-                    storyRepository
-                            .findByRestoreRequestedTrueOrderByIdDesc(
-                                    pageable
-                            );
-
-        } else {
-
-            stories =
-                    storyRepository
-                            .findByRestoreRequestedTrueAndIdLessThanOrderByIdDesc(
-                                    cursor,
-                                    pageable
-                            );
-        }
-
-        logger.info(
-                "Restore requests fetched successfully | count: {} | cursor: {}",
-                stories.size(),
-                cursor
-        );
-
-        return CursorPaginationUtil.buildResponse(
-                stories,
-                size,
-                Story::getId,
-                this::mapToResponse
-        );
-    }
-
     // ================= PRIVATE HELPER METHODS =================
-
     private AdminStoryResponse mapToResponse(
             Story story
     ) {
@@ -375,6 +328,9 @@ public class AdminStoryServiceImpl implements AdminStoryService {
                 .isActive(story.getIsActive())
                 .restoreRequested(
                         story.getRestoreRequested()
+                )
+                .reportCount(
+                        (long) story.getReports().size()
                 )
                 .viewCount(story.getViewCount())
                 .reactionCount(story.getReactionCount())

@@ -80,23 +80,63 @@ public class AdminCommentController {
         );
     }
 
-    // ================= RESTORE COMMENT =================
-    @PatchMapping("/{commentId}/restore")
-    public ResponseEntity<String> restoreComment(
+    // ================= MODERATE COMMENT =================
+    @PatchMapping("/{commentId}/moderate")
+    public ResponseEntity<String> moderateComment(
             @PathVariable Long commentId
     ) {
 
         logger.info(
-                "API request received | restoreComment | commentId: {}",
+                "API request received | moderateComment | commentId: {}",
                 commentId
         );
 
-        adminCommentService.restoreComment(
+        adminCommentService.moderateComment(
                 commentId
         );
 
         return ResponseEntity.ok(
-                "Comment restored successfully"
+                "Comment moderated successfully"
+        );
+    }
+
+    // ================= ACCEPT RESTORE COMMENT =================
+    @PatchMapping("/{commentId}/restore/approve")
+    public ResponseEntity<String> acceptRestoreComment(
+            @PathVariable Long commentId
+    ) {
+
+        logger.info(
+                "API request received | acceptRestoreComment | commentId: {}",
+                commentId
+        );
+
+        adminCommentService.acceptRestoreComment(
+                commentId
+        );
+
+        return ResponseEntity.ok(
+                "Comment restore approved successfully"
+        );
+    }
+
+    // ================= REJECT RESTORE COMMENT =================
+    @PatchMapping("/{commentId}/restore/reject")
+    public ResponseEntity<String> rejectRestoreComment(
+            @PathVariable Long commentId
+    ) {
+
+        logger.info(
+                "API request received | rejectRestoreComment | commentId: {}",
+                commentId
+        );
+
+        adminCommentService.rejectRestoreComment(
+                commentId
+        );
+
+        return ResponseEntity.ok(
+                "Comment restore rejected successfully"
         );
     }
 

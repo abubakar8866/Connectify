@@ -1,10 +1,11 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.request.PostSearchRequest;
 import com.abubakar.connectify.dto.response.AdminPostResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminPostService;
-
 import com.abubakar.connectify.util.PaginationConstants;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,81 +14,135 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/admin/posts")
+@RequestMapping("/api/v1/admin/posts")
 public class AdminPostController {
-
-    @Autowired
-    private AdminPostService adminPostService;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
                     AdminPostController.class
             );
 
+    @Autowired
+    private AdminPostService adminPostService;
+
+    // ================= GET POSTS =================
     @GetMapping
-    public ResponseEntity<CursorPageResponse<AdminPostResponse>>
-    searchPosts(
+    public ResponseEntity<
+            CursorPageResponse<AdminPostResponse>
+            > getPosts(
 
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            String username,
-
-            @RequestParam(required = false)
-            String hashtag,
-
-            @RequestParam(required = false)
-            Boolean reportedOnly,
-
-            @RequestParam(required = false)
-            Boolean restoreRequested,
-
-            @RequestParam(required = false)
-            Boolean deleted,
+            PostSearchRequest request,
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
             int size
-
     ) {
 
         logger.info(
-                "Admin post search API initiated | keyword: {} | username: {} | hashtag: {} | reportedOnly: {} | restoreRequested: {} | deleted: {} | cursor: {} | size: {}",
-                keyword,
-                username,
-                hashtag,
-                reportedOnly,
-                restoreRequested,
-                deleted,
+                """
+                Admin get posts API called
+                | keyword: {}
+                | username: {}
+                | hashtag: {}
+                | reportedOnly: {}
+                | restoreRequested: {}
+                | deleted: {}
+                | cursor: {}
+                | size: {}
+                """,
+                request.getKeyword(),
+                request.getUsername(),
+                request.getHashtag(),
+                request.getReportedOnly(),
+                request.getRestoreRequested(),
+                request.getDeleted(),
                 cursor,
                 size
         );
 
         return ResponseEntity.ok(
-                adminPostService.searchPosts(
-                        keyword,
-                        username,
-                        hashtag,
-                        reportedOnly,
-                        restoreRequested,
-                        deleted,
+
+                adminPostService.getPosts(
+                        request,
                         cursor,
                         size
                 )
         );
     }
 
-    @DeleteMapping("/{postId}")
-    public ResponseEntity<String>
-    permanentlyDeletePost(
+    // ================= MODERATE POST =================
+    @PatchMapping("/{postId}/moderate")
+    public ResponseEntity<String> moderatePost(
             @PathVariable Long postId
     ) {
 
         logger.info(
-                "Admin permanent delete API called | postId: {}",
+                "Admin moderate post API called | postId: {}",
+                postId
+        );
+
+        adminPostService.moderatePost(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Post moderated successfully"
+        );
+    }
+
+    // ================= APPROVE RESTORE =================
+    @PatchMapping("/{postId}/restore/approve")
+    public ResponseEntity<String> approvePostRestore(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin approve post restore API called | postId: {}",
+                postId
+        );
+
+        adminPostService.approvePostRestore(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Post restore approved successfully"
+        );
+    }
+
+    // ================= REJECT RESTORE =================
+    @PatchMapping("/{postId}/restore/reject")
+    public ResponseEntity<String> rejectPostRestore(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin reject post restore API called | postId: {}",
+                postId
+        );
+
+        adminPostService.rejectPostRestore(
+                postId
+        );
+
+        return ResponseEntity.ok(
+                "Post restore rejected successfully"
+        );
+    }
+
+    // ================= HARD DELETE =================
+    @DeleteMapping("/{postId}/permanent")
+    public ResponseEntity<String> permanentlyDeletePost(
+            @PathVariable Long postId
+    ) {
+
+        logger.info(
+                "Admin permanently delete post API called | postId: {}",
                 postId
         );
 
@@ -97,46 +152,6 @@ public class AdminPostController {
 
         return ResponseEntity.ok(
                 "Post permanently deleted successfully"
-        );
-    }
-
-    @PutMapping("/{postId}/restore")
-    public ResponseEntity<String>
-    restorePost(
-            @PathVariable Long postId
-    ) {
-
-        logger.info(
-                "Admin restore post API called | postId: {}",
-                postId
-        );
-
-        adminPostService.restorePost(
-                postId
-        );
-
-        return ResponseEntity.ok(
-                "Post restored successfully"
-        );
-    }
-
-    @PutMapping("/{postId}/restore/reject")
-    public ResponseEntity<String>
-    rejectRestoreRequest(
-            @PathVariable Long postId
-    ) {
-
-        logger.info(
-                "Admin reject restore request API called | postId: {}",
-                postId
-        );
-
-        adminPostService.rejectRestoreRequest(
-                postId
-        );
-
-        return ResponseEntity.ok(
-                "Restore request rejected successfully"
         );
     }
 

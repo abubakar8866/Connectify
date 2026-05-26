@@ -18,10 +18,21 @@ public interface AdminCommentService {
             int size
     );
 
-    void restoreComment(
+    // MODERATION
+    void moderateComment(
             Long commentId
     );
 
+    // RESTORE APPROVAL
+    void acceptRestoreComment(
+            Long commentId
+    );
+
+    void rejectRestoreComment(
+            Long commentId
+    );
+
+    // HARD DELETE
     void permanentlyDeleteComment(
             Long commentId
     );

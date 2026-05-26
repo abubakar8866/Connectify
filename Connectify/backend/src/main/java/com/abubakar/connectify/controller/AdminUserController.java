@@ -1,16 +1,18 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.request.AdminUserSearchRequest;
 import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
-import com.abubakar.connectify.enums.AccountStatus;
-import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.service.AdminUserService;
 import com.abubakar.connectify.util.PaginationConstants;
+
 import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,70 +21,50 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/users")
 public class AdminUserController {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AdminUserController.class
+            );
+
     @Autowired
     private AdminUserService adminUserService;
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(AdminUserController.class);
-
+    // ================= GET USERS =================
     @GetMapping
-    public ResponseEntity<CursorPageResponse<AdminUserResponse>>
-    getUsers(
+    public ResponseEntity<
+            CursorPageResponse<AdminUserResponse>
+            > getUsers(
 
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Boolean verified,
-
-            @RequestParam(required = false)
-            Boolean emailVerified,
-
-            @RequestParam(required = false)
-            Boolean isPrivate,
-
-            @RequestParam(required = false)
-            Boolean active,
-
-            @RequestParam(required = false)
-            AccountStatus status,
-
-            @RequestParam(required = false)
-            String city,
-
-            @RequestParam(required = false)
-            Gender gender,
-
-            @RequestParam(required = false)
-            Long minFollowers,
-
-            @RequestParam(required = false)
-            Boolean restoreRequested,
-
-            @RequestParam(required = false)
-            Boolean unbanRequested,
+            AdminUserSearchRequest request,
 
             @RequestParam(required = false)
             Long cursor,
 
-            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
             int size
-
     ) {
 
         logger.info(
-                "Admin user search API initiated | keyword: {} | verified: {} | emailVerified: {} | private: {} | active: {} | status: {} | city: {} | gender: {} | minFollowers: {} | restoreRequested: {} | unbanRequested: {} | cursor: {} | size: {}",
-                keyword,
-                verified,
-                emailVerified,
-                isPrivate,
-                active,
-                status,
-                city,
-                gender,
-                minFollowers,
-                restoreRequested,
-                unbanRequested,
+                """
+                Admin get users API called
+                | keyword: {}
+                | status: {}
+                | restoreRequested: {}
+                | unbanRequested: {}
+                | deleted: {}
+                | reportedOnly: {}
+                | cursor: {}
+                | size: {}
+                """,
+                request.getKeyword(),
+                request.getStatus(),
+                request.getRestoreRequested(),
+                request.getUnbanRequested(),
+                request.getDeleted(),
+                request.getReportedOnly(),
                 cursor,
                 size
         );
@@ -90,23 +72,14 @@ public class AdminUserController {
         return ResponseEntity.ok(
 
                 adminUserService.getUsers(
+                        request,
                         cursor,
-                        size,
-                        keyword,
-                        verified,
-                        emailVerified,
-                        isPrivate,
-                        active,
-                        status,
-                        city,
-                        gender,
-                        minFollowers,
-                        restoreRequested,
-                        unbanRequested
+                        size
                 )
         );
     }
 
+    // ================= GET USER DETAILS =================
     @GetMapping("/{userId}")
     public ResponseEntity<UserDetailsAdminResponse>
     getUserDetails(
@@ -114,169 +87,140 @@ public class AdminUserController {
     ) {
 
         logger.info(
-                "Admin get user details API initiated | userId: {}",
+                "Admin get user details API called | userId: {}",
                 userId
         );
 
-        UserDetailsAdminResponse response =
+        return ResponseEntity.ok(
                 adminUserService.getUserDetails(
                         userId
-                );
-
-        return ResponseEntity.ok(response);
+                )
+        );
     }
 
-    @PutMapping("/{userId}/ban")
-    public ResponseEntity<String> banUser(
+    // ================= MODERATE USER =================
+    @PatchMapping("/{userId}/moderate")
+    public ResponseEntity<String> moderateUser(
 
             @PathVariable Long userId,
 
-           @Valid @RequestBody BanUserRequest request
+            @Valid
+            @RequestBody
+            BanUserRequest request
     ) {
 
         logger.info(
-                "Admin ban user API initiated | userId: {} | reason: {} | durationDays: {}",
-                userId,
-                request.getReason(),
-                request.getDurationInDays()
+                "Admin moderate user API called | userId: {}",
+                userId
         );
 
-        adminUserService.banUser(
+        adminUserService.moderateUser(
                 userId,
                 request
         );
 
         return ResponseEntity.ok(
-                "User banned successfully"
+                "User moderated successfully"
         );
     }
 
-    @PutMapping("/{userId}/unban")
-    public ResponseEntity<String> unbanUser(
+    // ================= APPROVE USER RESTORE =================
+    @PatchMapping("/{userId}/restore/approve")
+    public ResponseEntity<String> approveUserRestore(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Admin unban user API initiated | userId: {}",
+                "Admin approve user restore API called | userId: {}",
                 userId
         );
 
-        adminUserService.unbanUser(userId);
+        adminUserService.approveUserRestore(
+                userId
+        );
 
         return ResponseEntity.ok(
-                "User unbanned successfully"
+                "User restore approved successfully"
         );
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<String> deleteUser(
+    // ================= REJECT USER RESTORE =================
+    @PatchMapping("/{userId}/restore/reject")
+    public ResponseEntity<String> rejectUserRestore(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Admin delete user API initiated | userId: {}",
+                "Admin reject user restore API called | userId: {}",
                 userId
         );
 
-        adminUserService.deleteUser(userId);
-
-        return ResponseEntity.ok(
-                "User deleted successfully"
-        );
-    }
-
-    @GetMapping("/reported")
-    public ResponseEntity<CursorPageResponse<AdminUserResponse>>
-    getReportedUsers(
-
-            @RequestParam(required = false)
-            Long cursor,
-
-            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
-            int size
-    ) {
-
-        logger.info(
-                "Admin get reported users API initiated | cursor: {} | size: {}",
-                cursor,
-                size
+        adminUserService.rejectUserRestore(
+                userId
         );
 
         return ResponseEntity.ok(
-
-                adminUserService.getReportedUsers(
-                        cursor,
-                        size
-                )
+                "User restore rejected successfully"
         );
     }
 
-    @PutMapping("/{userId}/restore")
-    public ResponseEntity<String> restoreUser(
+    // ================= APPROVE USER UNBAN =================
+    @PatchMapping("/{userId}/unban/approve")
+    public ResponseEntity<String> approveUserUnban(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Admin restore user API initiated | userId: {}",
+                "Admin approve user unban API called | userId: {}",
                 userId
         );
 
-        adminUserService.restoreUser(userId);
+        adminUserService.approveUserUnban(
+                userId
+        );
 
         return ResponseEntity.ok(
-                "User restored successfully"
+                "User unban approved successfully"
         );
     }
 
-    // ================= REJECT RESTORE REQUEST =================
-    @PutMapping("/{userId}/reject-restore")
-    public ResponseEntity<String> rejectRestoreRequest(
+    // ================= REJECT USER UNBAN =================
+    @PatchMapping("/{userId}/unban/reject")
+    public ResponseEntity<String> rejectUserUnban(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Admin reject restore request API initiated | userId: {}",
+                "Admin reject user unban API called | userId: {}",
                 userId
         );
 
-        adminUserService.rejectRestoreRequest(userId);
+        adminUserService.rejectUserUnban(
+                userId
+        );
 
         return ResponseEntity.ok(
-                "Restore request rejected successfully"
+                "User unban rejected successfully"
         );
     }
 
-    @PutMapping("/{userId}/unban/approve")
-    public ResponseEntity<String> approveUnbanRequest(
+    // ================= HARD DELETE USER =================
+    @DeleteMapping("/{userId}/permanent")
+    public ResponseEntity<String> permanentlyDeleteUser(
             @PathVariable Long userId
     ) {
 
         logger.info(
-                "Admin approve unban request API initiated | userId: {}",
+                "Admin permanently delete user API called | userId: {}",
                 userId
         );
 
-        adminUserService.approveUnbanRequest(userId);
-
-        return ResponseEntity.ok(
-                "Unban request approved successfully"
-        );
-    }
-
-    @PutMapping("/{userId}/unban/reject")
-    public ResponseEntity<String> rejectUnbanRequest(
-            @PathVariable Long userId
-    ) {
-
-        logger.info(
-                "Admin reject unban request API initiated | userId: {}",
+        adminUserService.permanentlyDeleteUser(
                 userId
         );
 
-        adminUserService.rejectUnbanRequest(userId);
-
         return ResponseEntity.ok(
-                "Unban request rejected successfully"
+                "User permanently deleted successfully"
         );
     }
 

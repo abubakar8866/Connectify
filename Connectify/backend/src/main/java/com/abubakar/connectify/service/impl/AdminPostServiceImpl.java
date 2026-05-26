@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.request.PostSearchRequest;
 import com.abubakar.connectify.dto.response.AdminPostResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Hashtag;
@@ -64,29 +65,37 @@ public class AdminPostServiceImpl
             );
 
     @Override
-    public CursorPageResponse<AdminPostResponse> searchPosts(
-            String keyword,
-            String username,
-            String hashtag,
-            Boolean reportedOnly,
-            Boolean restoreRequested,
-            Boolean deleted,
+    public CursorPageResponse<AdminPostResponse> getPosts(
+            PostSearchRequest request,
             Long cursor,
             int size
     ) {
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Admin post search requested | adminId: {} | keyword: {} | username: {} | hashtag: {} | reportedOnly: {} | restoreRequested: {} | deleted: {} | cursor: {} | size: {}",
+                """
+                Admin fetching posts
+                | adminId: {}
+                | keyword: {}
+                | username: {}
+                | hashtag: {}
+                | reportedOnly: {}
+                | restoreRequested: {}
+                | deleted: {}
+                | cursor: {}
+                | size: {}
+                """,
                 admin.getId(),
-                keyword,
-                username,
-                hashtag,
-                reportedOnly,
-                restoreRequested,
-                deleted,
+                request.getKeyword(),
+                request.getUsername(),
+                request.getHashtag(),
+                request.getReportedOnly(),
+                request.getRestoreRequested(),
+                request.getDeleted(),
                 cursor,
                 size
         );
@@ -99,25 +108,41 @@ public class AdminPostServiceImpl
         Specification<Post> specification =
                 Specification
                         .where(
-                                PostSpecification.keyword(keyword)
+                                PostSpecification.keyword(
+                                        request.getKeyword()
+                                )
                         )
                         .and(
-                                PostSpecification.username(username)
+                                PostSpecification.username(
+                                        request.getUsername()
+                                )
                         )
                         .and(
-                                PostSpecification.hashtag(hashtag)
+                                PostSpecification.hashtag(
+                                        request.getHashtag()
+                                )
                         )
                         .and(
                                 PostSpecification.restoreRequested(
-                                        restoreRequested
+                                        request.getRestoreRequested()
                                 )
-                        ).and(
-                                 PostSpecification.deleted(deleted)
-                        ).and(
-                                PostSpecification.cursor(cursor)
+                        )
+                        .and(
+                                PostSpecification.deleted(
+                                        request.getDeleted()
+                                )
+                        )
+                        .and(
+                                PostSpecification.cursor(
+                                        cursor
+                                )
                         );
 
-        if (Boolean.TRUE.equals(reportedOnly)) {
+        if (
+                Boolean.TRUE.equals(
+                        request.getReportedOnly()
+                )
+        ) {
 
             specification =
                     specification.and(
@@ -132,7 +157,7 @@ public class AdminPostServiceImpl
                 ).getContent();
 
         logger.info(
-                "Post search completed | resultCount: {}",
+                "Posts fetched successfully | count: {}",
                 posts.size()
         );
 
@@ -145,56 +170,72 @@ public class AdminPostServiceImpl
     }
 
     @Override
-    public void permanentlyDeletePost(
+    public void moderatePost(
             Long postId
     ) {
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Permanent post deletion requested | adminId: {} | postId: {}",
+                "Admin moderating post | adminId: {} | postId: {}",
                 admin.getId(),
                 postId
         );
 
-        Post post = postAccessValidator.getPost(postId);
+        Post post =
+                postAccessValidator.getPost(postId);
 
-        // DELETE MEDIA FILES FROM STORAGE
-        for (Media media : post.getMediaList()) {
+        if (post.getDeleted()) {
 
-            fileService.deleteFile(
-                    media.getUrl(),
-                    "posts"
+            throw new OperationFailException(
+                    "Post already moderated"
             );
         }
 
-        logger.debug(
-                "Deleting {} media files from storage | postId: {}",
-                post.getMediaList().size(),
-                postId
+        post.setDeleted(true);
+
+        post.setRestoreRequested(false);
+
+        // DECREMENT HASHTAG COUNTS
+        for (Hashtag hashtag : post.getHashtags()) {
+
+            hashtag.setPostCount(
+                    hashtag.getPostCount() - 1
+            );
+        }
+
+        hashtagRepository.saveAll(
+                post.getHashtags()
         );
 
-        // HARD DELETE FROM DATABASE
-        postRepository.delete(post);
+        postRepository.save(post);
 
         notificationService.createNotification(
+
                 post.getUser().getId(),
-                this.authUtil.getCurrentUser().getId(),
-                "Your post was permanently removed due to policy violation",
+
+                admin.getId(),
+
+                "Your post was removed by admin.",
+
                 NotificationType.POST_REMOVED,
+
                 post.getId(),
+
                 null
         );
 
         logger.info(
-                "Post permanently deleted successfully | postId: {}",
+                "Post moderated successfully | postId: {}",
                 postId
         );
     }
 
     @Override
-    public void restorePost(
+    public void approvePostRestore(
             Long postId
     ) {
 
@@ -252,7 +293,7 @@ public class AdminPostServiceImpl
     }
 
     @Override
-    public void rejectRestoreRequest(
+    public void rejectPostRestore(
             Long postId
     ) {
 
@@ -306,6 +347,55 @@ public class AdminPostServiceImpl
 
         logger.info(
                 "Restore request rejected successfully | postId: {}",
+                postId
+        );
+    }
+
+    @Override
+    public void permanentlyDeletePost(
+            Long postId
+    ) {
+
+        User admin = authUtil.getCurrentUser();
+        adminValidator.validateAdmin(admin);
+
+        logger.info(
+                "Permanent post deletion requested | adminId: {} | postId: {}",
+                admin.getId(),
+                postId
+        );
+
+        Post post = postAccessValidator.getPost(postId);
+
+        // DELETE MEDIA FILES FROM STORAGE
+        for (Media media : post.getMediaList()) {
+
+            fileService.deleteFile(
+                    media.getUrl(),
+                    "posts"
+            );
+        }
+
+        logger.debug(
+                "Deleting {} media files from storage | postId: {}",
+                post.getMediaList().size(),
+                postId
+        );
+
+        // HARD DELETE FROM DATABASE
+        postRepository.delete(post);
+
+        notificationService.createNotification(
+                post.getUser().getId(),
+                this.authUtil.getCurrentUser().getId(),
+                "Your post was permanently removed due to policy violation",
+                NotificationType.POST_REMOVED,
+                post.getId(),
+                null
+        );
+
+        logger.info(
+                "Post permanently deleted successfully | postId: {}",
                 postId
         );
     }

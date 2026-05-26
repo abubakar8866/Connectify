@@ -69,5 +69,11 @@ public class Story extends BaseEntity {
     )
     private List<StoryReply> replies = new ArrayList<>();
 
+    // REPORTS
+    @OneToMany(
+            mappedBy = "story"
+    )
+    private List<Report> reports = new ArrayList<>();
+
 }
 

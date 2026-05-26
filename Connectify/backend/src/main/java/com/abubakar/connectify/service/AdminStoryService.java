@@ -6,7 +6,7 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 
 public interface AdminStoryService {
 
-    CursorPageResponse<AdminStoryResponse> getAllStories(
+    CursorPageResponse<AdminStoryResponse> getStories(
             AdminStoryFilterRequest request,
             Long cursor,
             int size
@@ -16,20 +16,28 @@ public interface AdminStoryService {
             Long storyId
     );
 
-    void deleteStory(Long storyId);
+    // MODERATION
+    void moderateStory(
+            Long storyId
+    );
 
-    void restoreStory(Long storyId);
+    // RESTORE
+    void approveStoryRestore(
+            Long storyId
+    );
 
-    void approveRestoreRequest(Long storyId);
+    void rejectStoryRestore(
+            Long storyId
+    );
 
-    void rejectRestoreRequest(Long storyId);
+    // FORCE EXPIRE
+    void expireStory(
+            Long storyId
+    );
 
-    void expireStory(Long storyId);
-
-    CursorPageResponse<AdminStoryResponse>
-    getRestoreRequests(
-            Long cursor,
-            int size
+    // HARD DELETE
+    void permanentlyDeleteStory(
+            Long storyId
     );
 
 }

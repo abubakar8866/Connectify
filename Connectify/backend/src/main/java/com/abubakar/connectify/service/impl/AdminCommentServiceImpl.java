@@ -133,9 +133,58 @@ public class AdminCommentServiceImpl
         );
     }
 
+    // ================= MODERATE COMMENT =================
+    @Override
+    public void moderateComment(
+            Long commentId
+    ) {
+
+        logger.info(
+                "Moderating comment | commentId: {}",
+                commentId
+        );
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Comment comment =
+                commentAccessValidator.getActiveComment(
+                        commentId
+                );
+
+        comment.setDeleted(true);
+
+        // RESET RESTORE REQUEST
+        comment.setRestoreRequested(false);
+
+        commentRepository.save(comment);
+
+        notificationService.createNotification(
+
+                comment.getUser().getId(),
+
+                admin.getId(),
+
+                "Your comment was removed by admin.",
+
+                NotificationType.COMMENT,
+
+                comment.getPost().getId(),
+
+                comment.getId()
+        );
+
+        logger.info(
+                "Comment moderated successfully | commentId: {}",
+                commentId
+        );
+    }
+
     // ================= RESTORE COMMENT =================
     @Override
-    public void restoreComment(
+    public void acceptRestoreComment(
             Long commentId
     ) {
 
@@ -178,16 +227,56 @@ public class AdminCommentServiceImpl
                 comment.getId()
         );
 
-        logger.debug(
-                "Restore notification sent successfully | receiverId: {} | commentId: {}",
-                comment.getUser().getId(),
-                comment.getId()
-        );
-
         logger.info(
                 "Comment restored successfully | commentId: {} | restoredByAdminId: {}",
                 comment.getId(),
                 admin.getId()
+        );
+    }
+
+    // ================= REJECT RESTORE COMMENT =================
+    @Override
+    public void rejectRestoreComment(
+            Long commentId
+    ) {
+
+        logger.info(
+                "Rejecting comment restore | commentId: {}",
+                commentId
+        );
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Comment comment =
+                commentAccessValidator.getComment(
+                        commentId
+                );
+
+        comment.setRestoreRequested(false);
+
+        commentRepository.save(comment);
+
+        notificationService.createNotification(
+
+                comment.getUser().getId(),
+
+                admin.getId(),
+
+                "Your comment restore request was rejected.",
+
+                NotificationType.COMMENT,
+
+                comment.getPost().getId(),
+
+                comment.getId()
+        );
+
+        logger.info(
+                "Comment restore rejected successfully | commentId: {}",
+                commentId
         );
     }
 

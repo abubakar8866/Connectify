@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.request.AdminUserSearchRequest;
 import com.abubakar.connectify.dto.request.BanUserRequest;
 import com.abubakar.connectify.dto.response.AdminUserResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
@@ -63,22 +64,13 @@ public class AdminUserServiceImpl
 
     @Override
     public CursorPageResponse<AdminUserResponse> getUsers(
+            AdminUserSearchRequest request,
             Long cursor,
-            int size,
-            String keyword,
-            Boolean verified,
-            Boolean emailVerified,
-            Boolean isPrivate,
-            Boolean active,
-            AccountStatus status,
-            String city,
-            Gender gender,
-            Long minFollowers,
-            Boolean restoreRequested,
-            Boolean unbanRequested
+            int size
     ) {
 
         User admin = authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.debug(
@@ -99,100 +91,76 @@ public class AdminUserServiceImpl
                                 UserSpecification.cursor(cursor)
                         )
                         .and(
-                                UserSpecification.searchByKeyword(keyword)
+                                UserSpecification.searchByKeyword(
+                                        request.getKeyword()
+                                )
                         )
                         .and(
-                                UserSpecification.hasVerified(verified)
+                                UserSpecification.hasVerified(
+                                        request.getVerified()
+                                )
                         )
                         .and(
-                                UserSpecification.hasEmailVerified(emailVerified)
+                                UserSpecification.hasEmailVerified(
+                                        request.getEmailVerified()
+                                )
                         )
                         .and(
-                                UserSpecification.hasPrivateAccount(isPrivate)
+                                UserSpecification.hasPrivateAccount(
+                                        request.getIsPrivate()
+                                )
                         )
                         .and(
-                                UserSpecification.hasActive(active)
+                                UserSpecification.hasActive(
+                                        request.getActive()
+                                )
                         )
                         .and(
-                                UserSpecification.hasAccountStatus(status)
+                                UserSpecification.hasAccountStatus(
+                                        request.getStatus()
+                                )
                         )
                         .and(
-                                UserSpecification.hasCity(city)
+                                UserSpecification.hasCity(
+                                        request.getCity()
+                                )
                         )
                         .and(
-                                UserSpecification.hasGender(gender)
+                                UserSpecification.hasGender(
+                                        request.getGender()
+                                )
                         )
                         .and(
-                                UserSpecification.hasMinFollowers(minFollowers)
+                                UserSpecification.hasMinFollowers(
+                                        request.getMinFollowers()
+                                )
                         )
                         .and(
-                                UserSpecification.restoreRequested(restoreRequested)
+                                UserSpecification.restoreRequested(
+                                        request.getRestoreRequested()
+                                )
                         )
                         .and(
-                                UserSpecification.unbanRequested(unbanRequested)
+                                UserSpecification.unbanRequested(
+                                        request.getUnbanRequested()
+                                )
+                        )
+                        .and(
+                                UserSpecification.hasDeleted(
+                                        request.getDeleted()
+                                )
                         );
 
         List<User> users =
                 userRepository
-                        .findAll(specification, pageable)
+                        .findAll(
+                                specification,
+                                pageable
+                        )
                         .getContent();
 
         logger.info(
                 "Users fetched successfully | adminId: {} | resultSize: {}",
-                admin.getId(),
-                users.size()
-        );
-
-        return CursorPaginationUtil.buildResponse(
-                users,
-                size,
-                User::getId,
-                this::mapToAdminUserResponse
-        );
-    }
-
-    @Override
-    public CursorPageResponse<AdminUserResponse> getReportedUsers(
-            Long cursor,
-            int size
-    ) {
-
-        User admin = authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        logger.debug(
-                "Fetching reported users | adminId: {} | cursor: {} | size: {}",
-                admin.getId(),
-                cursor,
-                size
-        );
-
-        Pageable pageable =
-                PaginationUtil.createCursorPageable(
-                        size
-                );
-
-        List<User> users;
-
-        if (cursor == null) {
-
-            users =
-                    userRepository.findReportedUsers(
-                            pageable
-                    );
-
-        } else {
-
-            users =
-                    userRepository.findReportedUsersByCursor(
-                            cursor,
-                            pageable
-                    );
-        }
-
-        logger.info(
-                "Reported users fetched successfully | adminId: {} | resultSize: {}",
                 admin.getId(),
                 users.size()
         );
@@ -259,7 +227,7 @@ public class AdminUserServiceImpl
     }
 
     @Override
-    public void banUser(
+    public void moderateUser(
             Long userId,
             BanUserRequest request
     ) {
@@ -346,55 +314,7 @@ public class AdminUserServiceImpl
     }
 
     @Override
-    public void unbanUser(Long userId) {
-
-        User admin =
-                authUtil.getCurrentUser();
-        adminValidator.validateAdmin(admin);
-
-        logger.debug(
-                "Unban user request received | adminId: {} | targetUserId: {}",
-                admin.getId(),
-                userId
-        );
-
-        User user = getUserById(userId);
-
-        validateSelfAction(admin, user, "unban");
-
-        user.setAccountStatus(
-                AccountStatus.ACTIVE
-        );
-
-        user.setIsActive(true);
-
-        user.setBanReason(null);
-
-        user.setAdminNote(null);
-
-        user.setBannedUntil(null);
-
-        userRepository.save(user);
-
-        notificationService.createNotification(
-                user.getId(),
-                admin.getId(),
-                "Your account has been unbanned.",
-                NotificationType.ACCOUNT_UNBANNED,
-                null,
-                null
-        );
-
-        logger.info(
-                "User unbanned successfully | adminId: {} | targetUserId: {}",
-                admin.getId(),
-                userId
-        );
-
-    }
-
-    @Override
-    public void restoreUser(Long userId) {
+    public void approveUserRestore(Long userId) {
 
         User admin =
                 authUtil.getCurrentUser();
@@ -441,7 +361,7 @@ public class AdminUserServiceImpl
 
     // ================= REJECT RESTORE REQUEST =================
     @Override
-    public void rejectRestoreRequest(
+    public void rejectUserRestore(
             Long userId
     ) {
 
@@ -487,7 +407,7 @@ public class AdminUserServiceImpl
     }
 
     @Override
-    public void approveUnbanRequest(Long userId) {
+    public void approveUserUnban(Long userId) {
 
         User admin =
                 authUtil.getCurrentUser();
@@ -537,7 +457,7 @@ public class AdminUserServiceImpl
     }
 
     @Override
-    public void rejectUnbanRequest(Long userId) {
+    public void rejectUserUnban(Long userId) {
 
         User admin =
                 authUtil.getCurrentUser();
@@ -579,7 +499,7 @@ public class AdminUserServiceImpl
     }
 
     @Override
-    public void deleteUser(Long userId) {
+    public void permanentlyDeleteUser(Long userId) {
 
         User admin =
                 authUtil.getCurrentUser();

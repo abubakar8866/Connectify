@@ -25,11 +25,11 @@ public class AdminStoryController {
     @Autowired
     private AdminStoryService adminStoryService;
 
-    // ================= GET ALL Stories =================
+    // ================= GET STORIES =================
     @GetMapping
     public ResponseEntity<
             CursorPageResponse<AdminStoryResponse>
-            > getAllStories(
+            > getStories(
 
             AdminStoryFilterRequest request,
 
@@ -44,13 +44,34 @@ public class AdminStoryController {
     ) {
 
         logger.info(
-                "Admin get all stories api request received | cursor: {} | size: {}",
+                """
+                Admin get stories API called
+                | username: {}
+                | deleted: {}
+                | isActive: {}
+                | restoreRequested: {}
+                | expired: {}
+                | mediaType: {}
+                | reportedOnly: {}
+                | createdDate: {}
+                | cursor: {}
+                | size: {}
+                """,
+                request.getUsername(),
+                request.getDeleted(),
+                request.getIsActive(),
+                request.getRestoreRequested(),
+                request.getExpired(),
+                request.getMediaType(),
+                request.getReportedOnly(),
+                request.getCreatedDate(),
                 cursor,
                 size
         );
 
         return ResponseEntity.ok(
-                adminStoryService.getAllStories(
+
+                adminStoryService.getStories(
                         request,
                         cursor,
                         size
@@ -58,7 +79,7 @@ public class AdminStoryController {
         );
     }
 
-    // ================= GET SINGLE STORY =================
+    // ================= GET STORY BY ID =================
     @GetMapping("/{storyId}")
     public ResponseEntity<AdminStoryResponse>
     getStoryById(
@@ -66,137 +87,120 @@ public class AdminStoryController {
     ) {
 
         logger.info(
-                "Admin get story by id api request received | storyId: {}",
+                "Admin get story by id API called | storyId: {}",
                 storyId
         );
 
         return ResponseEntity.ok(
-                adminStoryService.getStoryById(storyId)
-        );
-    }
 
-    // ================= DELETE STORY =================
-    @DeleteMapping("/{storyId}")
-    public ResponseEntity<String>
-    deleteStory(
-            @PathVariable Long storyId
-    ) {
-
-        logger.info(
-                "Admin delete story api request received | storyId: {}",
-                storyId
-        );
-
-        adminStoryService.deleteStory(storyId);
-
-        return ResponseEntity.ok(
-                "Story deleted successfully"
-        );
-    }
-
-    // ================= RESTORE STORY =================
-    @PutMapping("/{storyId}/restore")
-    public ResponseEntity<String>
-    restoreStory(
-            @PathVariable Long storyId
-    ) {
-
-        logger.info(
-                "Admin restore story request received | storyId: {}",
-                storyId
-        );
-
-        adminStoryService.restoreStory(storyId);
-
-        return ResponseEntity.ok(
-                "Story restored successfully"
-        );
-    }
-
-    // ================= GET RESTORE REQUEST =================
-    @GetMapping("/restore-requests")
-    public ResponseEntity<
-            CursorPageResponse<AdminStoryResponse>
-            > getRestoreRequests(
-
-            @RequestParam(required = false)
-            Long cursor,
-
-            @RequestParam(
-                    defaultValue =
-                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
-            )
-            int size
-    ) {
-
-        logger.info(
-                "Admin get restore requests api request received | cursor: {} | size: {}",
-                cursor,
-                size
-        );
-
-        return ResponseEntity.ok(
-                adminStoryService.getRestoreRequests(
-                        cursor,
-                        size
+                adminStoryService.getStoryById(
+                        storyId
                 )
         );
     }
 
-    // ================= APPROVE RESTORE REQUEST =================
-    @PutMapping("/{storyId}/approve-restore")
+    // ================= MODERATE STORY =================
+    @PatchMapping("/{storyId}/moderate")
     public ResponseEntity<String>
-    approveRestoreRequest(
+    moderateStory(
             @PathVariable Long storyId
     ) {
 
         logger.info(
-                "Admin approve restore request api received | storyId: {}",
+                "Admin moderate story API called | storyId: {}",
                 storyId
         );
 
-        adminStoryService.approveRestoreRequest(storyId);
+        adminStoryService.moderateStory(
+                storyId
+        );
 
         return ResponseEntity.ok(
-                "Restore request approved successfully"
+                "Story moderated successfully"
         );
     }
 
-    // ================= REJECT RESTORE REQUEST =================
-    @PutMapping("/{storyId}/reject-restore")
+    // ================= APPROVE STORY RESTORE =================
+    @PatchMapping("/{storyId}/restore/approve")
     public ResponseEntity<String>
-    rejectRestoreRequest(
+    approveStoryRestore(
             @PathVariable Long storyId
     ) {
 
         logger.info(
-                "Admin reject restore request api received | storyId: {}",
+                "Admin approve story restore API called | storyId: {}",
                 storyId
         );
 
-        adminStoryService.rejectRestoreRequest(storyId);
+        adminStoryService.approveStoryRestore(
+                storyId
+        );
 
         return ResponseEntity.ok(
-                "Restore request rejected successfully"
+                "Story restore approved successfully"
+        );
+    }
+
+    // ================= REJECT STORY RESTORE =================
+    @PatchMapping("/{storyId}/restore/reject")
+    public ResponseEntity<String>
+    rejectStoryRestore(
+            @PathVariable Long storyId
+    ) {
+
+        logger.info(
+                "Admin reject story restore API called | storyId: {}",
+                storyId
+        );
+
+        adminStoryService.rejectStoryRestore(
+                storyId
+        );
+
+        return ResponseEntity.ok(
+                "Story restore rejected successfully"
         );
     }
 
     // ================= EXPIRE STORY =================
-    @PutMapping("/{storyId}/expire")
+    @PatchMapping("/{storyId}/expire")
     public ResponseEntity<String>
     expireStory(
             @PathVariable Long storyId
     ) {
 
         logger.info(
-                "Admin expire story api request received | storyId: {}",
+                "Admin expire story API called | storyId: {}",
                 storyId
         );
 
-        adminStoryService.expireStory(storyId);
+        adminStoryService.expireStory(
+                storyId
+        );
 
         return ResponseEntity.ok(
                 "Story expired successfully"
+        );
+    }
+
+    // ================= HARD DELETE STORY =================
+    @DeleteMapping("/{storyId}/permanent")
+    public ResponseEntity<String>
+    permanentlyDeleteStory(
+            @PathVariable Long storyId
+    ) {
+
+        logger.info(
+                "Admin permanently delete story API called | storyId: {}",
+                storyId
+        );
+
+        adminStoryService.permanentlyDeleteStory(
+                storyId
+        );
+
+        return ResponseEntity.ok(
+                "Story permanently deleted successfully"
         );
     }
 

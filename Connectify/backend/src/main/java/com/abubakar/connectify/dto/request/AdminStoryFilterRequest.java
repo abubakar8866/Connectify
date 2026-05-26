@@ -12,6 +12,8 @@ public class AdminStoryFilterRequest {
 
     private String username;
 
+    private Boolean reportedOnly;
+
     private Boolean deleted;
 
     private Boolean isActive;
