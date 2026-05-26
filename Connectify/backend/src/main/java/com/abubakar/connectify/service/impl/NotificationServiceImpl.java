@@ -6,14 +6,10 @@ import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Notification;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
-import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.NotificationRepository;
-import com.abubakar.connectify.repository.PostRepository;
-import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.*;
 
@@ -39,15 +35,6 @@ public class NotificationServiceImpl
     private NotificationRepository notificationRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -55,6 +42,12 @@ public class NotificationServiceImpl
 
     @Autowired
     private UserAccessValidator userAccessValidator;
+
+    @Autowired
+    private PostAccessValidator postAccessValidator;
+
+    @Autowired
+    private CommentAccessValidator commentAccessValidator;
 
     // ================= CREATE NOTIFICATION =================
     @Override
@@ -99,14 +92,14 @@ public class NotificationServiceImpl
 
         if (postId != null) {
 
-            Post post = getValidPost(postId);
+            Post post = postAccessValidator.getActivePost(postId);
 
             notification.setPost(post);
         }
 
         if (commentId != null) {
 
-            Comment comment = getValidComment(commentId);
+            Comment comment = commentAccessValidator.getActiveComment(commentId);
 
             notification.setComment(comment);
         }
@@ -438,251 +431,6 @@ public class NotificationServiceImpl
                 )
 
                 .build();
-    }
-
-    private Post getValidPost(Long postId) {
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> {
-
-                    logger.error("Post not found postId = {}", postId);
-
-                    return new ResourceNotFound(
-                            "Post not found postId = "+ postId
-                    );
-
-                    }
-                );
-
-        if (Boolean.TRUE.equals(post.getDeleted())) {
-
-            logger.warn(
-                    "Post validation failed | reason: deleted | postId: {}",
-                    postId
-            );
-
-            throw new OperationFailException(
-                    "Post is deleted"
-            );
-        }
-
-        if (post.getUser().getAccountStatus() == AccountStatus.BANNED) {
-
-            logger.warn(
-                    """
-                    Post validation failed
-                    | reason: banned owner
-                    | postId: {}
-                    | ownerId: {}
-                    """,
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "Post owner is banned"
-            );
-        }
-
-        if (Boolean.TRUE.equals(post.getUser().getDeleted())) {
-
-            logger.warn(
-                    """
-                    Post validation failed
-                    | reason: deleted owner
-                    | postId: {}
-                    | ownerId: {}
-                    """,
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "Post owner is deleted"
-            );
-        }
-
-        if (Boolean.FALSE.equals(post.getUser().getIsActive())) {
-
-            logger.warn(
-                    """
-                    Post validation failed
-                    | reason: inactive owner
-                    | postId: {}
-                    | ownerId: {}
-                    """,
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "Post owner is inactive"
-            );
-        }
-
-        return post;
-    }
-
-    private Comment getValidComment(Long commentId) {
-
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> {
-
-                            logger.error("Comment not found postId = {}", commentId);
-
-                            return new ResourceNotFound(
-                                    "Comment not found postId = "+ commentId
-                            );
-
-                        }
-                );
-
-        if (Boolean.TRUE.equals(comment.getDeleted())) {
-
-            logger.warn(
-                    "Comment validation failed | reason: deleted | commentId: {}",
-                    commentId
-            );
-
-            throw new OperationFailException(
-                    "Comment is deleted"
-            );
-        }
-
-        if (Boolean.TRUE.equals(comment.getPost().getDeleted())) {
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: parent post deleted
-                    | commentId: {}
-                    | postId: {}
-                    """,
-                    commentId,
-                    comment.getPost().getId()
-            );
-
-            throw new OperationFailException(
-                    "Parent post is deleted"
-            );
-        }
-
-        if (comment.getUser().getAccountStatus() == AccountStatus.BANNED){
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: comment owner banned
-                    | commentId: {}
-                    | ownerId: {}
-                    """,
-                    commentId,
-                    comment.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "Comment owner is banned"
-            );
-
-        }
-
-        if (Boolean.TRUE.equals(comment.getUser().getDeleted())){
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: comment owner deleted
-                    | commentId: {}
-                    | deleted: {}
-                    """,
-                    commentId,
-                    comment.getUser().getDeleted()
-            );
-
-            throw new OperationFailException(
-                    "Comment owner is deleted."
-            );
-
-        }
-
-        if (Boolean.FALSE.equals(comment.getUser().getIsActive())){
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: comment owner not active
-                    | commentId: {}
-                    | active: {}
-                    """,
-                    commentId,
-                    comment.getUser().getIsActive()
-            );
-
-            throw new OperationFailException(
-                    "Comment owner is not active."
-            );
-
-        }
-
-        // PARENT POST OWNER BANNED
-        if (comment.getPost().getUser().getAccountStatus() == AccountStatus.BANNED
-        ) {
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: parent post owner banned
-                    | commentId: {}
-                    | postOwnerId: {}
-                    """,
-                    commentId,
-                    comment.getPost().getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "Parent post owner is banned"
-            );
-        }
-
-        // PARENT POST OWNER DELETED
-        if (Boolean.TRUE.equals(comment.getPost().getUser().getDeleted())) {
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: parent post owner deleted
-                    | commentId: {}
-                    | postOwnerDeleted: {}
-                    """,
-                    commentId,
-                    comment.getPost().getUser().getDeleted()
-            );
-
-            throw new OperationFailException(
-                    "Parent post owner is deleted"
-            );
-        }
-
-        // PARENT POST OWNER INACTIVE
-        if (Boolean.FALSE.equals(comment.getPost().getUser().getIsActive())) {
-
-            logger.warn(
-                    """
-                    Comment validation failed
-                    | reason: parent post owner ot active
-                    | commentId: {}
-                    | postOwnerActive: {}
-                    """,
-                    commentId,
-                    comment.getPost().getUser().getIsActive()
-            );
-
-            throw new OperationFailException(
-                    "Parent post owner is inactive"
-            );
-        }
-
-        return comment;
     }
 
 }

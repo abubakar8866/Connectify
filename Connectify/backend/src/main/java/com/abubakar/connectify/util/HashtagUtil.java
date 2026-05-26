@@ -10,19 +10,29 @@ public class HashtagUtil {
     private static final Pattern HASHTAG_PATTERN =
             Pattern.compile("#(\\w+)");
 
-    public static Set<String> extractHashtags(String caption) {
+    public static Set<String> extractHashtags(
+            String caption
+    ) {
 
-        Set<String> hashtags = new HashSet<>();
+        Set<String> hashtags =
+                new HashSet<>();
 
-        if (caption == null || caption.isBlank()) {
+        if (
+                caption == null
+                        || caption.isBlank()
+        ) {
             return hashtags;
         }
 
-        Matcher matcher = HASHTAG_PATTERN.matcher(caption);
+        Matcher matcher =
+                HASHTAG_PATTERN.matcher(caption);
 
         while (matcher.find()) {
+
             hashtags.add(
-                    matcher.group(1).toLowerCase()
+                    matcher.group(1)
+                            .trim()
+                            .toLowerCase()
             );
         }
 

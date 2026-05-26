@@ -8,7 +8,6 @@ import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.PostService;
@@ -46,9 +45,6 @@ public class PostServiceImpl implements PostService {
     private FollowRepository followRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -56,6 +52,9 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private UserAccessValidator userAccessValidator;
+
+    @Autowired
+    private PostAccessValidator postAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(PostServiceImpl.class);
@@ -126,7 +125,7 @@ public class PostServiceImpl implements PostService {
 
         logger.info("Updating post with id: {}", postId);
 
-        Post post = this.getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         User currentUser = this.authUtil.getCurrentUser();
 
@@ -224,7 +223,7 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
-        Post post = this.getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         logger.debug(
                 "Post fetched successfully | postId: {}",
@@ -522,7 +521,7 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
-        Post post = getPostById(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         User currentUser =
                 authUtil.getCurrentUser();
@@ -573,7 +572,7 @@ public class PostServiceImpl implements PostService {
         User currentUser =
                 authUtil.getCurrentUser();
 
-        Post post = this.getPostIncludingDeleted(postId);
+        Post post = postAccessValidator.getPost(postId);
 
         // OWNERSHIP CHECK
         ownershipValidator.validate(
@@ -680,39 +679,6 @@ public class PostServiceImpl implements PostService {
                 )
 
                 .build();
-    }
-
-    private Post getPostById(Long postId){
-
-        logger.debug(
-                "Fetching active post by id | postId: {}",
-                postId
-        );
-
-        return postRepository
-                .findByIdAndDeletedFalse(postId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Post not found with id: " + postId
-                        )
-                );
-    }
-
-    private Post getPostIncludingDeleted(
-            Long postId
-    ) {
-
-        logger.debug(
-                "Fetching post including deleted | postId: {}",
-                postId
-        );
-
-        return postRepository.findById(postId)
-                .orElseThrow(() ->
-                        new ResourceNotFound(
-                                "Post not found with id: " + postId
-                        )
-                );
     }
 
     private List<Hashtag> processHashtags(String caption) {

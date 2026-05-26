@@ -29,6 +29,12 @@ public interface SearchService {
             int size
     );
 
+    CursorPageResponse<PostResponse> getPostsByHashtag(
+            String hashtagName,
+            Long cursor,
+            int size
+    );
+
     CursorPageResponse<PostResponse> getTrendingPosts(
             Long cursor,
             int size

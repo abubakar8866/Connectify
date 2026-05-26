@@ -1,5 +1,6 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.request.CommentSearchRequest;
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminCommentService;
@@ -30,14 +31,7 @@ public class AdminCommentController {
             CursorPageResponse<AdminCommentResponse>
             > getComments(
 
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Boolean reportedOnly,
-
-            @RequestParam(required = false)
-            Boolean restoreRequested,
+            CommentSearchRequest request,
 
             @RequestParam(required = false)
             Long cursor,
@@ -50,11 +44,26 @@ public class AdminCommentController {
     ) {
 
         logger.info(
-                "API request received | getComments | keyword: {} | reportedOnly: {} | restoreRequested: {} | cursor: {} | size: {}",
-                keyword,
-                reportedOnly,
-                restoreRequested,
+                """
+                API request received | getComments
+                | keyword: {}
+                | reportedOnly: {}
+                | restoreRequested: {}
+                | deleted: {}
+                | cursor: {}
+                | size: {}
+                """,
+
+                request.getKeyword(),
+
+                request.getReportedOnly(),
+
+                request.getRestoreRequested(),
+
+                request.getDeleted(),
+
                 cursor,
+
                 size
         );
 
@@ -62,11 +71,11 @@ public class AdminCommentController {
 
                 adminCommentService.getAllComments(
 
+                        request,
+
                         cursor,
-                        size,
-                        keyword,
-                        reportedOnly,
-                        restoreRequested
+
+                        size
                 )
         );
     }

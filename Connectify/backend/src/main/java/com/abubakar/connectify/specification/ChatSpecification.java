@@ -4,6 +4,7 @@ import com.abubakar.connectify.entity.Chat;
 import com.abubakar.connectify.entity.ChatParticipant;
 import com.abubakar.connectify.entity.User;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -29,10 +30,16 @@ public class ChatSpecification {
             );
 
             Join<Chat, ChatParticipant> participants =
-                    root.join("participants");
+                    root.join(
+                            "participants",
+                            JoinType.LEFT
+                    );
 
             Join<ChatParticipant, User> user =
-                    participants.join("user");
+                    participants.join(
+                            "user",
+                            JoinType.LEFT
+                    );
 
             List<Predicate> predicates =
                     new ArrayList<>();
@@ -48,12 +55,12 @@ public class ChatSpecification {
 
                                 cb.like(
                                         cb.lower(user.get("uname")),
-                                        "%" + keyword.toLowerCase() + "%"
+                                         keyword.toLowerCase() + "%"
                                 ),
 
                                 cb.like(
                                         cb.lower(user.get("email")),
-                                        "%" + keyword.toLowerCase() + "%"
+                                         keyword.toLowerCase() + "%"
                                 )
                         )
                 );

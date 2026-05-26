@@ -103,5 +103,22 @@ public class MessageSpecification {
         };
     }
 
+    public static Specification<Message> hasChatId(
+            Long chatId
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (chatId == null) {
+                return cb.conjunction();
+            }
+
+            return cb.equal(
+                    root.get("chat").get("id"),
+                    chatId
+            );
+        };
+    }
+
 }
 

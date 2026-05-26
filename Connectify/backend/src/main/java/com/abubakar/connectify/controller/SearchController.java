@@ -135,6 +135,43 @@ public class SearchController {
         );
     }
 
+    // ================= POSTS BY HASHTAG =================
+    @GetMapping("/hashtags/{hashtagName}/posts")
+    public ResponseEntity<CursorPageResponse<PostResponse>>
+    getPostsByHashtag(
+
+            @PathVariable
+            String hashtagName,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue =
+                    PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            int size
+    ) {
+
+        logger.info(
+                """
+                Posts by hashtag API called
+                | hashtagName: {}
+                | cursor: {}
+                | size: {}
+                """,
+                hashtagName,
+                cursor,
+                size
+        );
+
+        return ResponseEntity.ok(
+                searchService.getPostsByHashtag(
+                        hashtagName,
+                        cursor,
+                        size
+                )
+        );
+    }
+
     // ================= TRENDING POSTS =================
     @GetMapping("/trending/posts")
     public ResponseEntity<CursorPageResponse<PostResponse>>

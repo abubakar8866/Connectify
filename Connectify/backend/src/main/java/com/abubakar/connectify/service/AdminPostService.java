@@ -3,8 +3,6 @@ package com.abubakar.connectify.service;
 import com.abubakar.connectify.dto.response.AdminPostResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 
-import java.util.List;
-
 public interface AdminPostService {
 
     // ================= SEARCH POSTS =================

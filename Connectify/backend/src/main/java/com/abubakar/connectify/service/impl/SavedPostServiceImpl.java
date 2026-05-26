@@ -23,6 +23,7 @@ import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.CursorPaginationUtil;
 import com.abubakar.connectify.util.PaginationUtil;
 
+import com.abubakar.connectify.util.PostAccessValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,9 @@ public class SavedPostServiceImpl implements SavedPostService {
     @Autowired
     private AuthUtil authUtil;
 
+    @Autowired
+    private PostAccessValidator postAccessValidator;
+
     // ================= TOGGLE SAVE =================
     @Override
     public SavePostResponse toggleSavePost(Long postId) {
@@ -66,7 +70,7 @@ public class SavedPostServiceImpl implements SavedPostService {
                 currentUser.getId()
         );
 
-        Post post = validateAndGetPost(postId);
+        Post post = postAccessValidator.getActivePost(postId);
 
         Optional<SavedPost> existingSave =
                 savedPostRepository.findByUserAndPost(
@@ -80,6 +84,7 @@ public class SavedPostServiceImpl implements SavedPostService {
                 currentUser.getId(),
                 postId
         );
+
         if (existingSave.isPresent()) {
 
             logger.info(
@@ -247,96 +252,6 @@ public class SavedPostServiceImpl implements SavedPostService {
     }
 
     // ================= PRIVATE METHODS =================
-    private Post validateAndGetPost(Long postId) {
-
-        logger.debug(
-                "Validating post for save operation | postId: {}",
-                postId
-        );
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> {
-
-                    logger.warn(
-                            "Save post failed | post not found | postId: {}",
-                            postId
-                    );
-
-                    return new ResourceNotFound(
-                            "Post not found with id = "+postId
-                    );
-                });
-
-        logger.debug(
-                "Post found successfully | postId: {} | ownerId: {}",
-                post.getId(),
-                post.getUser().getId()
-        );
-
-        // DELETED POST VALIDATION
-        if (Boolean.TRUE.equals(post.getDeleted())) {
-
-            logger.warn(
-                    "Save post failed | post is deleted | postId: {}",
-                    postId
-            );
-
-            throw new OperationFailException(
-                    "Save post already deleted."
-            );
-        }
-
-        // BANNED OWNER VALIDATION
-        if (post.getUser().getAccountStatus()
-                == AccountStatus.BANNED) {
-
-            logger.warn(
-                    "Save post failed | owner is banned | postId: {} | ownerId: {}",
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "This Save post owner is banned"
-            );
-        }
-
-        // DELETED OWNER VALIDATION
-        if (Boolean.TRUE.equals(post.getUser().getDeleted())) {
-
-            logger.warn(
-                    "Save post failed | owner is deleted | postId: {} | ownerId: {}",
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "This Save post owner is deleted"
-            );
-        }
-
-        // ACTIVE OWNER VALIDATION
-        if (Boolean.FALSE.equals(post.getUser().getIsActive())) {
-
-            logger.warn(
-                    "Save post failed | owner is inactive | postId: {} | ownerId: {}",
-                    postId,
-                    post.getUser().getId()
-            );
-
-            throw new OperationFailException(
-                    "This Save post owner is not active"
-            );
-        }
-
-        logger.debug(
-                "Post validation successful | postId: {}",
-                postId
-        );
-
-        return post;
-    }
-
     private PostResponse mapToPostResponse(
             SavedPost savedPost,
             User currentUser,

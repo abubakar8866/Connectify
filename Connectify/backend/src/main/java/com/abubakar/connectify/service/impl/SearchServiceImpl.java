@@ -226,6 +226,94 @@ public class SearchServiceImpl implements SearchService {
         );
     }
 
+    // ================= POSTS BY HASHTAG =================
+    @Override
+    public CursorPageResponse<PostResponse> getPostsByHashtag(
+            String hashtagName,
+            Long cursor,
+            int size
+    ) {
+
+        logger.info(
+                "Fetching posts by hashtag | hashtag: {} | cursor: {} | size: {}",
+                hashtagName,
+                cursor,
+                size
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Authenticated user for hashtag posts | userId: {}",
+                currentUser.getId()
+        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Post> posts;
+
+        if (cursor == null) {
+
+            posts =
+                    postRepository
+                            .findByHashtags_NameAndDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndUserAccountStatusNotOrderByIdDesc(
+                                    hashtagName,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+
+        } else {
+
+            posts =
+                    postRepository
+                            .findByHashtags_NameAndDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
+                                    hashtagName,
+                                    cursor,
+                                    AccountStatus.BANNED,
+                                    pageable
+                            );
+        }
+
+        logger.info(
+                "Posts fetched successfully by hashtag | hashtag: {} | count: {}",
+                hashtagName,
+                posts.size()
+        );
+
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Set<Long> likedPostIds =
+                postIds.isEmpty()
+                        ? Set.of()
+                        : likeRepository.findLikedPostIdsByUserAndPostIds(
+                        currentUser,
+                        postIds
+                );
+
+        logger.debug(
+                "Liked post IDs fetched inside getPostByHashtag method | count: {}",
+                likedPostIds.size()
+        );
+
+        return CursorPaginationUtil.buildResponse(
+                posts,
+                size,
+                Post::getId,
+                post -> mapToPostResponse(
+                        post,
+                        likedPostIds,
+                        currentUser
+                )
+        );
+    }
+
     // ================= TRENDING POSTS =================
     @Override
     public CursorPageResponse<PostResponse> getTrendingPosts(

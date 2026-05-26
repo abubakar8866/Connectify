@@ -8,36 +8,37 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 
 public interface AdminChatService {
 
-    CursorPageResponse<AdminChatResponse> getAllChats(
-            Long cursor,
-            int size
-    );
-
-    CursorPageResponse<AdminMessageResponse> getChatMessages(
-            Long chatId,
-            Long cursor,
-            int size
-    );
-
-    CursorPageResponse<AdminChatResponse> searchChats(
+    CursorPageResponse<AdminChatResponse> getChats(
             ChatSearchRequest request,
             Long cursor,
             int size
     );
 
-    CursorPageResponse<AdminMessageResponse> searchMessages(
+    CursorPageResponse<AdminMessageResponse> getMessages(
+            Long chatId,
             MessageSearchRequest request,
             Long cursor,
             int size
     );
 
-    void adminDeleteChat(
-            Long chatId
-    );
+    // MODERATION
+    void moderateChat(Long chatId);
 
-    void adminDeleteMessage(
-            Long messageId
-    );
+    void moderateMessage(Long messageId);
+
+    // RESTORE APPROVAL
+    void approveChatRestore(Long chatId);
+
+    void rejectChatRestore(Long chatId);
+
+    void approveMessageRestore(Long messageId);
+
+    void rejectMessageRestore(Long messageId);
+
+    // HARD DELETE
+    void permanentlyDeleteChat(Long chatId);
+
+    void permanentlyDeleteMessage(Long messageId);
 
 }
 

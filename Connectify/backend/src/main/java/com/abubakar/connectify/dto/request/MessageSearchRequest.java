@@ -14,5 +14,7 @@ public class MessageSearchRequest {
 
     private Boolean deletedByAdmin;
 
+    private Boolean restoreRequested;
+
 }
 

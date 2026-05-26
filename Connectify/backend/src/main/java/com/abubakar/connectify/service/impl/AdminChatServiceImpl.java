@@ -59,139 +59,37 @@ public class AdminChatServiceImpl
     private static final Logger logger =
             LoggerFactory.getLogger(AdminChatServiceImpl.class);
 
-    // ================= GET ALL CHATS =================
+    // ================= GET CHATS =================
     @Override
-    public CursorPageResponse<AdminChatResponse> getAllChats(
-            Long cursor,
-            int size
-    ) {
-
-        logger.info(
-                "Fetching all chats | cursor: {} | size: {}",
-                cursor,
-                size
-        );
-
-        User admin = authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        Pageable pageable =
-                PaginationUtil.createCursorPageable(size);
-
-        List<Chat> chats;
-
-        if (cursor == null) {
-
-            chats =
-                    chatRepository.findAllByOrderByIdDesc(
-                            pageable
-                    );
-
-        } else {
-
-            chats =
-                    chatRepository.findByIdLessThanOrderByIdDesc(
-                    cursor,
-                    pageable
-            );
-        }
-
-        logger.info(
-                "Chats fetched successfully | totalChats: {}",
-                chats.size()
-        );
-
-        return CursorPaginationUtil.buildResponse(
-                chats,
-                size,
-                Chat::getId,
-                this::mapToAdminChatResponse
-        );
-    }
-
-    // ================= GET CHAT MESSAGES =================
-    @Override
-    public CursorPageResponse<AdminMessageResponse> getChatMessages(
-            Long chatId,
-            Long cursor,
-            int size
-    ) {
-
-        logger.info(
-                "Fetching chat messages | chatId: {} | cursor: {} | size: {}",
-                chatId,
-                cursor,
-                size
-        );
-
-        User admin = authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        Chat chat = chatAccessValidator.getChat(chatId);
-
-        Pageable pageable =
-                PaginationUtil.createCursorPageable(size);
-
-        List<Message> messages;
-
-        if (cursor == null) {
-
-            messages =
-                    messageRepository
-                            .findByChatOrderByIdDesc(
-                                    chat,
-                                    pageable
-                            );
-
-        } else {
-
-            messages =
-                    messageRepository
-                            .findByChatAndIdLessThanOrderByIdDesc(
-                                    chat,
-                                    cursor,
-                                    pageable
-                            );
-        }
-
-        logger.info(
-                "Chat messages fetched successfully | chatId: {} | totalMessages: {}",
-                chatId,
-                messages.size()
-        );
-
-        return CursorPaginationUtil.buildResponse(
-                messages,
-                size,
-                Message::getId,
-                this::mapToAdminMessageResponse
-        );
-    }
-
-    // ================= SEARCH CHATS =================
-    @Override
-    public CursorPageResponse<AdminChatResponse> searchChats(
+    public CursorPageResponse<AdminChatResponse> getChats(
             ChatSearchRequest request,
             Long cursor,
             int size
     ) {
 
         logger.info(
-                "Searching chats | keyword: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                """
+                Fetching chats
+                | keyword: {}
+                | deletedByAdmin: {}
+                | cursor: {}
+                | size: {}
+                """,
                 request.getKeyword(),
                 request.getDeletedByAdmin(),
                 cursor,
                 size
         );
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
         Pageable pageable =
-                PaginationUtil.createCursorPageable(size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         Specification<Chat> specification =
                 ChatSpecification.searchChats(
@@ -207,7 +105,7 @@ public class AdminChatServiceImpl
                 ).getContent();
 
         logger.info(
-                "Chat search completed successfully | totalChats: {}",
+                "Chats fetched successfully | totalChats: {}",
                 chats.size()
         );
 
@@ -219,16 +117,27 @@ public class AdminChatServiceImpl
         );
     }
 
-    // ================= SEARCH MESSAGES =================
+    // ================= GET MESSAGES =================
     @Override
-    public CursorPageResponse<AdminMessageResponse> searchMessages(
+    public CursorPageResponse<AdminMessageResponse> getMessages(
+            Long chatId,
             MessageSearchRequest request,
             Long cursor,
             int size
     ) {
 
         logger.info(
-                "Searching messages | keyword: {} | username: {} | messageType: {} | deletedByAdmin: {} | cursor: {} | size: {}",
+                """
+                Fetching messages
+                | chatId: {}
+                | keyword: {}
+                | username: {}
+                | messageType: {}
+                | deletedByAdmin: {}
+                | cursor: {}
+                | size: {}
+                """,
+                chatId,
                 request.getKeyword(),
                 request.getUsername(),
                 request.getMessageType(),
@@ -237,12 +146,17 @@ public class AdminChatServiceImpl
                 size
         );
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
+        chatAccessValidator.getChat(chatId);
+
         Pageable pageable =
-                PaginationUtil.createCursorPageable(size);
+                PaginationUtil.createCursorPageable(
+                        size
+                );
 
         Specification<Message> specification =
                 MessageSpecification.searchMessages(
@@ -251,6 +165,10 @@ public class AdminChatServiceImpl
                         request.getMessageType(),
                         request.getDeletedByAdmin(),
                         cursor
+                ).and(
+                        MessageSpecification.hasChatId(
+                                chatId
+                        )
                 );
 
         List<Message> messages =
@@ -260,7 +178,7 @@ public class AdminChatServiceImpl
                 ).getContent();
 
         logger.info(
-                "Message search completed successfully | totalMessages: {}",
+                "Messages fetched successfully | totalMessages: {}",
                 messages.size()
         );
 
@@ -272,22 +190,24 @@ public class AdminChatServiceImpl
         );
     }
 
-    // ================= DELETE CHAT =================
+    // ================= MODERATE CHAT =================
     @Override
-    public void adminDeleteChat(
+    public void moderateChat(
             Long chatId
     ) {
 
         logger.info(
-                "Admin deleting chat | chatId: {}",
+                "Moderating chat | chatId: {}",
                 chatId
         );
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
-        Chat chat = chatAccessValidator.getActiveChat(chatId);
+        Chat chat =
+                chatAccessValidator.getActiveChat(chatId);
 
         chat.setDeletedByAdmin(true);
 
@@ -297,14 +217,12 @@ public class AdminChatServiceImpl
 
         chat.setIsActive(false);
 
-        // RESET RESTORE REQUEST STATE
         chat.setRestoreRequested(false);
 
         chat.setRestoreRequestedAt(null);
 
         chatRepository.save(chat);
 
-        // NOTIFY PARTICIPANTS
         for (ChatParticipant participant
                 : chat.getParticipants()) {
 
@@ -325,32 +243,126 @@ public class AdminChatServiceImpl
         }
 
         logger.info(
-                "Chat deleted by admin successfully | chatId: {}",
+                "Chat moderated successfully | chatId: {}",
                 chatId
         );
-
     }
 
-    // ================= DELETE MESSAGE =================
+    // ================= APPROVE RESTORE CHAT =================
     @Override
-    public void adminDeleteMessage(
+    public void approveChatRestore(
+            Long chatId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Chat chat =
+                chatAccessValidator.getChat(chatId);
+
+        chat.setDeletedByAdmin(false);
+
+        chat.setDeletedByAdminAt(null);
+
+        chat.setRestoreRequested(false);
+
+        chat.setRestoreRequestedAt(null);
+
+        chat.setIsActive(true);
+
+        chatRepository.save(chat);
+
+        for (ChatParticipant participant
+                : chat.getParticipants()) {
+
+            notificationService.createNotification(
+
+                    participant.getUser().getId(),
+
+                    admin.getId(),
+
+                    "Your chat was restored by admin",
+
+                    NotificationType.CHAT,
+
+                    chat.getId(),
+
+                    null
+            );
+        }
+    }
+
+    // ================= REJECT RESTORE CHAT =================
+    @Override
+    public void rejectChatRestore(
+            Long chatId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Chat chat =
+                chatAccessValidator.getChat(chatId);
+
+        chat.setRestoreRequested(false);
+
+        chat.setRestoreRequestedAt(null);
+
+        chatRepository.save(chat);
+    }
+
+    // ================= PERMANENTLY DELETE CHAT =================
+    @Override
+    public void permanentlyDeleteChat(
+            Long chatId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Chat chat =
+                chatAccessValidator.getChat(chatId);
+
+        chatRepository.delete(chat);
+
+        logger.info(
+                "Chat permanently deleted | chatId: {}",
+                chatId
+        );
+    }
+
+    // ================= MODERATE MESSAGE =================
+    @Override
+    public void moderateMessage(
             Long messageId
     ) {
 
         logger.info(
-                "Admin deleting message | messageId: {}",
+                "Moderating message | messageId: {}",
                 messageId
         );
 
-        User admin = authUtil.getCurrentUser();
+        User admin =
+                authUtil.getCurrentUser();
 
         adminValidator.validateAdmin(admin);
 
-        Message message = messageAccessValidator.getActiveMessage(messageId);
+        Message message =
+                messageAccessValidator.getActiveMessage(messageId);
 
-        // STORE ORIGINAL CONTENT
-        String originalContent =
-                message.getContent();
+        message.setOriginalContent(
+                message.getContent()
+        );
+
+        message.setOriginalMediaUrl(
+                message.getMediaUrl()
+        );
 
         message.setDeletedByAdmin(true);
 
@@ -358,7 +370,6 @@ public class AdminChatServiceImpl
                 LocalDateTime.now()
         );
 
-        // ADMIN MODERATION OVERRIDES USER DELETE
         message.setDeletedForEveryone(false);
 
         message.setContent(
@@ -367,56 +378,23 @@ public class AdminChatServiceImpl
 
         message.setMediaUrl(null);
 
-        // RESET RESTORE REQUEST STATE
         message.setRestoreRequested(false);
 
         message.setRestoreRequestedAt(null);
 
-        // CLEAR CHILD REPLIES
         for (Message reply : message.getReplies()) {
 
             reply.setReplyToMessage(null);
         }
 
-        // CLEAR PARENT REPLY
         message.setReplyToMessage(null);
 
         message.setIsEdited(false);
+
         message.setEditedAt(null);
-
-        // ================= CHAT LAST MESSAGE SYNC =================
-        Chat chat =
-                message.getChat();
-
-        if (
-                chat.getLastMessage() != null
-                        &&
-                        originalContent != null
-                        &&
-                        chat.getLastMessage().equals(
-                                originalContent
-                        )
-        ) {
-
-            chat.setLastMessage(
-                    "Message removed by admin"
-            );
-
-            chat.setLastMessageAt(
-                    LocalDateTime.now()
-            );
-
-            chatRepository.save(chat);
-
-            logger.info(
-                    "Chat last message synced after admin deletion | chatId: {}",
-                    chat.getId()
-            );
-        }
 
         messageRepository.save(message);
 
-        // NOTIFY SENDER
         notificationService.createNotification(
 
                 message.getSender().getId(),
@@ -433,10 +411,119 @@ public class AdminChatServiceImpl
         );
 
         logger.info(
-                "Message deleted by admin successfully | messageId: {}",
+                "Message moderated successfully | messageId: {}",
                 messageId
         );
+    }
 
+    // ================= APPROVE RESTORE MESSAGE =================
+    @Override
+    public void approveMessageRestore(
+            Long messageId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Message message =
+                messageAccessValidator.getMessage(messageId);
+
+        message.setDeletedByAdmin(false);
+
+        message.setDeletedByAdminAt(null);
+
+        message.setRestoreRequested(false);
+
+        message.setRestoreRequestedAt(null);
+
+        message.setContent(
+                message.getOriginalContent()
+        );
+
+        message.setMediaUrl(
+                message.getOriginalMediaUrl()
+        );
+
+        message.setOriginalContent(null);
+
+        message.setOriginalMediaUrl(null);
+
+        messageRepository.save(message);
+
+        notificationService.createNotification(
+
+                message.getSender().getId(),
+
+                admin.getId(),
+
+                "Your message was restored by admin",
+
+                NotificationType.MESSAGE,
+
+                null,
+
+                message.getId()
+        );
+    }
+
+    // ================= REJECT RESTORE MESSAGE =================
+    @Override
+    public void rejectMessageRestore(
+            Long messageId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Message message =
+                messageAccessValidator.getMessage(messageId);
+
+        message.setRestoreRequested(false);
+
+        message.setRestoreRequestedAt(null);
+
+        messageRepository.save(message);
+
+        notificationService.createNotification(
+
+                message.getSender().getId(),
+
+                admin.getId(),
+
+                "Your message restore request was rejected",
+
+                NotificationType.RESTORE_REQUEST,
+
+                null,
+
+                message.getId()
+        );
+    }
+
+    // ================= PERMANENTLY DELETE MESSAGE =================
+    @Override
+    public void permanentlyDeleteMessage(
+            Long messageId
+    ) {
+
+        User admin =
+                authUtil.getCurrentUser();
+
+        adminValidator.validateAdmin(admin);
+
+        Message message =
+                messageAccessValidator.getMessage(messageId);
+
+        messageRepository.delete(message);
+
+        logger.info(
+                "Message permanently deleted | messageId: {}",
+                messageId
+        );
     }
 
     // ================= DTO MAPPERS =================

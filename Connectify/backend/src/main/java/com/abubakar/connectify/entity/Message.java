@@ -21,6 +21,8 @@ public class Message extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ================= MESSAGE CONTENT =================
+
     @Column(columnDefinition = "TEXT")
     private String content;
 
@@ -28,6 +30,8 @@ public class Message extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private MessageType messageType;
+
+    // ================= MESSAGE STATUS =================
 
     private Boolean isSeen = false;
 
@@ -37,37 +41,54 @@ public class Message extends BaseEntity {
 
     private LocalDateTime editedAt;
 
+    // ================= USER DELETE =================
+
     private Boolean deletedForEveryone = false;
+
+    // ================= ADMIN MODERATION =================
 
     private Boolean deletedByAdmin = false;
 
     private LocalDateTime deletedByAdminAt;
 
+    // ORIGINAL DATA BACKUP FOR RESTORE
+    @Column(columnDefinition = "TEXT")
+    private String originalContent;
+
+    private String originalMediaUrl;
+
+    // ================= RESTORE REQUEST =================
+
     private Boolean restoreRequested = false;
 
     private LocalDateTime restoreRequestedAt;
 
-    // REPLY MESSAGE
+    // ================= REPLY MESSAGE =================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reply_to_message_id")
     private Message replyToMessage;
 
-    // REPLIES
+    // ================= REPLIES =================
+
     @OneToMany(mappedBy = "replyToMessage")
     private List<Message> replies =
             new ArrayList<>();
 
-    // CHAT
+    // ================= CHAT =================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id")
     private Chat chat;
 
-    // SENDER
+    // ================= SENDER =================
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
     private User sender;
 
-    // DELETE FOR ME
+    // ================= DELETE FOR ME =================
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "deleted_messages",

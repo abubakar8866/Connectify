@@ -6,6 +6,7 @@ public enum NotificationType {
     COMMENT,
     FOLLOW,
     REPLY,
+    CHAT,
     STORY_REACTION,
     STORY_REPLY,
     POST_REMOVED,

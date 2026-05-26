@@ -98,5 +98,21 @@ public interface PostRepository extends JpaRepository<Post, Long>,
 
     Long countByUserAndDeletedFalse(User targetUser);
 
+    // ================= POSTS BY HASHTAG =================
+    List<Post>
+    findByHashtags_NameAndDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndUserAccountStatusNotOrderByIdDesc(
+            String hashtagName,
+            AccountStatus accountStatus,
+            Pageable pageable
+    );
+
+    List<Post>
+    findByHashtags_NameAndDeletedFalseAndUserDeletedFalseAndUserIsActiveTrueAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
+            String hashtagName,
+            Long cursor,
+            AccountStatus accountStatus,
+            Pageable pageable
+    );
+
 }
 

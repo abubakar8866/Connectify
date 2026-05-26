@@ -1,16 +1,16 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.request.CommentSearchRequest;
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
-import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
 import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.specification.CommentSpecification;
 import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
@@ -54,11 +54,12 @@ public class AdminCommentServiceImpl
     @Override
     public CursorPageResponse<AdminCommentResponse>
     getAllComments(
+
+            CommentSearchRequest request,
+
             Long cursor,
-            int size,
-            String keyword,
-            Boolean reportedOnly,
-            Boolean restoreRequested
+
+            int size
     ) {
 
         logger.info(
@@ -71,13 +72,23 @@ public class AdminCommentServiceImpl
         adminValidator.validateAdmin(admin);
 
         logger.info(
-                "Admin fetching comments | adminId: {} | cursor: {} | size: {} | keyword: {} | reportedOnly: {} | restoreRequested: {}",
+                """
+                Admin fetching comments
+                | adminId: {}
+                | keyword: {}
+                | reportedOnly: {}
+                | restoreRequested: {}
+                | deleted: {}
+                | cursor: {}
+                | size: {}
+                """,
                 admin.getId(),
+                request.getKeyword(),
+                request.getReportedOnly(),
+                request.getRestoreRequested(),
+                request.getDeleted(),
                 cursor,
-                size,
-                keyword,
-                reportedOnly,
-                restoreRequested
+                size
         );
 
         Pageable pageable =
@@ -85,96 +96,25 @@ public class AdminCommentServiceImpl
                         size
                 );
 
-        List<Comment> comments;
+        List<Comment> comments =
+                commentRepository.findAll(
 
-        // ================= RESTORE REQUESTED =================
+                        CommentSpecification.searchComments(
 
-        if (Boolean.TRUE.equals(restoreRequested)) {
+                                request.getKeyword(),
 
-            logger.debug(
-                    "Fetching restore requested comments"
-            );
+                                request.getReportedOnly(),
 
-            comments = (cursor == null)
+                                request.getRestoreRequested(),
 
-                    ? commentRepository
-                    .findByRestoreRequestedTrueOrderByIdDesc(
-                            pageable
-                    )
+                                request.getDeleted(),
 
-                    : commentRepository
-                    .findByRestoreRequestedTrueAndIdLessThanOrderByIdDesc(
-                            cursor,
-                            pageable
-                    );
-        }
+                                cursor
+                        ),
 
-        // ================= REPORTED COMMENTS =================
+                        pageable
 
-        else if (Boolean.TRUE.equals(reportedOnly)) {
-
-            logger.debug(
-                    "Fetching reported comments"
-            );
-
-            comments = (cursor == null)
-
-                    ? reportRepository.findReportedComments(
-                    pageable
-            )
-
-                    : reportRepository
-                    .findReportedCommentsByCursor(
-                            cursor,
-                            pageable
-                    );
-        }
-
-        // ================= SEARCH =================
-
-        else if (
-                keyword != null
-                        && !keyword.isBlank()
-        ) {
-
-            logger.debug(
-                    "Searching comments | keyword: {}",
-                    keyword
-            );
-
-            comments = (cursor == null)
-
-                    ? commentRepository
-                    .findByContentContainingIgnoreCaseOrderByIdDesc(
-                            keyword,
-                            pageable
-                    )
-
-                    : commentRepository
-                    .findByContentContainingIgnoreCaseAndIdLessThanOrderByIdDesc(
-                            keyword,
-                            cursor,
-                            pageable
-                    );
-        }
-
-        // ================= ALL COMMENTS =================
-
-        else {
-
-            comments = (cursor == null)
-
-                    ? commentRepository
-                    .findAllByOrderByIdDesc(
-                            pageable
-                    )
-
-                    : commentRepository
-                    .findByIdLessThanOrderByIdDesc(
-                            cursor,
-                            pageable
-                    );
-        }
+                ).getContent();
 
         logger.info(
                 "Comments fetched successfully | count: {}",
@@ -182,9 +122,13 @@ public class AdminCommentServiceImpl
         );
 
         return CursorPaginationUtil.buildResponse(
+
                 comments,
+
                 size,
+
                 Comment::getId,
+
                 this::mapToResponse
         );
     }

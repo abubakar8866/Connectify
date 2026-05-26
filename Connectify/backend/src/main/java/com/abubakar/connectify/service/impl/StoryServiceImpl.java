@@ -76,6 +76,9 @@ public class StoryServiceImpl implements StoryService {
     @Autowired
     private UserAccessValidator userAccessValidator;
 
+    @Autowired
+    private StoryAccessValidator storyAccessValidator;
+
     private static final Logger logger =
             LoggerFactory.getLogger(StoryServiceImpl.class);
 
@@ -226,7 +229,7 @@ public class StoryServiceImpl implements StoryService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        Story story = getStoryById(storyId);
+        Story story = storyAccessValidator.getActiveStory(storyId);
 
         logger.debug(
                 "Validating story owner account status | ownerId: {}",
@@ -289,7 +292,7 @@ public class StoryServiceImpl implements StoryService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        Story story = getStoryById(storyId);
+        Story story = storyAccessValidator.getActiveStory(storyId);
 
         logger.debug(
                 "Validating story owner account before reaction | ownerId: {}",
@@ -390,7 +393,7 @@ public class StoryServiceImpl implements StoryService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        Story story = getStoryById(storyId);
+        Story story = storyAccessValidator.getActiveStory(storyId);
 
         logger.debug(
                 "Validating story owner account before reply | ownerId: {}",
@@ -458,17 +461,7 @@ public class StoryServiceImpl implements StoryService {
         User currentUser =
                 authUtil.getCurrentUser();
 
-        Story story =
-                storyRepository.findById(storyId)
-                        .orElseThrow(() -> {
-
-                            logger.warn("Story not found with id: {}", storyId);
-
-                            return new ResourceNotFound(
-                                            "Story not found with id: " + storyId
-                                    );
-                        }
-                        );
+        Story story = storyAccessValidator.getStory(storyId);
 
         logger.debug(
                 "Validating story ownership for restore request | ownerId: {} | requesterId: {}",
@@ -520,7 +513,7 @@ public class StoryServiceImpl implements StoryService {
                 storyId
         );
 
-        Story story = getStoryById(storyId);
+        Story story = storyAccessValidator.getActiveStory(storyId);
 
         logger.debug(
                 "Validating story ownership for deletion | ownerId: {} | requesterId: {}",
@@ -532,15 +525,6 @@ public class StoryServiceImpl implements StoryService {
                 this.authUtil.getCurrentUser(),
                 "You are not authorized to access this story"
         );
-
-        if (Boolean.TRUE.equals(story.getDeleted())) {
-
-            logger.warn("Story already deleted");
-
-            throw new OperationFailException(
-                    "Story already deleted"
-            );
-        }
 
         story.setDeleted(true);
         story.setIsActive(false);
@@ -567,7 +551,7 @@ public class StoryServiceImpl implements StoryService {
                 size
         );
 
-        Story story = getStoryById(storyId);
+        Story story = storyAccessValidator.getActiveStory(storyId);
 
         logger.debug(
                 "Validating story ownership for viewers access | ownerId: {}",
@@ -791,74 +775,6 @@ public class StoryServiceImpl implements StoryService {
                 .expiresAt(story.getExpiresAt())
 
                 .build();
-    }
-
-    // ================= GET STORY BY ID =================
-    private Story getStoryById(Long storyId) {
-
-        Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Story not found | storyId: {}",
-                            storyId
-                    );
-
-                    return new ResourceNotFound(
-                            "Story not found with id: "
-                                    + storyId
-                    );
-                });
-
-        validateActiveStory(story);
-
-        return story;
-    }
-
-    private void validateActiveStory(Story story) {
-
-        logger.debug(
-                "Validating story availability | storyId: {}",
-                story.getId()
-        );
-
-        if (Boolean.TRUE.equals(story.getDeleted())) {
-
-            logger.warn(
-                    "Deleted story access attempted | storyId: {}",
-                    story.getId()
-            );
-
-            throw new ResourceNotFound(
-                    "Story is deleted"
-            );
-        }
-
-        if (Boolean.FALSE.equals(story.getIsActive())) {
-
-            logger.warn(
-                    "Inactive story access attempted | storyId: {}",
-                    story.getId()
-            );
-
-            throw new ResourceNotFound(
-                    "Story is unavailable"
-            );
-        }
-
-        if (story.getExpiresAt()
-                .isBefore(LocalDateTime.now())) {
-
-            logger.warn(
-                    "Expired story access attempted | storyId: {} | expiresAt: {}",
-                    story.getId(),
-                    story.getExpiresAt()
-            );
-
-            throw new ResourceNotFound(
-                    "Story has expired"
-            );
-        }
     }
 
 }

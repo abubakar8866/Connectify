@@ -8,6 +8,7 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.service.AdminStoryService;
+import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.specification.StorySpecification;
 import com.abubakar.connectify.util.*;
 
@@ -43,6 +44,9 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
     @Autowired
     private AuthUtil authUtil;
+
+    @Autowired
+    private FileService fileService;
 
     // ================= GET ALL Stories =================
     @Override
@@ -121,15 +125,25 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         Story story = storyAccessValidator.getStory(storyId);
 
-        if (Boolean.TRUE.equals(story.getDeleted())) {
+        // DELETE MEDIA IF EXISTS
+        if (
+                story.getMediaUrl() != null
+                        &&
+                        !story.getMediaUrl().isBlank()
+        ) {
 
-            throw new OperationFailException(
-                    "Story already deleted"
+            logger.info(
+                    "Deleting story media | storyId: {}",
+                    storyId
+            );
+
+            fileService.deleteFile(
+                    story.getMediaUrl(),
+                    "stories"
             );
         }
 
-        story.setDeleted(true);
-        story.setIsActive(false);
+        storyRepository.delete(story);
 
         logger.info(
                 "Updating story status to deleted | storyId: {}",

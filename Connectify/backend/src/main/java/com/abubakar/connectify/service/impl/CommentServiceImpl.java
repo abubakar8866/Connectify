@@ -8,18 +8,12 @@ import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.LikeRepository;
-import com.abubakar.connectify.repository.PostRepository;
-import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.CommentService;
 
 import com.abubakar.connectify.service.NotificationService;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.OwnershipValidator;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,12 +32,6 @@ public class CommentServiceImpl implements CommentService {
     private CommentRepository commentRepository;
 
     @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private LikeRepository likeRepository;
 
     @Autowired
@@ -51,6 +39,12 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private OwnershipValidator ownershipValidator;
+
+    @Autowired
+    private CommentAccessValidator commentAccessValidator;
+
+    @Autowired
+    private PostAccessValidator postAccessValidator;
 
     @Autowired
     private NotificationService notificationService;
@@ -67,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
 
         User currentUser = this.authUtil.getCurrentUser();
 
-        Post post = getActivePostById(postId);
+        Post post = postAccessValidator.getActivePost(postId);
 
         Comment comment = Comment.builder()
                 .content(request.getContent())
@@ -83,8 +77,8 @@ public class CommentServiceImpl implements CommentService {
                     request.getParentCommentId()
             );
 
-            Comment parentComment =
-                    getCommentById(request.getParentCommentId());
+            Comment parentComment = commentAccessValidator
+                    .getComment(request.getParentCommentId());
 
             if (!parentComment.getPost().getId().equals(postId)) {
 
@@ -174,19 +168,7 @@ public class CommentServiceImpl implements CommentService {
 
         logger.info("Updating comment with id: {}", commentId);
 
-        Comment comment = getCommentById(commentId);
-
-        if (comment.getDeleted()) {
-
-            logger.warn(
-                    "Update attempt on deleted comment | commentId: {}",
-                    commentId
-            );
-
-            throw new OperationFailException(
-                    "Deleted comment cannot be updated"
-            );
-        }
+        Comment comment = commentAccessValidator.getActiveComment(commentId);
 
         this.ownershipValidator.validate(
                     comment.getUser().getId(),
@@ -220,19 +202,7 @@ public class CommentServiceImpl implements CommentService {
         );
 
         Comment comment =
-                getCommentById(commentId);
-
-        if (comment.getDeleted()) {
-
-            logger.warn(
-                    "Comment already deleted | commentId: {}",
-                    commentId
-            );
-
-            throw new OperationFailException(
-                    "Comment already deleted"
-            );
-        }
+                commentAccessValidator.getActiveComment(commentId);
 
         ownershipValidator.validate(
                 comment.getUser().getId(),
@@ -263,8 +233,7 @@ public class CommentServiceImpl implements CommentService {
                 commentId
         );
 
-        Comment comment =
-                getCommentById(commentId);
+        Comment comment = commentAccessValidator.getComment(commentId);
 
         if (comment.getRestoreRequested()) {
 
@@ -325,7 +294,7 @@ public class CommentServiceImpl implements CommentService {
                 size
         );
 
-        Post post = this.getActivePostById(postId);
+        Post post = postAccessValidator.getActivePost(postId);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -405,42 +374,6 @@ public class CommentServiceImpl implements CommentService {
                                 .toList()
                 )
                 .build();
-    }
-
-    private Comment getCommentById(Long commentId) {
-
-        logger.debug("Fetching comment with id: {}", commentId);
-
-        return commentRepository.findById(commentId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Comment not found with id: {}",
-                            commentId
-                    );
-
-                    return new ResourceNotFound(
-                            "Comment not found with id: " + commentId
-                    );
-                });
-    }
-
-    private Post getActivePostById(Long postId) {
-
-        logger.debug("Fetching post with id: {}", postId);
-
-        return postRepository.findByIdAndDeletedFalse(postId)
-                .orElseThrow(() -> {
-
-                    logger.error(
-                            "Post not found with id: {}",
-                            postId
-                    );
-
-                    return new ResourceNotFound(
-                            "Post not found with id: " + postId
-                    );
-                });
     }
 
     private Boolean isCommentLikedByCurrentUser(Comment comment) {
