@@ -165,7 +165,7 @@ public class AuthServiceImpl implements AuthService {
 			Authentication authentication =
 					authenticationManager.authenticate(
 							new UsernamePasswordAuthenticationToken(
-									request.getEmail().trim(),
+									request.getEmail().trim().toLowerCase(),
 									request.getPassword()
 							)
 					);
@@ -221,7 +221,7 @@ public class AuthServiceImpl implements AuthService {
 		return mapToResponse(user);
 	}
 
-	// ================= UPDATE PROFILE IMAGE =================
+	// ================= UPDATE PROFILE =================
 	@Override
 	@Transactional
 	public UserResponse updateProfile(
@@ -235,9 +235,11 @@ public class AuthServiceImpl implements AuthService {
 				userId
 		);
 
-		User user = userAccessValidator.getValidUser(userId);
+		User user =
+				userAccessValidator.getValidUser(userId);
 
-		User currentUser = this.authUtil.getCurrentUser();
+		User currentUser =
+				this.authUtil.getCurrentUser();
 
 		// Authorization
 		if (!user.getId().equals(currentUser.getId())) {
@@ -276,7 +278,9 @@ public class AuthServiceImpl implements AuthService {
 				);
 			}
 
-			user.setUname(request.getUname());
+			user.setUname(
+					request.getUname()
+			);
 		}
 
 		// Name
@@ -287,19 +291,6 @@ public class AuthServiceImpl implements AuthService {
 		// Bio
 		if (request.getBio() != null) {
 			user.setBio(request.getBio());
-		}
-
-		// Profile image
-		if (file != null && !file.isEmpty()) {
-
-			String fileName = fileService.uploadFile(
-					file,
-					userId,
-					user.getProfileImageUrl(),
-					"users"
-			);
-
-			user.setProfileImageUrl(fileName);
 		}
 
 		// Gender
@@ -314,7 +305,9 @@ public class AuthServiceImpl implements AuthService {
 
 		// Date of birth
 		if (request.getDateOfBirth() != null) {
-			user.setDateOfBirth(request.getDateOfBirth());
+			user.setDateOfBirth(
+					request.getDateOfBirth()
+			);
 		}
 
 		// City
@@ -322,14 +315,81 @@ public class AuthServiceImpl implements AuthService {
 			user.setCity(request.getCity());
 		}
 
-		userRepo.save(user);
+		String uploadedFileName = null;
 
-		logger.info(
-				"Profile updated successfully for userId: {}",
-				userId
-		);
+		// STORE OLD FILE
+		String oldProfileImage =
+				user.getProfileImageUrl();
 
-		return mapToResponse(user);
+		try {
+
+			// ================= PROFILE IMAGE =================
+
+			if (
+					file != null
+							&&
+							!file.isEmpty()
+			) {
+
+				uploadedFileName =
+						fileService.uploadFile(
+								file,
+								userId,
+								null, // IMPORTANT
+								"users"
+						);
+
+				user.setProfileImageUrl(
+						uploadedFileName
+				);
+			}
+
+			// ================= SAVE USER =================
+
+			userRepo.save(user);
+
+			// ================= DELETE OLD FILE =================
+
+			if (
+					uploadedFileName != null
+							&&
+							oldProfileImage != null
+							&&
+							!oldProfileImage.isBlank()
+			) {
+
+				fileService.deleteFile(
+						oldProfileImage,
+						"users"
+				);
+			}
+
+			logger.info(
+					"Profile updated successfully | userId: {}",
+					userId
+			);
+
+			return mapToResponse(user);
+
+		} catch (Exception e) {
+
+			logger.error(
+					"Profile update failed | userId: {}",
+					userId,
+					e
+			);
+
+			// DELETE NEWLY UPLOADED FILE
+			if (uploadedFileName != null) {
+
+				fileService.deleteFile(
+						uploadedFileName,
+						"users"
+				);
+			}
+
+			throw e;
+		}
 	}
 
 	// ================= FORGOT PASSWORD =================
@@ -338,51 +398,56 @@ public class AuthServiceImpl implements AuthService {
 	public void forgotPassword(String email) {
 
 		logger.debug(
-				"Starting forgot password flow | email: {}",
-				email
+				"Starting forgot password flow"
 		);
 
-		User user = userRepo.findByEmail(email)
-				.orElseThrow(() -> {
-							logger.warn(
-									"Forgot password failed - email not found | email: {}",
-									email
-							);
-							return new EmailNotFound(
-									"User not found with email: " + email
-							);
-						}
-				);
+		User user =
+				userRepo.findByEmail(
+						email.trim().toLowerCase()
+				).orElse(null);
 
-		User validateUser = userAccessValidator.getValidUser(user.getId());
+		// SECURITY:
+		// Never reveal whether email exists
 
-		String token = UUID.randomUUID().toString();
+		if (user == null) {
+
+			logger.warn(
+					"Forgot password requested for non-existing email"
+			);
+
+			return;
+		}
+
+		userAccessValidator.validateActiveUser(user);
+
+		String token =
+				UUID.randomUUID().toString();
 
 		logger.debug(
 				"Password reset token generated | userId: {}",
-				validateUser.getId()
+				user.getId()
 		);
 
-		validateUser.setResetToken(token);
+		user.setResetToken(token);
 
-		validateUser.setResetTokenExpiry(
+		user.setResetTokenExpiry(
 				LocalDateTime.now().plusMinutes(15)
 		);
 
-		userRepo.save(validateUser);
+		userRepo.save(user);
 
 		String resetUrl =
 				"http://localhost:3000/reset-password?token="
 						+ token;
 
 		sendResetEmail(
-				validateUser.getEmail(),
+				user.getEmail().trim().toLowerCase(),
 				resetUrl
 		);
 
 		logger.info(
 				"Password reset email sent successfully | userId: {}",
-				validateUser.getId()
+				user.getId()
 		);
 	}
 

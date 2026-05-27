@@ -19,7 +19,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_email", columnList = "email"),
+                @Index(name = "idx_user_username", columnList = "username"),
+                @Index(name = "idx_user_status", columnList = "accountStatus"),
+                @Index(name = "idx_user_active", columnList = "isActive")
+        }
+        )
 @Getter
 @Setter
 @AllArgsConstructor
@@ -36,7 +44,7 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "username",unique = true, nullable = false)
     private String uname;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, updatable = false)
     private String email;
 
     private String password;
@@ -47,18 +55,23 @@ public class User extends BaseEntity implements UserDetails {
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AccountStatus accountStatus;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AuthProvider provider;
 
     private String providerId;
 
+    @Column(nullable = false)
     private Boolean isActive;
 
+    @Column(nullable = false)
     private Boolean isEmailVerified;
 
     private String emailVerificationToken;
@@ -69,14 +82,19 @@ public class User extends BaseEntity implements UserDetails {
 
     private LocalDateTime resetTokenExpiry;
 
+    @Column(nullable = false)
     private Long followersCount = 0L;
 
+    @Column(nullable = false)
     private Long followingCount = 0L;
 
+    @Column(nullable = false)
     private Boolean deleted = false;
 
+    @Column(nullable = false)
     private Boolean restoreRequested = false;
 
+    @Column(nullable = false)
     private Boolean unbanRequested = false;
 
     @Column(columnDefinition = "TEXT")
@@ -86,8 +104,10 @@ public class User extends BaseEntity implements UserDetails {
 
     private LocalDateTime restoredAt;
 
+    @Column(nullable = false)
     private Boolean isPrivate = false;
 
+    @Column(nullable = false)
     private Boolean isVerified = false;
 
     private LocalDateTime bannedUntil;
@@ -130,7 +150,8 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(
             mappedBy = "following",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     private List<Follow> followers = new ArrayList<>();
 
@@ -139,7 +160,8 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(
             mappedBy = "follower",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     private List<Follow> following = new ArrayList<>();
 
@@ -147,16 +169,57 @@ public class User extends BaseEntity implements UserDetails {
 
     private LocalDateTime lastSeenAt;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Post> posts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<SavedPost> savedPosts = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "reportedUser",
+            fetch = FetchType.LAZY
+    )
+    private List<Report> reports = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
-        this.isActive = true;
-        this.isEmailVerified = false;
+
+        if (this.isActive == null) {
+            this.isActive = true;
+        }
+
+        if (this.isEmailVerified == null) {
+            this.isEmailVerified = false;
+        }
+
+        if (this.deleted == null) {
+            this.deleted = false;
+        }
+
+        if (this.restoreRequested == null) {
+            this.restoreRequested = false;
+        }
+
+        if (this.unbanRequested == null) {
+            this.unbanRequested = false;
+        }
+
+        if (this.isPrivate == null) {
+            this.isPrivate = false;
+        }
+
+        if (this.isVerified == null) {
+            this.isVerified = false;
+        }
+
+        if (this.followersCount == null) {
+            this.followersCount = 0L;
+        }
+
+        if (this.followingCount == null) {
+            this.followingCount = 0L;
+        }
 
         if (this.role == null) {
             this.role = Role.USER;
@@ -188,7 +251,10 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return accountStatus != AccountStatus.BANNED;
+
+        return accountStatus != null
+                &&
+                accountStatus != AccountStatus.BANNED;
     }
 
     @Override

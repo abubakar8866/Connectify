@@ -265,5 +265,29 @@ public class UserSpecification {
         };
     }
 
+    // ================= REPORTED USERS =================
+    public static Specification<User> reportedOnly(
+            Boolean reportedOnly
+    ) {
+
+        return (root, query, cb) -> {
+
+            if (
+                    reportedOnly == null
+                            ||
+                            !reportedOnly
+            ) {
+
+                return cb.conjunction();
+            }
+
+            query.distinct(true);
+
+            return cb.isNotEmpty(
+                    root.get("reports")
+            );
+        };
+    }
+
 }
 

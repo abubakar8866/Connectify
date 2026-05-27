@@ -50,16 +50,34 @@ public class AuthUtil {
             );
         }
 
-        User user =
-                (User) authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
 
-        assert user != null;
-        logger.debug(
-                "Authenticated user fetched successfully | userId: {}",
-                user.getId()
+        if (!(principal instanceof User user)) {
+
+            logger.warn(
+                    "Invalid authentication principal"
+            );
+
+            throw new UserNotAuthenticatedException(
+                    "Invalid authentication principal"
+            );
+        }
+
+        User validUser =
+                this.userAccessValidator.getValidUser(
+                        user.getId()
+                );
+
+        this.userAccessValidator.validateActiveUser(
+                validUser
         );
 
-        return this.userAccessValidator.getValidUser(user.getId());
+        logger.debug(
+                "Authenticated user fetched successfully | userId: {}",
+                validUser.getId()
+        );
+
+        return validUser;
     }
 
 }

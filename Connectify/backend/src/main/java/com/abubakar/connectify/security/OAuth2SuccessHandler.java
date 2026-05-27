@@ -6,8 +6,11 @@ import java.util.UUID;
 
 import com.abubakar.connectify.dto.response.AuthResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -42,6 +45,8 @@ public class OAuth2SuccessHandler
 
 	@Autowired
 	private ModelMapper modelMapper;
+
+	private static final Logger logger = LoggerFactory.getLogger(OAuth2SuccessHandler.class);
 
 	@Override
 	public void onAuthenticationSuccess(
@@ -105,6 +110,8 @@ public class OAuth2SuccessHandler
 
 				if (idObj == null) {
 
+					logger.warn("Github ID not found");
+
 					throw new GithubIdNotFound(
 							"Github ID not found"
 					);
@@ -120,15 +127,22 @@ public class OAuth2SuccessHandler
 				if (email == null) {
 
 					email =
-							providerId + "@github.com";
+							"github_" + providerId + "@oauth.connectify";
+					logger.warn(
+							"Email is not found from github, so manually created Email : {}",email
+					);
+
 				}
 			}
 
-			default ->
-					throw new UnsupportedProviderException(
-							"Unsupported provider"
-					);
-		}
+            default -> {
+                logger.error("Unsupported provider, only Google and Github is allowed.");
+
+                throw new UnsupportedProviderException(
+                        "Unsupported provider"
+                );
+            }
+        }
 
 		User user =
 				userRepo.findByEmail(email)
@@ -195,6 +209,12 @@ public class OAuth2SuccessHandler
 
 			user =
 					userRepo.save(user);
+
+			logger.info(
+					"New OAuth user created | userId: {} | provider: {}",
+					user.getId(),
+					provider
+			);
 		}
 
 		// ================= UPDATE EXISTING USER =================
@@ -205,7 +225,30 @@ public class OAuth2SuccessHandler
 						: user.getName()
 		);
 
-		user.setProvider(provider);
+		if (
+				user.getProvider() != AuthProvider.LOCAL
+						&&
+						user.getProvider() != provider
+		) {
+
+			logger.warn(
+					"OAuth provider collision detected | email: {} | existingProvider: {} | attemptedProvider: {}",
+					email,
+					user.getProvider(),
+					provider
+			);
+
+			throw new OperationFailException(
+					"Account already linked with "
+							+ user.getProvider()
+			);
+		}
+
+		// Keep LOCAL provider unchanged
+		if (user.getProvider() != AuthProvider.LOCAL) {
+
+			user.setProvider(provider);
+		}
 
 		user.setProviderId(providerId);
 
@@ -239,6 +282,12 @@ public class OAuth2SuccessHandler
 		}
 
 		userRepo.save(user);
+
+		logger.info(
+				"OAuth login successful | userId: {} | provider: {}",
+				user.getId(),
+				provider
+		);
 
 		// ================= GENERATE JWT =================
 

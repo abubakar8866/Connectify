@@ -7,7 +7,6 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.UserDetailsAdminResponse;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
-import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
@@ -18,10 +17,7 @@ import com.abubakar.connectify.service.AdminUserService;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.UserSpecification;
 
-import com.abubakar.connectify.util.AdminValidator;
-import com.abubakar.connectify.util.AuthUtil;
-import com.abubakar.connectify.util.CursorPaginationUtil;
-import com.abubakar.connectify.util.PaginationUtil;
+import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +52,9 @@ public class AdminUserServiceImpl
 
     @Autowired
     private AdminValidator adminValidator;
+
+    @Autowired
+    private UserAccessValidator userAccessValidator;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
@@ -149,6 +148,10 @@ public class AdminUserServiceImpl
                                 UserSpecification.hasDeleted(
                                         request.getDeleted()
                                 )
+                        ).and(
+                                UserSpecification.reportedOnly(
+                                        request.getReportedOnly()
+                                )
                         );
 
         List<User> users =
@@ -187,7 +190,7 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
 
         Long postsCount =
                 postRepository.countByUser(user);
@@ -241,7 +244,7 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
 
         validateSelfAction(admin, user, "ban");
 
@@ -326,7 +329,17 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
+
+        if (!Boolean.TRUE.equals(user.getRestoreRequested())) {
+
+            logger.warn("Restore request not found");
+
+            throw new OperationFailException(
+                    "Restore request not found"
+            );
+
+        }
 
         validateSelfAction(admin, user, "restore");
 
@@ -376,7 +389,7 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
 
         validateSelfAction(admin, user, "reject unban request");
 
@@ -419,7 +432,17 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
+
+        if (!Boolean.TRUE.equals(user.getRestoreRequested())) {
+
+            logger.warn("Restore unban request not found");
+
+            throw new OperationFailException(
+                    "Restore unban request not found"
+            );
+
+        }
 
         validateSelfAction(admin, user, "approve unban request");
 
@@ -469,7 +492,7 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
 
         user.setAdminNote(
                 "Your unban request was rejected by admin."
@@ -511,7 +534,7 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = getUserById(userId);
+        User user = userAccessValidator.getValidUser(userId);
 
         validateSelfAction(admin, user, "delete");
 
@@ -540,46 +563,25 @@ public class AdminUserServiceImpl
     }
 
     // ================= PRIVATE =================
-
-    private User getUserById(Long userId) {
-
-        logger.debug(
-                "Fetching user by id | userId: {}",
-                userId
-        );
-
-        return userRepository.findById(userId)
-                .orElseThrow(() -> {
-                            logger.warn(
-                                    "User not found | userId: {}",
-                                    userId
-                            );
-                            return new ResourceNotFound(
-                                    "User not found"
-                            );
-                    }
-
-                );
-    }
-
     private void validateSelfAction(
             User admin,
             User targetUser,
             String action
     ) {
 
-        logger.warn(
-                "Admin attempted self action | adminId: {} | action: {}",
-                admin.getId(),
-                action
-        );
-
         if (admin.getId().equals(targetUser.getId())) {
+
+            logger.warn(
+                    "Admin attempted self action | adminId: {} | action: {}",
+                    admin.getId(),
+                    action
+            );
 
             throw new OperationFailException(
                     "Admin cannot " + action + " own account"
             );
         }
+
     }
 
     private AdminUserResponse mapToAdminUserResponse(

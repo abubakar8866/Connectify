@@ -30,7 +30,7 @@ public class FileServiceImpl implements FileService {
 
 	private static final long MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 
-	private static final long MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 5MB
+	private static final long MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 	private static final int MAX_FILE_COUNT = 5;
 
@@ -105,21 +105,40 @@ public class FileServiceImpl implements FileService {
 		}
 
 		// File name validation
-		String originalFileName = file.getOriginalFilename();
-		if (originalFileName == null || originalFileName.isBlank() || originalFileName.contains("..")) {
-			logger.warn("Invalid file name: {}", originalFileName);
-			throw new UnableToUploadFileException("Invalid file name.");
+		String originalFileName =
+				file.getOriginalFilename();
+
+		if (
+				originalFileName == null
+						||
+						originalFileName.isBlank()
+		) {
+
+			logger.warn(
+					"Invalid file name: {}",
+					originalFileName
+			);
+
+			throw new UnableToUploadFileException(
+					"Invalid file name."
+			);
 		}
+
+		// SAFE CLEAN NAME
+		String cleanFileName =
+				Paths.get(originalFileName)
+						.getFileName()
+						.toString();
 
 		Path folderPath = createFolder(folderName);
 
-		int index = originalFileName.lastIndexOf(".");
+		int index = cleanFileName.lastIndexOf(".");
 		if (index <= 0) {
-			logger.warn("File Extension not found: {}", originalFileName);
+			logger.warn("File Extension not found: {}", cleanFileName);
 			throw new UnableToUploadFileException("File Extension not found.");
 		}
 
-		String extension = originalFileName.substring(index).toLowerCase();
+		String extension = cleanFileName.substring(index).toLowerCase();
 		String fileName = entityId + "_" + UUID.randomUUID() + extension;
 
 		try {
@@ -342,3 +361,4 @@ public class FileServiceImpl implements FileService {
 	}
 
 }
+
