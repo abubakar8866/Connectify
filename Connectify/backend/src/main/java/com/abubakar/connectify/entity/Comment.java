@@ -7,7 +7,19 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "comments")
+@Table(
+        name = "comments",
+        indexes = {
+                @Index(
+                        name = "idx_comment_deleted",
+                        columnList = "deleted"
+                ),
+                @Index(
+                        name = "idx_comment_restoreRequested",
+                        columnList = "restoreRequested"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -61,7 +73,8 @@ public class Comment extends BaseEntity {
     @OneToMany(
             mappedBy = "comment",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
     private List<Like> likes = new ArrayList<>();
 

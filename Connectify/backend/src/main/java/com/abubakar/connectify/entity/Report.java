@@ -7,7 +7,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "reports")
+@Table(
+        name = "reports",
+        indexes = {
+                @Index(
+                        name = "idx_report_comment",
+                        columnList = "comment_id"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

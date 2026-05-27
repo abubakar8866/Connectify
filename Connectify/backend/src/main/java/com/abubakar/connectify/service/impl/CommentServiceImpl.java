@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.internal.CommentMappingData;
 import com.abubakar.connectify.dto.request.CreateCommentRequest;
 import com.abubakar.connectify.dto.response.CommentResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
@@ -22,7 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -52,10 +54,13 @@ public class CommentServiceImpl implements CommentService {
     private static final Logger logger =
             LoggerFactory.getLogger(CommentServiceImpl.class);
 
+    private static final int MAX_REPLY_DEPTH = 3;
+
     @Override
     public CommentResponse addComment(
             Long postId,
-            CreateCommentRequest request) {
+            CreateCommentRequest request
+    ) {
 
         logger.info("Adding comment to post with id: {}", postId);
 
@@ -64,7 +69,7 @@ public class CommentServiceImpl implements CommentService {
         Post post = postAccessValidator.getActivePost(postId);
 
         Comment comment = Comment.builder()
-                .content(request.getContent())
+                .content(request.getContent().trim())
                 .user(currentUser)
                 .post(post)
                 .build();
@@ -102,6 +107,22 @@ public class CommentServiceImpl implements CommentService {
 
                 throw new OperationFailException(
                         "Cannot reply to deleted comment"
+                );
+            }
+
+            int replyDepth =
+                    calculateReplyDepth(parentComment);
+
+            if (replyDepth >= MAX_REPLY_DEPTH) {
+
+                logger.warn(
+                        "Reply depth exceeded | parentCommentId: {} | depth: {}",
+                        parentComment.getId(),
+                        replyDepth
+                );
+
+                throw new OperationFailException(
+                        "Maximum reply depth exceeded"
                 );
             }
 
@@ -164,7 +185,8 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public CommentResponse updateComment(
             Long commentId,
-            CreateCommentRequest request) {
+            CreateCommentRequest request
+    ) {
 
         logger.info("Updating comment with id: {}", commentId);
 
@@ -181,7 +203,7 @@ public class CommentServiceImpl implements CommentService {
                 authUtil.getCurrentUser().getId()
         );
 
-        comment.setContent(request.getContent());
+        comment.setContent(request.getContent().trim());
 
         Comment updatedComment = commentRepository.save(comment);
 
@@ -235,6 +257,18 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = commentAccessValidator.getComment(commentId);
 
+        if (comment.getPost().getDeleted()) {
+
+            logger.warn(
+                    "Cannot restore comment because parent post is deleted"
+            );
+
+            throw new OperationFailException(
+                    "Cannot restore comment because parent post is deleted"
+            );
+
+        }
+
         if (comment.getRestoreRequested()) {
 
             logger.warn(
@@ -261,11 +295,11 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.getDeleted()) {
 
             logger.warn(
-                    "Comment is already deleted"
+                    "Comment is not deleted"
             );
 
             throw new OperationFailException(
-                    "Comment is already deleted"
+                    "Comment is not deleted"
             );
         }
 
@@ -294,23 +328,21 @@ public class CommentServiceImpl implements CommentService {
                 size
         );
 
-        Post post = postAccessValidator.getActivePost(postId);
+        Post post =
+                postAccessValidator.getActivePost(
+                        postId
+                );
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
                         size
                 );
 
-        List<Comment> comments;
+        List<Comment> parentComments;
 
         if (cursor == null) {
 
-            logger.debug(
-                    "Fetching first page comments | postId: {}",
-                    postId
-            );
-
-            comments =
+            parentComments =
                     commentRepository
                             .findByPostIdAndParentCommentIsNullAndDeletedFalseOrderByIdDesc(
                                     post.getId(),
@@ -319,13 +351,7 @@ public class CommentServiceImpl implements CommentService {
 
         } else {
 
-            logger.debug(
-                    "Fetching paginated comments | postId: {} | cursor: {}",
-                    postId,
-                    cursor
-            );
-
-            comments =
+            parentComments =
                     commentRepository
                             .findByPostIdAndParentCommentIsNullAndDeletedFalseAndIdLessThanOrderByIdDesc(
                                     post.getId(),
@@ -335,55 +361,225 @@ public class CommentServiceImpl implements CommentService {
         }
 
         logger.info(
-                "Comments fetched successfully | postId: {} | fetchedCount: {}",
-                postId,
-                comments.size()
+                "Top-level comments fetched | count: {}",
+                parentComments.size()
         );
 
+        CommentMappingData mappingData =
+                prepareCommentMappingData(
+                        parentComments
+                );
+
         return CursorPaginationUtil.buildResponse(
-                comments,
+                parentComments,
                 size,
                 Comment::getId,
-                this::mapToResponse
+                comment -> mapToResponse(
+                        comment,
+                        mappingData,
+                        0
+                )
         );
     }
 
-    // PRIVATE METHODS
-    private CommentResponse mapToResponse(Comment comment) {
+    // ================= PRIVATE METHODS =================
+
+    private CommentResponse mapToResponse(
+            Comment comment
+    ) {
+
+        CommentMappingData mappingData =
+                prepareCommentMappingData(
+                        List.of(comment)
+                );
+
+        return mapToResponse(
+                comment,
+                mappingData,
+                0
+        );
+    }
+
+    private CommentResponse mapToResponse(
+            Comment comment,
+            CommentMappingData mappingData,
+            int depth
+    ) {
+
+        List<Comment> childReplies =
+                mappingData.getRepliesMap()
+                        .getOrDefault(
+                                comment.getId(),
+                                List.of()
+                        );
+
+        List<CommentResponse> replyResponses;
+
+        if (depth >= MAX_REPLY_DEPTH) {
+
+            replyResponses = List.of();
+
+        } else {
+
+            replyResponses =
+                    childReplies.stream()
+
+                            .map(reply ->
+                                    mapToResponse(
+                                            reply,
+                                            mappingData,
+                                            depth + 1
+                                    )
+                            )
+                            .toList();
+        }
 
         return CommentResponse.builder()
+
                 .id(comment.getId())
-                .content(comment.getContent())
+
+                .content(comment.getContent().trim())
 
                 .userId(comment.getUser().getId())
+
                 .username(comment.getUser().getUname())
+
                 .userProfileImage(
                         comment.getUser().getProfileImageUrl()
                 )
 
                 .likeCount(comment.getLikeCount())
-                .liked(isCommentLikedByCurrentUser(comment))
+
+                .liked(
+                        mappingData.getLikedCommentIds()
+                                .contains(comment.getId())
+                )
 
                 .createdAt(comment.getCreatedAt())
+
                 .updatedAt(comment.getUpdatedAt())
 
-                .replies(
-                        comment.getReplies()
-                                .stream()
-                                .map(this::mapToResponse)
-                                .toList()
+                .replies(replyResponses)
+
+                .replyCount(
+                        (long) childReplies.size()
                 )
+
                 .build();
     }
 
-    private Boolean isCommentLikedByCurrentUser(Comment comment) {
+    private List<Comment> fetchRepliesRecursively(
+            List<Long> parentIds,
+            int depth
+    ) {
 
-        User currentUser = this.authUtil.getCurrentUser();
+        if (
+                parentIds.isEmpty()
+                        ||
+                        depth <= 0
+        ) {
 
-        return likeRepository
-                .findByUserAndComment(currentUser, comment)
-                .isPresent();
+            return List.of();
+        }
 
+        List<Comment> replies =
+                commentRepository.findRepliesByParentIds(
+                        parentIds
+                );
+
+        List<Long> replyIds =
+                replies.stream()
+                        .map(Comment::getId)
+                        .toList();
+
+        List<Comment> nestedReplies =
+                fetchRepliesRecursively(
+                        replyIds,
+                        depth - 1
+                );
+
+        List<Comment> allReplies =
+                new ArrayList<>(replies);
+
+        allReplies.addAll(
+                nestedReplies
+        );
+
+        return allReplies;
+    }
+
+    private CommentMappingData prepareCommentMappingData(
+            List<Comment> parentComments
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        // PARENT IDS
+        List<Long> parentIds =
+                parentComments.stream()
+                        .map(Comment::getId)
+                        .toList();
+
+        // FETCH ALL REPLIES
+        List<Comment> allReplies =
+                fetchRepliesRecursively(
+                        parentIds,
+                        MAX_REPLY_DEPTH
+                );
+
+        // GROUP REPLIES
+        Map<Long, List<Comment>> repliesMap =
+                allReplies.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        reply ->
+                                                reply.getParentComment().getId()
+                                )
+                        );
+
+        // ALL COMMENT IDS
+        List<Long> allCommentIds =
+                new ArrayList<>();
+
+        allCommentIds.addAll(parentIds);
+
+        allCommentIds.addAll(
+                allReplies.stream()
+                        .map(Comment::getId)
+                        .toList()
+        );
+
+        // FETCH LIKED IDS
+        Set<Long> likedCommentIds =
+                likeRepository
+                        .findLikedCommentIdsByUserAndCommentIds(
+                                currentUser,
+                                allCommentIds
+                        );
+
+        return new CommentMappingData(
+                repliesMap,
+                likedCommentIds
+        );
+    }
+
+    private int calculateReplyDepth(
+            Comment comment
+    ) {
+
+        int depth = 0;
+
+        Comment current = comment;
+
+        while (current.getParentComment() != null) {
+
+            depth++;
+
+            current = current.getParentComment();
+        }
+
+        return depth;
     }
 
 }

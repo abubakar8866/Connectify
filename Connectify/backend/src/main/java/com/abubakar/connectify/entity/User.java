@@ -121,7 +121,7 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "user_languages",
             joinColumns = @JoinColumn(name = "user_id")
@@ -178,6 +178,8 @@ public class User extends BaseEntity implements UserDetails {
     @JsonIgnore
     @OneToMany(
             mappedBy = "reportedUser",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
             fetch = FetchType.LAZY
     )
     private List<Report> reports = new ArrayList<>();

@@ -6,6 +6,7 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.repository.CommentRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
@@ -206,6 +207,26 @@ public class AdminCommentServiceImpl
 
         Comment comment = commentAccessValidator.getComment(commentId);
 
+        if (!comment.getDeleted()) {
+
+            logger.warn("Comment is already active");
+
+            throw new OperationFailException(
+                    "Comment is already active"
+            );
+
+        }
+
+        if (!comment.getRestoreRequested()) {
+
+            logger.warn("No restore request found when calling restore comment.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+
+        }
+
         comment.setDeleted(false);
 
         comment.setRestoreRequested(false);
@@ -254,6 +275,16 @@ public class AdminCommentServiceImpl
                 commentAccessValidator.getComment(
                         commentId
                 );
+
+        if (!comment.getRestoreRequested()) {
+
+            logger.warn("No restore request found when calling rejecting restore comment.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+
+        }
 
         comment.setRestoreRequested(false);
 

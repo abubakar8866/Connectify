@@ -30,5 +30,7 @@ public class CommentResponse {
 
     private List<CommentResponse> replies;
 
+    private Long replyCount;
+
 }
 

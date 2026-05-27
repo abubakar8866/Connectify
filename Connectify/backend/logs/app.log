@@ -66,3 +66,294 @@
 2026-05-27 12:53:52[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
 2026-05-27 12:53:52[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
 2026-05-27 12:53:52[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
+2026-05-27 16:32:58[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
+2026-05-27 16:32:58[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 19944 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
+2026-05-27 16:32:58[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-27 16:32:58[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
+2026-05-27 16:32:59[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-27 16:32:59[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 221 ms. Found 17 JPA repository interfaces.
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ChatParticipantRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ChatRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.CommentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.FollowRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.HashtagRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.LikeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MediaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MessageRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.NotificationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.PostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ReportRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.SavedPostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReactionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReplyRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryViewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:33:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 11 ms. Found 0 Redis repository interfaces.
+2026-05-27 16:33:01[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
+2026-05-27 16:33:01[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-27 16:33:01[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
+2026-05-27 16:33:01[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-27 16:33:01[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2588 ms
+2026-05-27 16:33:01[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-27 16:33:01[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-27 16:33:01[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-27 16:33:01[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
+2026-05-27 16:33:02[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@65d2d3cc
+2026-05-27 16:33:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
+2026-05-27 16:33:02[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.43
+	Default catalog/schema: connectifyApp/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-27 16:33:02[ERROR]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Failed to initialize JPA EntityManagerFactory: Association 'com.abubakar.connectify.entity.User.reports' is 'mappedBy' a property named 'post' which references the wrong entity type 'com.abubakar.connectify.entity.Post', expected 'com.abubakar.connectify.entity.User'
+2026-05-27 16:33:02[ERROR]org.springframework.boot.tomcat.servlet.DeferredServletContainerInitializers-Error starting Tomcat context. Exception: org.springframework.beans.factory.UnsatisfiedDependencyException. Message: Error creating bean with name 'jwtFilter': Unsatisfied dependency expressed through field 'customUserDetailsService': Error creating bean with name 'customUserDetailsService': Unsatisfied dependency expressed through field 'userRepo': Error creating bean with name 'userRepository' defined in com.abubakar.connectify.repository.UserRepository defined in @EnableJpaRepositories declared on DataJpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+2026-05-27 16:33:02[INFO]org.apache.catalina.core.StandardService-Stopping service [Tomcat]
+2026-05-27 16:33:02[WARN]org.apache.catalina.loader.WebappClassLoaderBase-The web application [ROOT] appears to have started a thread named [HikariPool-1:housekeeper] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ java.base/jdk.internal.misc.Unsafe.park(Native Method)
+ java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+ java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1763)
+ java.base/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1182)
+ java.base/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:899)
+ java.base/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+ java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+ java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+ java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-27 16:33:02[WARN]org.apache.catalina.loader.WebappClassLoaderBase-The web application [ROOT] appears to have started a thread named [HikariPool-1:connection-adder] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ java.base/java.lang.Thread.sleep0(Native Method)
+ java.base/java.lang.Thread.sleep(Thread.java:509)
+ com.zaxxer.hikari.util.UtilityElf.quietlySleep(UtilityElf.java:80)
+ com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:757)
+ com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:731)
+ java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+ java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+ java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+ java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-27 16:33:02[WARN]org.springframework.boot.web.server.servlet.context.AnnotationConfigServletWebServerApplicationContext-Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
+2026-05-27 16:33:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
+2026-05-27 16:33:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.
+2026-05-27 16:33:02[INFO]org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLogger-
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-05-27 16:33:02[ERROR]org.springframework.boot.SpringApplication-Application run failed
+org.springframework.context.ApplicationContextException: Unable to start web server
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:167)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at com.abubakar.connectify.ConnectifyApplication.main(ConnectifyApplication.java:15)
+Caused by: org.springframework.boot.web.server.WebServerException: Unable to start embedded Tomcat
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:150)
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164)
+	... 8 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jwtFilter': Unsatisfied dependency expressed through field 'customUserDetailsService': Error creating bean with name 'customUserDetailsService': Unsatisfied dependency expressed through field 'userRepo': Error creating bean with name 'userRepository' defined in com.abubakar.connectify.repository.UserRepository defined in @EnableJpaRepositories declared on DataJpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:767)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:748)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:146)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:493)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1446)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:602)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at org.springframework.boot.web.servlet.ServletContextInitializerBeans.getOrderedBeansOfType(ServletContextInitializerBeans.java:231)
+	at org.springframework.boot.web.servlet.ServletContextInitializerBeans.addAsRegistrationBean(ServletContextInitializerBeans.java:185)
+	at org.springframework.boot.web.servlet.ServletContextInitializerBeans.addAsRegistrationBean(ServletContextInitializerBeans.java:180)
+	at org.springframework.boot.web.servlet.ServletContextInitializerBeans.addAdaptableBeans(ServletContextInitializerBeans.java:165)
+	at org.springframework.boot.web.servlet.ServletContextInitializerBeans.<init>(ServletContextInitializerBeans.java:97)
+	at org.springframework.boot.web.context.servlet.WebApplicationContextInitializer.initialize(WebApplicationContextInitializer.java:53)
+	at org.springframework.boot.tomcat.servlet.DeferredServletContainerInitializers.onStartup(DeferredServletContainerInitializers.java:55)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4416)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:435)
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:131)
+	... 13 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'customUserDetailsService': Unsatisfied dependency expressed through field 'userRepo': Error creating bean with name 'userRepository' defined in com.abubakar.connectify.repository.UserRepository defined in @EnableJpaRepositories declared on DataJpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:767)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:748)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:146)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:493)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1446)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:602)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveBean(DefaultListableBeanFactory.java:1225)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1704)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1651)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:764)
+	... 54 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'userRepository' defined in com.abubakar.connectify.repository.UserRepository defined in @EnableJpaRepositories declared on DataJpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:377)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveValueIfNecessary(BeanDefinitionValueResolver.java:135)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyPropertyValues(AbstractAutowireCapableBeanFactory.java:1712)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1461)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:602)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:229)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1762)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1651)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.resolveFieldValue(AutowiredAnnotationBeanPostProcessor.java:764)
+	... 68 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jpaSharedEM_entityManagerFactory': Cannot resolve reference to bean 'entityManagerFactory' while setting constructor argument
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:377)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveValueIfNecessary(BeanDefinitionValueResolver.java:135)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveConstructorArguments(ConstructorResolver.java:691)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1362)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:565)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:356)
+	... 81 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class]: Association 'com.abubakar.connectify.entity.User.reports' is 'mappedBy' a property named 'post' which references the wrong entity type 'com.abubakar.connectify.entity.Post', expected 'com.abubakar.connectify.entity.User'
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1817)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:603)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:196)
+	at org.springframework.beans.factory.support.BeanDefinitionValueResolver.resolveReference(BeanDefinitionValueResolver.java:365)
+	... 93 common frames omitted
+Caused by: org.hibernate.AnnotationException: Association 'com.abubakar.connectify.entity.User.reports' is 'mappedBy' a property named 'post' which references the wrong entity type 'com.abubakar.connectify.entity.Post', expected 'com.abubakar.connectify.entity.User'
+	at org.hibernate.boot.model.internal.BinderHelper.checkMappedByType(BinderHelper.java:993)
+	at org.hibernate.boot.model.internal.BinderHelper.checkMappedByType(BinderHelper.java:968)
+	at org.hibernate.boot.model.internal.CollectionBinder.isReversePropertyInJoin(CollectionBinder.java:1507)
+	at org.hibernate.boot.model.internal.CollectionBinder.noAssociationTable(CollectionBinder.java:1531)
+	at org.hibernate.boot.model.internal.CollectionBinder.bindStarToManySecondPass(CollectionBinder.java:1489)
+	at org.hibernate.boot.model.internal.CollectionBinder$1.secondPass(CollectionBinder.java:1480)
+	at org.hibernate.boot.model.internal.CollectionSecondPass.doSecondPass(CollectionSecondPass.java:39)
+	at org.hibernate.boot.internal.InFlightMetadataCollectorImpl.processSecondPasses(InFlightMetadataCollectorImpl.java:1771)
+	at org.hibernate.boot.internal.InFlightMetadataCollectorImpl.processSecondPasses(InFlightMetadataCollectorImpl.java:1737)
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.coordinateProcessors(MetadataBuildingProcess.java:357)
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.complete(MetadataBuildingProcess.java:201)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.metadata(EntityManagerFactoryBuilderImpl.java:1392)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.populateSessionFactoryBuilder(EntityManagerFactoryBuilderImpl.java:1472)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1454)
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:93)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:443)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:436)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:411)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:419)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1864)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1813)
+	... 100 common frames omitted
+2026-05-27 16:38:58[INFO]org.hibernate.validator.internal.util.Version-HV000001: Hibernate Validator 9.0.1.Final
+2026-05-27 16:38:58[INFO]com.abubakar.connectify.ConnectifyApplication-Starting ConnectifyApplication using Java 21.0.9 with PID 1076 (C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify\backend\target\classes started by wwwab in C:\Users\wwwab\Desktop\Sem4InternshipPresentation\2\Connectify)
+2026-05-27 16:38:58[DEBUG]com.abubakar.connectify.ConnectifyApplication-Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-27 16:38:58[INFO]com.abubakar.connectify.ConnectifyApplication-The following 1 profile is active: "dev"
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 173 ms. Found 17 JPA repository interfaces.
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ChatParticipantRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ChatRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.CommentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.FollowRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.HashtagRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.LikeRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MediaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.MessageRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.NotificationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.PostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.ReportRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.SavedPostRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReactionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryReplyRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.StoryViewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport-Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.abubakar.connectify.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-05-27 16:39:00[INFO]org.springframework.data.repository.config.RepositoryConfigurationDelegate-Finished Spring Data repository scanning in 15 ms. Found 0 Redis repository interfaces.
+2026-05-27 16:39:01[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat initialized with port 8080 (http)
+2026-05-27 16:39:01[INFO]org.apache.coyote.http11.Http11NioProtocol-Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-27 16:39:01[INFO]org.apache.catalina.core.StandardService-Starting service [Tomcat]
+2026-05-27 16:39:01[INFO]org.apache.catalina.core.StandardEngine-Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-27 16:39:01[INFO]org.springframework.boot.web.context.servlet.WebApplicationContextInitializer-Root WebApplicationContext: initialization completed in 2530 ms
+2026-05-27 16:39:01[INFO]org.hibernate.orm.jpa-HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-27 16:39:01[INFO]org.hibernate.orm.core-HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-27 16:39:01[INFO]org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo-No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-27 16:39:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Starting...
+2026-05-27 16:39:02[INFO]com.zaxxer.hikari.pool.HikariPool-HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@655f92a1
+2026-05-27 16:39:02[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Start completed.
+2026-05-27 16:39:02[INFO]org.hibernate.orm.connections.pooling-HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/connectifyApp]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.43
+	Default catalog/schema: connectifyApp/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-27 16:39:03[INFO]org.hibernate.orm.core-HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-27 16:39:03[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-27 16:39:03[INFO]org.springframework.data.jpa.repository.query.QueryEnhancerFactories-Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-27 16:39:04[DEBUG]com.abubakar.connectify.security.JwtFilter-Filter 'jwtFilter' configured for use
+2026-05-27 16:39:05[INFO]org.springframework.security.config.annotation.authentication.configuration.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer-Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-27 16:39:05[WARN]org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer-Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-27 16:39:06[WARN]org.springframework.boot.jpa.autoconfigure.JpaBaseConfiguration$JpaWebConfiguration-spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-27 16:39:07[INFO]org.apache.coyote.http11.Http11NioProtocol-Starting ProtocolHandler ["http-nio-8080"]
+2026-05-27 16:39:07[INFO]org.springframework.boot.tomcat.TomcatWebServer-Tomcat started on port 8080 (http) with context path '/'
+2026-05-27 16:39:07[INFO]com.abubakar.connectify.ConnectifyApplication-Started ConnectifyApplication in 8.843 seconds (process running for 9.389)
+2026-05-27 16:39:07[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Running story cleanup job
+2026-05-27 16:39:07[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Expired stories found: 0
+2026-05-27 16:39:07[INFO]com.abubakar.connectify.configuration.StoryCleanupScheduler-Story cleanup completed
+2026-05-27 16:39:11[INFO]org.springframework.boot.tomcat.GracefulShutdown-Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-27 16:39:11[INFO]org.springframework.boot.tomcat.GracefulShutdown-Graceful shutdown complete
+2026-05-27 16:39:11[INFO]org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean-Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-27 16:39:11[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown initiated...
+2026-05-27 16:39:11[INFO]com.zaxxer.hikari.HikariDataSource-HikariPool-1 - Shutdown completed.

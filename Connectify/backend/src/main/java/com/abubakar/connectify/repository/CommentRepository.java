@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.abubakar.connectify.entity.Comment;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -26,6 +28,19 @@ public interface CommentRepository
             Long cursor,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT c
+        FROM Comment c
+        WHERE c.parentComment.id IN :parentIds
+        AND c.deleted = false
+        ORDER BY c.id DESC
+    """)
+    List<Comment> findRepliesByParentIds(
+            @Param("parentIds")
+            List<Long> parentIds
+    );
+
 
     Long countByDeletedFalse();
 
