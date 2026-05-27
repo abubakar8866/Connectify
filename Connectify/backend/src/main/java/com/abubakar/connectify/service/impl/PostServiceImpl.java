@@ -62,58 +62,79 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostResponse createPost(
             CreatePostRequest request,
-            List<MultipartFile> files)
-    {
+            List<MultipartFile> files
+    ) {
 
         logger.info("Creating new post");
 
-        User user = this.authUtil.getCurrentUser();
-        logger.info("Post creation requested by userId: {}", user.getId());
+        User user = authUtil.getCurrentUser();
 
-        Post post = new Post();
+        List<String> uploadedFiles =
+                new ArrayList<>();
 
-        post.setCaption(request.getCaption());
-        post.setUser(user);
-        post.setLikeCount(0L);
-        post.setCommentCount(0L);
+        try {
 
-        // Extract Hashtags
-        List<Hashtag> extractedTags =
-                processHashtags(request.getCaption());
+            Post post = new Post();
 
-        post.setHashtags(extractedTags);
+            post.setCaption(request.getCaption());
+            post.setUser(user);
+            post.setLikeCount(0L);
+            post.setCommentCount(0L);
 
-        logger.info(
-                "Extracted hashtags inside Create Post: {}",
-                extractedTags.stream()
-                        .map(Hashtag::getName)
-                        .toList()
-        );
+            // HASHTAGS
+            List<Hashtag> extractedTags =
+                    processHashtags(request.getCaption());
 
-       // Save Post First
-        post = postRepository.save(post);
-        logger.info("Post saved successfully with id: {}", post.getId());
+            post.setHashtags(extractedTags);
 
-        // Upload Media
-        List<Media> mediaList =
-                uploadMedia(files, post);
+            // SAVE POST
+            post = postRepository.save(post);
 
-        post.getMediaList().addAll(mediaList);
-        logger.info("Uploaded {} media files for postId: {}",
-                mediaList.size(),
-                post.getId());
+            // MEDIA
+            List<Media> mediaList =
+                    uploadMedia(
+                            files,
+                            post,
+                            uploadedFiles
+                    );
 
-        post = postRepository.save(post);
+            post.getMediaList().addAll(mediaList);
 
-        logger.info("Post creation completed successfully");
+            post = postRepository.save(post);
 
-        Set<Long> likedPostIds = this.buildSingleLikedPostSet(post,user);
+            logger.info(
+                    "Post created successfully | postId: {}",
+                    post.getId()
+            );
 
-        return mapToResponse(
-                post,
-                likedPostIds,
-                user
-        );
+            Set<Long> likedPostIds =
+                    buildSingleLikedPostSet(
+                            post,
+                            user
+                    );
+
+            return mapToResponse(
+                    post,
+                    likedPostIds,
+                    user
+            );
+
+        } catch (Exception e) {
+
+            logger.error(
+                    "Post creation failed | cleaning uploaded files"
+            );
+
+            for (String fileName : uploadedFiles) {
+
+                fileService.deleteFile(
+                        fileName,
+                        "posts"
+                );
+            }
+
+            throw e;
+        }
     }
 
     @Override
@@ -123,91 +144,166 @@ public class PostServiceImpl implements PostService {
             List<MultipartFile> files
     ) {
 
-        logger.info("Updating post with id: {}", postId);
-
-        Post post = postAccessValidator.getPost(postId);
-
-        User currentUser = this.authUtil.getCurrentUser();
-
-        // Ownership Check
-        this.ownershipValidator.validate(
-                post.getUser().getId(),
-                currentUser,
-                "You are not authorized to access this post"
+        logger.info(
+                "Updating post with id: {}",
+                postId
         );
-        logger.info("Ownership validation passed for userId: {}",
-                currentUser.getId());
 
-        // Update Caption
-        post.setCaption(request.getCaption());
+        Post post =
+                postAccessValidator.getPost(postId);
 
-        // OLD HASHTAGS
-        List<Hashtag> oldTags =
-                post.getHashtags();
+        User currentUser =
+                authUtil.getCurrentUser();
 
-        // DECREMENT OLD COUNTS
-        for (Hashtag hashtag : oldTags) {
+        // TRACK NEWLY UPLOADED FILES
+        List<String> uploadedFiles =
+                new ArrayList<>();
 
-            hashtag.setPostCount(
-                    Math.max(
-                            0,
-                            hashtag.getPostCount() - 1
-                    )
+        // BACKUP OLD FILES
+        List<String> oldFiles =
+                post.getMediaList()
+                        .stream()
+                        .map(Media::getUrl)
+                        .toList();
+
+        try {
+
+            // OWNERSHIP VALIDATION
+            ownershipValidator.validate(
+                    post.getUser().getId(),
+                    currentUser,
+                    "You are not authorized to access this post"
             );
 
-            hashtagRepository.save(hashtag);
-        }
+            logger.info(
+                    "Ownership validation passed | userId: {}",
+                    currentUser.getId()
+            );
 
-        // NEW TAGS
-        List<Hashtag> extractedTags =
-                processHashtags(request.getCaption());
+            // UPDATE CAPTION
+            post.setCaption(
+                    request.getCaption()
+            );
 
-        post.setHashtags(extractedTags);
+            // REMOVE OLD HASHTAG COUNTS
+            List<Hashtag> oldTags =
+                    post.getHashtags();
 
-        logger.info(
-                "Extracted hashtags inside Update post method: {}",
-                extractedTags.stream()
-                        .map(Hashtag::getName)
-                        .toList()
-        );
+            for (Hashtag hashtag : oldTags) {
 
-        // Replace Media
-        if (files != null && !files.isEmpty()) {
+                hashtag.setPostCount(
+                        Math.max(
+                                0,
+                                hashtag.getPostCount() - 1
+                        )
+                );
 
-            // Delete old files from storage
-            for (Media media : post.getMediaList()) {
+                hashtagRepository.save(
+                        hashtag
+                );
+            }
+
+            // NEW HASHTAGS
+            List<Hashtag> extractedTags =
+                    processHashtags(
+                            request.getCaption()
+                    );
+
+            post.setHashtags(
+                    extractedTags
+            );
+
+            logger.info(
+                    "Updated hashtags | postId: {} | hashtags: {}",
+                    postId,
+                    extractedTags.stream()
+                            .map(Hashtag::getName)
+                            .toList()
+            );
+
+            // REPLACE MEDIA
+            if (files != null && !files.isEmpty()) {
+
+                logger.info(
+                        "Replacing media files | postId: {}",
+                        postId
+                );
+
+                // DELETE OLD MEDIA RECORDS
+                mediaRepository.deleteAll(
+                        post.getMediaList()
+                );
+
+                post.getMediaList().clear();
+
+                // UPLOAD NEW FILES
+                List<Media> newMediaList =
+                        uploadMedia(
+                                files,
+                                post,
+                                uploadedFiles
+                        );
+
+                post.getMediaList()
+                        .addAll(newMediaList);
+
+                logger.info(
+                        "Uploaded {} new files | postId: {}",
+                        newMediaList.size(),
+                        postId
+                );
+            }
+
+            post = postRepository.save(post);
+
+            // DELETE OLD FILES ONLY AFTER SUCCESS
+            if (files != null && !files.isEmpty()) {
+
+                for (String oldFile : oldFiles) {
+
+                    fileService.deleteFile(
+                            oldFile,
+                            "posts"
+                    );
+                }
+            }
+
+            logger.info(
+                    "Post updated successfully | postId: {}",
+                    postId
+            );
+
+            Set<Long> likedPostIds =
+                    buildSingleLikedPostSet(
+                            post,
+                            currentUser
+                    );
+
+            return mapToResponse(
+                    post,
+                    likedPostIds,
+                    currentUser
+            );
+
+        } catch (Exception e) {
+
+            logger.error(
+                    "Post update failed | cleaning uploaded files | postId: {}",
+                    postId,
+                    e
+            );
+
+            // CLEANUP NEWLY UPLOADED FILES
+            for (String fileName : uploadedFiles) {
 
                 fileService.deleteFile(
-                        media.getUrl(),
+                        fileName,
                         "posts"
                 );
             }
 
-            // Delete old media records
-            mediaRepository.deleteAll(post.getMediaList());
-            post.getMediaList().clear();
-            logger.info("Deleting old media files for postId: {}", postId);
-
-            // Upload new files
-            List<Media> newMediaList =
-                    uploadMedia(files, post);
-
-            post.getMediaList().addAll(newMediaList);
-            logger.info("Uploaded {} new media files",
-                    newMediaList.size());
+            throw e;
         }
-
-        post = postRepository.save(post);
-        logger.info("Post updated successfully with id: {}", postId);
-
-        Set<Long> likedPostIds = this.buildSingleLikedPostSet(post,currentUser);
-
-        return mapToResponse(
-                post,
-                likedPostIds,
-                currentUser
-        );
-
     }
 
     @Override
@@ -223,7 +319,7 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
-        Post post = postAccessValidator.getPost(postId);
+        Post post = postAccessValidator.getActivePost(postId);
 
         logger.debug(
                 "Post fetched successfully | postId: {}",
@@ -374,7 +470,15 @@ public class PostServiceImpl implements PostService {
                 size
         );
 
-        User user = this.userAccessValidator.getValidUser(userId);
+        // TARGET USER (PROFILE OWNER)
+        User targetUser =
+                this.userAccessValidator.getValidUser(
+                        userId
+                );
+
+        // CURRENT LOGGED-IN USER (VIEWER)
+        User currentUser =
+                this.authUtil.getCurrentUser();
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -393,7 +497,7 @@ public class PostServiceImpl implements PostService {
             posts =
                     postRepository
                             .findByUserAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
-                                    user,
+                                    targetUser,
                                     AccountStatus.BANNED,
                                     pageable
                             );
@@ -411,7 +515,7 @@ public class PostServiceImpl implements PostService {
             posts =
                     postRepository
                             .findByUserAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
-                                    user,
+                                    targetUser,
                                     cursor,
                                     AccountStatus.BANNED,
                                     pageable
@@ -419,7 +523,7 @@ public class PostServiceImpl implements PostService {
         }
 
         logger.info(
-                "User posts fetched successfully | userId: {} | resultCount: {}",
+                "User posts fetched successfully | targetUserId: {} | resultCount: {}",
                 userId,
                 posts.size()
         );
@@ -429,11 +533,12 @@ public class PostServiceImpl implements PostService {
                         .map(Post::getId)
                         .toList();
 
+        // CHECK WHICH POSTS ARE LIKED BY CURRENT VIEWER
         Set<Long> likedPostIds =
                 postIds.isEmpty()
                         ? Set.of()
                         : likeRepository.findLikedPostIdsByUserAndPostIds(
-                        user,
+                        currentUser,
                         postIds
                 );
 
@@ -444,7 +549,7 @@ public class PostServiceImpl implements PostService {
                 post -> mapToResponse(
                         post,
                         likedPostIds,
-                        user
+                        currentUser
                 )
         );
     }
@@ -727,7 +832,8 @@ public class PostServiceImpl implements PostService {
 
     private List<Media> uploadMedia(
             List<MultipartFile> files,
-            Post post
+            Post post,
+            List<String> uploadedFiles
     ) {
 
         logger.debug(
@@ -735,14 +841,10 @@ public class PostServiceImpl implements PostService {
                 post.getId()
         );
 
-        List<Media> mediaList = new ArrayList<>();
+        List<Media> mediaList =
+                new ArrayList<>();
 
         if (files == null || files.isEmpty()) {
-
-            logger.debug(
-                    "No media files provided | postId: {}",
-                    post.getId()
-            );
 
             return mediaList;
         }
@@ -757,6 +859,9 @@ public class PostServiceImpl implements PostService {
                             "posts"
                     );
 
+            // TRACK SUCCESSFUL UPLOADS
+            uploadedFiles.add(fileName);
+
             Media media = new Media();
 
             media.setUrl(fileName);
@@ -765,9 +870,14 @@ public class PostServiceImpl implements PostService {
 
             media.setPost(post);
 
-            String type = file.getContentType();
+            String type =
+                    file.getContentType();
 
-            if (type != null && type.startsWith("video")) {
+            if (
+                    type != null
+                            &&
+                            type.startsWith("video")
+            ) {
 
                 media.setType(MediaType.VIDEO);
 
@@ -778,12 +888,6 @@ public class PostServiceImpl implements PostService {
 
             mediaList.add(
                     mediaRepository.save(media)
-            );
-
-            logger.debug(
-                    "Media uploaded successfully | postId: {} | mediaType: {}",
-                    post.getId(),
-                    media.getType()
             );
         }
 

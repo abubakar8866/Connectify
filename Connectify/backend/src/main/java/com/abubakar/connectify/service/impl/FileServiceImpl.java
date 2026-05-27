@@ -186,7 +186,7 @@ public class FileServiceImpl implements FileService {
 
 		if (totalSize > MAX_TOTAL_SIZE) {
 			logger.warn("Total file size exceeded | Size: {}", totalSize);
-			throw new UnableToUploadFileException("Total file size must not exceed 10MB.");
+			throw new UnableToUploadFileException("Total file size must not exceed 60MB.");
 		}
 
 		createFolder(folderName);

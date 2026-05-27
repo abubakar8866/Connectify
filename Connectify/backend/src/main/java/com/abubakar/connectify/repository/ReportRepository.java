@@ -78,5 +78,15 @@ public interface ReportRepository
             Message message
     );
 
+    @Query("""
+        SELECT r.post.id, COUNT(r.id)
+        FROM Report r
+        WHERE r.post.id IN :postIds
+        GROUP BY r.post.id
+    """)
+    List<Object[]> getReportCounts(
+            List<Long> postIds
+    );
+
 }
 

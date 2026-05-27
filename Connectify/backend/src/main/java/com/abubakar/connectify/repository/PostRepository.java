@@ -5,8 +5,10 @@ import com.abubakar.connectify.entity.User;
 
 import com.abubakar.connectify.enums.AccountStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -17,20 +19,20 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Long>,
         JpaSpecificationExecutor<Post> {
 
-    // ================= FEED =================
-
-    // ALL POSTS (ADMIN PURPOSE)
-    List<Post> findAllByOrderByIdDesc(
-            Pageable pageable
-    );
-
-    List<Post> findByIdLessThanOrderByIdDesc(
-            Long cursor,
-            Pageable pageable
-    );
+    @EntityGraph(attributePaths = {
+            "user",
+            "mediaList",
+            "hashtags"
+    })
+    Optional<Post> findWithDetailsById(Long id);
 
     // ================= PERSONALIZED FEED =================
 
+    @EntityGraph(attributePaths = {
+            "user",
+            "mediaList",
+            "hashtags"
+    })
     List<Post>
     findByUserInAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
             List<User> users,
@@ -38,6 +40,11 @@ public interface PostRepository extends JpaRepository<Post, Long>,
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {
+            "user",
+            "mediaList",
+            "hashtags"
+    })
     List<Post>
     findByUserInAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
             List<User> users,
@@ -48,6 +55,11 @@ public interface PostRepository extends JpaRepository<Post, Long>,
 
     // ================= USER POSTS =================
 
+    @EntityGraph(attributePaths = {
+            "user",
+            "mediaList",
+            "hashtags"
+    })
     List<Post>
     findByUserAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
             User user,
@@ -55,18 +67,17 @@ public interface PostRepository extends JpaRepository<Post, Long>,
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {
+            "user",
+            "mediaList",
+            "hashtags"
+    })
     List<Post>
     findByUserAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
             User user,
             Long cursor,
             AccountStatus accountStatus,
             Pageable pageable
-    );
-
-    // ================= SINGLE POST =================
-
-    Optional<Post> findByIdAndDeletedFalse(
-            Long postId
     );
 
     // ================= TRENDING POSTS =================

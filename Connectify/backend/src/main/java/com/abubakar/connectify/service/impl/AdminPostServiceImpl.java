@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -161,11 +163,27 @@ public class AdminPostServiceImpl
                 posts.size()
         );
 
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Map<Long, Long> reportCountMap =
+                reportRepository.getReportCounts(postIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                row -> (Long) row[0],
+                                row -> (Long) row[1]
+                        ));
+
         return CursorPaginationUtil.buildResponse(
                 posts,
                 size,
                 Post::getId,
-                this::mapToResponse
+                post -> mapToResponse(
+                        post,
+                        reportCountMap
+                )
         );
     }
 
@@ -402,11 +420,9 @@ public class AdminPostServiceImpl
 
     // ================= Helper Method =================
     private AdminPostResponse mapToResponse(
-            Post post
+            Post post,
+            Map<Long, Long> reportCountMap
     ) {
-
-        Long reportCount =
-                reportRepository.countByPost(post);
 
         return AdminPostResponse.builder()
 
@@ -422,7 +438,12 @@ public class AdminPostServiceImpl
 
                 .restoreRequested(post.getRestoreRequested())
 
-                .reportCount(reportCount)
+                .reportCount(
+                        reportCountMap.getOrDefault(
+                                post.getId(),
+                                0L
+                        )
+                )
 
                 .username(
                         post.getUser().getUname()

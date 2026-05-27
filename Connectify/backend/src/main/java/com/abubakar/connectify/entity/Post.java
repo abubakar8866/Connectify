@@ -7,7 +7,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "posts")
+@Table(
+        name = "posts",
+        indexes = {
+
+                // USER PROFILE POSTS
+                @Index(
+                        name = "idx_post_user_deleted",
+                        columnList = "user_id, deleted"
+                ),
+
+                // CURSOR PAGINATION
+                @Index(
+                        name = "idx_post_user_deleted_id",
+                        columnList = "user_id, deleted, id"
+                ),
+
+                // FEED QUERIES
+                @Index(
+                        name = "idx_post_deleted_id",
+                        columnList = "deleted, id"
+                ),
+
+                // ADMIN RESTORE REQUESTS
+                @Index(
+                        name = "idx_post_restore_requested",
+                        columnList = "restore_requested"
+                ),
+
+                // SOFT DELETE FILTERS
+                @Index(
+                        name = "idx_post_deleted",
+                        columnList = "deleted"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,6 +62,7 @@ public class Post extends BaseEntity {
 
     private Boolean deleted = false;
 
+    @Column(name = "restore_requested")
     private Boolean restoreRequested = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

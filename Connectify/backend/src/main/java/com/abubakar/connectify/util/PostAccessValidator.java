@@ -62,7 +62,7 @@ public class PostAccessValidator {
                 postId
         );
 
-        return postRepository.findById(postId)
+        return postRepository.findWithDetailsById(postId)
                 .orElseThrow(() -> {
 
                     logger.warn(

@@ -7,11 +7,55 @@ import lombok.*;
 @Table(
         name = "likes",
         uniqueConstraints = {
+
+                // PREVENT DUPLICATE POST LIKES
                 @UniqueConstraint(
-                        columnNames = {"user_id", "post_id"}
+                        name = "uk_like_user_post",
+                        columnNames = {
+                                "user_id",
+                                "post_id"
+                        }
                 ),
+
+                // PREVENT DUPLICATE COMMENT LIKES
                 @UniqueConstraint(
-                        columnNames = {"user_id", "comment_id"}
+                        name = "uk_like_user_comment",
+                        columnNames = {
+                                "user_id",
+                                "comment_id"
+                        }
+                )
+        },
+        indexes = {
+
+                // FAST POST LIKE LOOKUPS
+                @Index(
+                        name = "idx_like_post",
+                        columnList = "post_id"
+                ),
+
+                // FAST COMMENT LIKE LOOKUPS
+                @Index(
+                        name = "idx_like_comment",
+                        columnList = "comment_id"
+                ),
+
+                // FAST USER LIKE LOOKUPS
+                @Index(
+                        name = "idx_like_user",
+                        columnList = "user_id"
+                ),
+
+                // FEED "LIKED POSTS" CHECKS
+                @Index(
+                        name = "idx_like_user_post",
+                        columnList = "user_id, post_id"
+                ),
+
+                // COMMENT LIKE CHECKS
+                @Index(
+                        name = "idx_like_user_comment",
+                        columnList = "user_id, comment_id"
                 )
         }
 )
@@ -26,7 +70,6 @@ public class Like extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // USER WHO LIKED
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
