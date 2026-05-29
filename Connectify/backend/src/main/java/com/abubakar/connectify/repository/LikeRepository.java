@@ -10,6 +10,7 @@ import com.abubakar.connectify.entity.Comment;
 import com.abubakar.connectify.entity.Like;
 import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,6 +21,11 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     Optional<Like> findByUserAndPost(User user, Post post);
 
     boolean existsByUserAndPost(User user,Post post);
+
+    boolean existsByUserAndComment(
+            User user,
+            Comment comment
+    );
 
     Optional<Like> findByUserAndComment(User user, Comment comment);
 
@@ -43,6 +49,28 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     Set<Long> findLikedCommentIdsByUserAndCommentIds(
             @Param("user") User user,
             @Param("commentIds") List<Long> commentIds
+    );
+
+    @Modifying
+    @Query("""
+        DELETE FROM Like l
+        WHERE l.user = :user
+        AND l.post = :post
+    """)
+    void deleteByUserAndPost(
+            @Param("user") User user,
+            @Param("post") Post post
+    );
+
+    @Modifying
+    @Query("""
+        DELETE FROM Like l
+        WHERE l.user = :user
+        AND l.comment = :comment
+    """)
+    void deleteByUserAndComment(
+            @Param("user") User user,
+            @Param("comment") Comment comment
     );
 
 }

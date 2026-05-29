@@ -1,5 +1,6 @@
 package com.abubakar.connectify.entity;
 
+import com.abubakar.connectify.exception.OperationFailException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -83,6 +84,20 @@ public class Like extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id")
     private Comment comment;
+
+    @PrePersist
+    @PreUpdate
+    private void validateLikeTarget() {
+
+        boolean hasPost = post != null;
+        boolean hasComment = comment != null;
+
+        if (hasPost == hasComment) {
+            throw new OperationFailException(
+                    "Like must belong to either post or comment"
+            );
+        }
+    }
 
 }
 

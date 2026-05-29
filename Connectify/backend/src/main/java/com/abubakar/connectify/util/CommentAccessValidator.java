@@ -50,13 +50,49 @@ public class CommentAccessValidator {
         if (Boolean.TRUE.equals(comment.getPost().getDeleted())) {
 
             logger.warn(
-                    "Comment access denied | parent post deleted | commentId: {} | postId: {}",
+                    """
+                    Comment access denied
+                    | parent post deleted
+                    | commentId: {}
+                    | postId: {}
+                    """,
                     commentId,
                     comment.getPost().getId()
             );
 
             throw new OperationFailException(
                     "Parent post is deleted"
+            );
+        }
+
+        // PARENT COMMENT VALIDATION
+        Comment parentComment =
+                comment.getParentComment();
+
+        if (parentComment != null) {
+
+            // PARENT COMMENT DELETED
+            if (Boolean.TRUE.equals(parentComment.getDeleted())) {
+
+                logger.warn(
+                        """
+                        Comment access denied
+                        | parent comment deleted
+                        | commentId: {}
+                        | parentCommentId: {}
+                        """,
+                        commentId,
+                        parentComment.getId()
+                );
+
+                throw new OperationFailException(
+                        "Parent comment is deleted"
+                );
+            }
+
+            // PARENT COMMENT OWNER VALIDATION
+            userAccessValidator.validateActiveUser(
+                    parentComment.getUser()
             );
         }
 

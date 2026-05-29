@@ -13,6 +13,8 @@ public class UserPreviewResponse {
 
     private String profileImageUrl;
 
+    private Boolean isVerified;
+
     private Boolean following;
 
 }

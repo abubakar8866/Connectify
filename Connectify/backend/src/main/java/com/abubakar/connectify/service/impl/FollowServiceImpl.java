@@ -3,11 +3,13 @@ package com.abubakar.connectify.service.impl;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.abubakar.connectify.dto.response.*;
 import com.abubakar.connectify.entity.Follow;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
+import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.UnauthorizedException;
 import com.abubakar.connectify.repository.FollowRepository;
 import com.abubakar.connectify.repository.UserRepository;
@@ -22,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +64,7 @@ public class FollowServiceImpl implements FollowService {
         User currentUser = this.authUtil.getCurrentUser();
 
         User targetUser = this.userAccessValidator.getValidUser(userId);
+        userAccessValidator.validateActiveUser(targetUser);
 
         // SELF FOLLOW CHECK
         if (Objects.equals(currentUser.getId(), targetUser.getId())) {
@@ -127,7 +131,19 @@ public class FollowServiceImpl implements FollowService {
                 .following(targetUser)
                 .build();
 
-        followRepository.save(follow);
+        try {
+
+            followRepository.save(follow);
+
+        } catch (DataIntegrityViolationException e) {
+
+            logger.error("Already following user, {}", e.getMessage());
+
+            throw new OperationFailException(
+                    "Already following user"
+            );
+
+        }
 
         targetUser.setFollowersCount(
                 targetUser.getFollowersCount() + 1
@@ -154,7 +170,7 @@ public class FollowServiceImpl implements FollowService {
 
         logger.info(
                 """
-                User unfollowed successfully
+                User followed successfully
                 | followerId: {}
                 | followingId: {}
                 | followersCount: {}
@@ -173,6 +189,7 @@ public class FollowServiceImpl implements FollowService {
 
     // GET FOLLOWERS
     @Override
+    @Transactional(readOnly = true)
     public CursorCountResponse<UserPreviewResponse> getFollowers(
             Long userId,
             Long cursor,
@@ -192,6 +209,7 @@ public class FollowServiceImpl implements FollowService {
         );
 
         User targetUser = this.userAccessValidator.getValidUser(userId);
+        userAccessValidator.validateActiveUser(targetUser);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -204,7 +222,7 @@ public class FollowServiceImpl implements FollowService {
 
             followers =
                     followRepository
-                            .findByFollowingOrderByIdDesc(
+                            .findFollowers(
                                     targetUser,
                                     pageable
                             );
@@ -213,7 +231,7 @@ public class FollowServiceImpl implements FollowService {
 
             followers =
                     followRepository
-                            .findByFollowingAndIdLessThanOrderByIdDesc(
+                            .findFollowersByCursor(
                                     targetUser,
                                     cursor,
                                     pageable
@@ -230,6 +248,21 @@ public class FollowServiceImpl implements FollowService {
                 followers.size()
         );
 
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        List<Long> userIds =
+                extractUserIds(
+                        followers,
+                        true
+                );
+
+        Set<Long> followingIds =
+                getFollowingIds(
+                        currentUser,
+                        userIds
+                );
+
         CursorPageResponse<UserPreviewResponse> page =
                 CursorPaginationUtil.buildResponse(
                         followers,
@@ -237,7 +270,8 @@ public class FollowServiceImpl implements FollowService {
                         Follow::getId,
                         follow ->
                                 mapToUserPreviewResponse(
-                                        follow.getFollower()
+                                        follow.getFollower(),
+                                        followingIds
                                 )
                 );
 
@@ -252,6 +286,7 @@ public class FollowServiceImpl implements FollowService {
 
     // GET FOLLOWING
     @Override
+    @Transactional(readOnly = true)
     public CursorCountResponse<UserPreviewResponse>
     getFollowing(
             Long userId,
@@ -272,6 +307,7 @@ public class FollowServiceImpl implements FollowService {
         );
 
         User targetUser = this.userAccessValidator.getValidUser(userId);
+        userAccessValidator.validateActiveUser(targetUser);
 
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
@@ -285,7 +321,7 @@ public class FollowServiceImpl implements FollowService {
 
             following =
                     followRepository
-                            .findByFollowerOrderByIdDesc(
+                            .findFollowing(
                                     targetUser,
                                     pageable
                             );
@@ -297,7 +333,7 @@ public class FollowServiceImpl implements FollowService {
 
             following =
                     followRepository
-                            .findByFollowerAndIdLessThanOrderByIdDesc(
+                            .findFollowingByCursor(
                                     targetUser,
                                     cursor,
                                     pageable
@@ -314,6 +350,21 @@ public class FollowServiceImpl implements FollowService {
                 following.size()
         );
 
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        List<Long> userIds =
+                extractUserIds(
+                        following,
+                        false
+                );
+
+        Set<Long> followingIds =
+                getFollowingIds(
+                        currentUser,
+                        userIds
+                );
+
         CursorPageResponse<UserPreviewResponse> page =
                 CursorPaginationUtil.buildResponse(
                         following,
@@ -321,7 +372,8 @@ public class FollowServiceImpl implements FollowService {
                         Follow::getId,
                         follow ->
                                 mapToUserPreviewResponse(
-                                        follow.getFollowing()
+                                        follow.getFollowing(),
+                                        followingIds
                                 )
                 );
 
@@ -334,6 +386,7 @@ public class FollowServiceImpl implements FollowService {
 
     // ================= GET FOLLOW COUNTS =================
     @Override
+    @Transactional(readOnly = true)
     public FollowCountResponse getFollowCounts(
             Long userId
     ) {
@@ -398,27 +451,27 @@ public class FollowServiceImpl implements FollowService {
         return response;
     }
 
-    // PRIVATE METHODS
-    private UserPreviewResponse mapToUserPreviewResponse(User user) {
+    // ================= PRIVATE METHODS =================
+    private UserPreviewResponse mapToUserPreviewResponse(
+            User user,
+            Set<Long> followingIds
+    ) {
 
         return UserPreviewResponse.builder()
                 .id(user.getId())
                 .uname(user.getUname())
-                .profileImageUrl(user.getProfileImageUrl())
-                .following(isFollowing(user))
-                .build();
-    }
-
-    private Boolean isFollowing(User targetUser) {
-
-        User currentUser = this.authUtil.getCurrentUser();
-
-        return followRepository
-                .findByFollowerAndFollowing(
-                        currentUser,
-                        targetUser
+                .profileImageUrl(
+                        user.getProfileImageUrl()
                 )
-                .isPresent();
+                .isVerified(
+                        user.getIsVerified()
+                )
+                .following(
+                        followingIds.contains(
+                                user.getId()
+                        )
+                )
+                .build();
     }
 
     private void updateVerificationBadge(User user) {
@@ -434,6 +487,35 @@ public class FollowServiceImpl implements FollowService {
                 "Verification badge updated | userId: {} | verified: {}",
                 user.getId(),
                 verified
+        );
+    }
+
+    private List<Long> extractUserIds(
+            List<Follow> follows,
+            boolean followersPage
+    ) {
+
+        return follows.stream()
+                .map(follow -> followersPage
+                        ? follow.getFollower().getId()
+                        : follow.getFollowing().getId()
+                )
+                .toList();
+    }
+
+    private Set<Long> getFollowingIds(
+            User currentUser,
+            List<Long> userIds
+    ) {
+
+        if (userIds.isEmpty()) {
+
+            return Set.of();
+        }
+
+        return followRepository.findFollowingIds(
+                currentUser,
+                userIds
         );
     }
 

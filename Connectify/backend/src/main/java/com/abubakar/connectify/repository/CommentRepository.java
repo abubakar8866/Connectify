@@ -41,9 +41,7 @@ public interface CommentRepository
             List<Long> parentIds
     );
 
-
     Long countByDeletedFalse();
-
 
 }
 

@@ -41,8 +41,20 @@ public class FileServiceImpl implements FileService {
 			"video/mp4", "video/webm", "video/quicktime"
 	);
 
+	private static final List<String> ALLOWED_EXTENSIONS = List.of(
+			".png",
+			".jpg",
+			".jpeg",
+			".webp",
+			".mp4",
+			".webm",
+			".mov"
+	);
+
 	// COMMON METHOD (REUSABLE)
-	private Path createFolder(String folderName) {
+	private Path createFolder(
+			String folderName
+	) {
 
 		logger.info("Creating/Checking folder: {}", folderName);
 
@@ -66,7 +78,12 @@ public class FileServiceImpl implements FileService {
 
 	// Single file upload
 	@Override
-	public String uploadFile(MultipartFile file, Long entityId, String oldFileName, String folderName) {
+	public String uploadFile(
+			MultipartFile file,
+			Long entityId,
+			String oldFileName,
+			String folderName
+	) {
 
 		logger.info("File upload started | EntityId: {} | Folder: {}", entityId, folderName);
 
@@ -139,12 +156,29 @@ public class FileServiceImpl implements FileService {
 		}
 
 		String extension = cleanFileName.substring(index).toLowerCase();
+
+		if (!ALLOWED_EXTENSIONS.contains(extension)) {
+
+			logger.warn(
+					"Invalid file extension: {}",
+					extension
+			);
+
+			throw new UnableToUploadFileException(
+					"Invalid file extension."
+			);
+		}
+
 		String fileName = entityId + "_" + UUID.randomUUID() + extension;
 
 		try {
 			// Save file
-			Files.copy(file.getInputStream(), folderPath.resolve(fileName));
-			logger.info("File uploaded successfully: {}", fileName);
+			Files.copy(
+					file.getInputStream(),
+					folderPath.resolve(fileName).normalize(),
+					StandardCopyOption.REPLACE_EXISTING
+			);
+			logger.info("File uploaded successfully from one file uploader: {}", fileName);
 
 			// Delete old file
 			if (oldFileName != null && !oldFileName.isBlank()) {
@@ -163,8 +197,12 @@ public class FileServiceImpl implements FileService {
 
 	// Multiple file upload
 	@Override
-	public FileUploadResponse uploadMultipleFiles(List<MultipartFile> files, Long entityId, List<String> oldFiles,
-												  String folderName) {
+	public FileUploadResponse uploadMultipleFiles(
+			List<MultipartFile> files,
+			Long entityId,
+			List<String> oldFiles,
+			String folderName
+	) {
 
 		logger.info("Multiple file upload started | EntityId: {} | Folder: {}", entityId, folderName);
 
@@ -181,6 +219,7 @@ public class FileServiceImpl implements FileService {
 		//totalSize = total size of all uploaded files (in bytes)
 		long totalSize = files.stream()
 				.filter(Objects::nonNull)
+				.filter(file -> !file.isEmpty())
 				.mapToLong(MultipartFile::getSize)
 				.sum();
 
@@ -236,7 +275,10 @@ public class FileServiceImpl implements FileService {
 
 	// Delete file
 	@Override
-	public boolean deleteFile(String fileName, String folderName) {
+	public boolean deleteFile(
+			String fileName,
+			String folderName
+	) {
 
 		logger.info("Delete file request | File: {} | Folder: {}", fileName, folderName);
 
@@ -264,7 +306,12 @@ public class FileServiceImpl implements FileService {
 
 	// URL Image Upload
 	@Override
-	public String uploadFromUrl(String imageUrl, Long entityId, String oldFileName, String folderName) {
+	public String uploadFromUrl(
+			String imageUrl,
+			Long entityId,
+			String oldFileName,
+			String folderName
+	) {
 
 		logger.info("Upload from URL started | EntityId: {} | Folder: {}", entityId, folderName);
 
@@ -276,6 +323,20 @@ public class FileServiceImpl implements FileService {
 		Path folderPath = createFolder(folderName);
 
 		try {
+
+			if (
+					!imageUrl.startsWith("https://")
+							&&
+							!imageUrl.startsWith("http://")
+			) {
+
+				logger.warn(
+						"Invalid URL protocol"
+				);
+
+				return null;
+			}
+
 			URL url = URI.create(imageUrl).toURL();
 
 			URLConnection connection = url.openConnection();
@@ -289,7 +350,16 @@ public class FileServiceImpl implements FileService {
 				return null;
 			}
 
-			long contentLength = url.openConnection().getContentLengthLong();
+			long contentLength = connection.getContentLengthLong();
+
+			if (contentLength <= 0) {
+
+				logger.warn(
+						"Invalid content length"
+				);
+
+				return null;
+			}
 
 			// File size validation
 			long maxAllowedSize =
@@ -341,7 +411,11 @@ public class FileServiceImpl implements FileService {
 			String fileName = entityId + "_" + UUID.randomUUID() + extension;
 
 			try (InputStream in = connection.getInputStream()) {
-				Files.copy(in, folderPath.resolve(fileName));
+				Files.copy(
+						in,
+						folderPath.resolve(fileName).normalize(),
+						StandardCopyOption.REPLACE_EXISTING
+				);
 			}
 
 			logger.info("Image downloaded and saved successfully: {}", fileName);

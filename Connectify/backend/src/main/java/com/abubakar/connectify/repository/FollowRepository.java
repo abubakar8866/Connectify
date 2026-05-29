@@ -25,29 +25,55 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     List<Follow> findByFollowing(User following);
 
-    List<Follow>
-    findByFollowingOrderByIdDesc(
-            User following,
+    @Query("""
+        SELECT f
+        FROM Follow f
+        JOIN FETCH f.follower
+        WHERE f.following = :following
+        ORDER BY f.id DESC
+    """)
+    List<Follow> findFollowers(
+            @Param("following") User following,
             Pageable pageable
     );
 
-    List<Follow>
-    findByFollowingAndIdLessThanOrderByIdDesc(
-            User following,
-            Long cursor,
+    @Query("""
+        SELECT f
+        FROM Follow f
+        JOIN FETCH f.follower
+        WHERE f.following = :following
+        AND f.id < :cursor
+        ORDER BY f.id DESC
+    """)
+    List<Follow> findFollowersByCursor(
+            @Param("following") User following,
+            @Param("cursor") Long cursor,
             Pageable pageable
     );
 
-    List<Follow>
-    findByFollowerOrderByIdDesc(
-            User follower,
+    @Query("""
+        SELECT f
+        FROM Follow f
+        JOIN FETCH f.following
+        WHERE f.follower = :follower
+        ORDER BY f.id DESC
+    """)
+    List<Follow> findFollowing(
+            @Param("follower") User follower,
             Pageable pageable
     );
 
-    List<Follow>
-    findByFollowerAndIdLessThanOrderByIdDesc(
-            User follower,
-            Long cursor,
+    @Query("""
+        SELECT f
+        FROM Follow f
+        JOIN FETCH f.following
+        WHERE f.follower = :follower
+        AND f.id < :cursor
+        ORDER BY f.id DESC
+    """)
+    List<Follow> findFollowingByCursor(
+            @Param("follower") User follower,
+            @Param("cursor") Long cursor,
             Pageable pageable
     );
 

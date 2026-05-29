@@ -60,32 +60,58 @@ public class LikeServiceImpl implements LikeService {
     @Override
     public LikeResponse togglePostLike(Long postId) {
 
-        logger.info("Toggle post like request | postId: {}", postId);
+        logger.info(
+                "Toggle post like request | postId: {}",
+                postId
+        );
 
-        User currentUser = this.authUtil.getCurrentUser();
+        User currentUser =
+                authUtil.getCurrentUser();
 
-        Post post = postAccessValidator.getPost(postId);
+        Post post =
+                postAccessValidator.getActivePost(
+                        postId
+                );
 
-        Optional<Like> existingLike =
-                likeRepository.findByUserAndPost(currentUser, post);
+        boolean alreadyLiked =
+                likeRepository.existsByUserAndPost(
+                        currentUser,
+                        post
+                );
 
         // UNLIKE
-        if (existingLike.isPresent()) {
+        if (alreadyLiked) {
 
             logger.debug(
-                    "Existing post like found | postId: {} | userId: {}",
+                    """
+                    Existing post like found
+                    | postId: {}
+                    | userId: {}
+                    """,
                     postId,
                     currentUser.getId()
             );
 
-            likeRepository.delete(existingLike.get());
+            likeRepository.deleteByUserAndPost(
+                    currentUser,
+                    post
+            );
 
-            post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
+            post.setLikeCount(
+                    Math.max(
+                            0,
+                            post.getLikeCount() - 1
+                    )
+            );
 
             postRepository.save(post);
 
             logger.info(
-                    "Post unliked successfully | postId: {} | userId: {}",
+                    """
+                    Post unliked successfully
+                    | postId: {}
+                    | userId: {}
+                    """,
                     postId,
                     currentUser.getId()
             );
@@ -96,9 +122,8 @@ public class LikeServiceImpl implements LikeService {
                     .build();
         }
 
-        try{
+        try {
 
-            // LIKE
             Like like = Like.builder()
                     .user(currentUser)
                     .post(post)
@@ -106,7 +131,9 @@ public class LikeServiceImpl implements LikeService {
 
             likeRepository.save(like);
 
-            post.setLikeCount(post.getLikeCount() + 1);
+            post.setLikeCount(
+                    post.getLikeCount() + 1
+            );
 
             postRepository.save(post);
 
@@ -121,7 +148,11 @@ public class LikeServiceImpl implements LikeService {
             );
 
             logger.info(
-                    "Post liked successfully | postId: {} | userId: {}",
+                    """
+                    Post liked successfully
+                    | postId: {}
+                    | userId: {}
+                    """,
                     postId,
                     currentUser.getId()
             );
@@ -134,7 +165,11 @@ public class LikeServiceImpl implements LikeService {
         } catch (DataIntegrityViolationException ex) {
 
             logger.warn(
-                    "Duplicate post like prevented | postId: {} | userId: {}",
+                    """
+                    Duplicate post like prevented
+                    | postId: {}
+                    | userId: {}
+                    """,
                     postId,
                     currentUser.getId()
             );
@@ -142,43 +177,90 @@ public class LikeServiceImpl implements LikeService {
             throw new OperationFailException(
                     "Post already liked"
             );
-
         }
-
     }
 
     // TOGGLE COMMENT LIKE
     @Override
     public LikeResponse toggleCommentLike(Long commentId) {
 
-        logger.info("Toggle comment like request | commentId: {}", commentId);
+        logger.info(
+                "Toggle comment like request | commentId: {}",
+                commentId
+        );
 
-        User currentUser = this.authUtil.getCurrentUser();
+        User currentUser =
+                this.authUtil.getCurrentUser();
 
-        Comment comment = commentAccessValidator.getComment(commentId);
+        Comment comment =
+                commentAccessValidator.getActiveComment(
+                        commentId
+                );
 
-        Optional<Like> existingLike =
-                likeRepository.findByUserAndComment(currentUser, comment);
+        boolean alreadyLiked =
+                likeRepository.existsByUserAndComment(
+                        currentUser,
+                        comment
+                );
 
         // UNLIKE
-        if (existingLike.isPresent()) {
+        if (alreadyLiked) {
 
             logger.debug(
-                    "Existing comment like found | commentId: {} | userId: {}",
+                    """
+                    Existing comment like found
+                    | commentId: {}
+                    | userId: {}
+                    """,
                     commentId,
                     currentUser.getId()
             );
 
-            likeRepository.delete(existingLike.get());
+            Like existingLike =
+                    likeRepository
+                            .findByUserAndComment(
+                                    currentUser,
+                                    comment
+                            )
+                            .orElseThrow(() -> {
 
-            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+                                logger.warn(
+                                        """
+                                        Comment like not found during unlike
+                                        | commentId: {}
+                                        | userId: {}
+                                        """,
+                                        commentId,
+                                        currentUser.getId()
+                                );
+
+                                return new ResourceNotFound(
+                                        "Comment like not found"
+                                );
+
+                            });
+
+            likeRepository.delete(existingLike);
+
+            comment.setLikeCount(
+                    Math.max(
+                            0,
+                            comment.getLikeCount() - 1
+                    )
+            );
 
             commentRepository.save(comment);
 
             logger.info(
-                    "Comment unliked successfully | commentId: {} | userId: {}",
+                    """
+                    Comment unliked successfully
+                    | commentId: {}
+                    | userId: {}
+                    | likeCount: {}
+                    """,
                     commentId,
-                    currentUser.getId()
+                    currentUser.getId(),
+                    comment.getLikeCount()
             );
 
             return LikeResponse.builder()
@@ -197,7 +279,9 @@ public class LikeServiceImpl implements LikeService {
 
             likeRepository.save(like);
 
-            comment.setLikeCount(comment.getLikeCount() + 1);
+            comment.setLikeCount(
+                    comment.getLikeCount() + 1
+            );
 
             commentRepository.save(comment);
 
@@ -212,9 +296,15 @@ public class LikeServiceImpl implements LikeService {
             );
 
             logger.info(
-                    "Comment liked successfully | commentId: {} | userId: {}",
+                    """
+                    Comment liked successfully
+                    | commentId: {}
+                    | userId: {}
+                    | likeCount: {}
+                    """,
                     commentId,
-                    currentUser.getId()
+                    currentUser.getId(),
+                    comment.getLikeCount()
             );
 
             return LikeResponse.builder()
@@ -225,7 +315,11 @@ public class LikeServiceImpl implements LikeService {
         } catch (DataIntegrityViolationException ex) {
 
             logger.warn(
-                    "Duplicate comment like prevented | commentId: {} | userId: {}",
+                    """
+                    Duplicate comment like prevented
+                    | commentId: {}
+                    | userId: {}
+                    """,
                     commentId,
                     currentUser.getId()
             );
@@ -233,9 +327,7 @@ public class LikeServiceImpl implements LikeService {
             throw new OperationFailException(
                     "Comment already liked"
             );
-
         }
-
     }
 
 }
