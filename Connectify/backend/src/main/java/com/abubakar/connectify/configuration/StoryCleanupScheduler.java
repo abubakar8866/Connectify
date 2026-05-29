@@ -1,7 +1,6 @@
 package com.abubakar.connectify.configuration;
 
 import com.abubakar.connectify.entity.Story;
-import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.service.FileService;
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public class StoryCleanupScheduler {
         logger.info("Running story cleanup job");
 
         List<Story> expiredStories =
-                storyRepository.findByExpiresAtBefore(
+                storyRepository.findByExpiresAtBeforeAndDeletedFalse(
                         LocalDateTime.now()
                 );
 

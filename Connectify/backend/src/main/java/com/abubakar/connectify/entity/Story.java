@@ -32,7 +32,13 @@ public class Story extends BaseEntity {
 
     private Boolean deleted = false;
 
+    private Boolean deletedByAdmin = false;
+
+    private LocalDateTime deletedByAdminAt;
+
     private Boolean restoreRequested = false;
+
+    private LocalDateTime restoreRequestedAt;
 
     private Long viewCount = 0L;
 

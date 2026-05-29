@@ -131,8 +131,19 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         if (story.getDeleted()) {
 
+            logger.warn("Story already moderated");
+
             throw new OperationFailException(
                     "Story already moderated"
+            );
+        }
+
+        if (Boolean.TRUE.equals(story.getDeletedByAdmin())) {
+
+            logger.warn("Story already moderated by admin");
+
+            throw new OperationFailException(
+                    "Story already moderated by admin"
             );
         }
 
@@ -141,6 +152,14 @@ public class AdminStoryServiceImpl implements AdminStoryService {
         story.setIsActive(false);
 
         story.setRestoreRequested(false);
+
+        story.setRestoreRequestedAt(null);
+
+        story.setDeletedByAdmin(true);
+
+        story.setDeletedByAdminAt(
+                LocalDateTime.now()
+        );
 
         storyRepository.save(story);
 
@@ -187,6 +206,12 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         story.setRestoreRequested(false);
 
+        story.setRestoreRequestedAt(null);
+
+        story.setDeletedByAdmin(false);
+
+        story.setDeletedByAdminAt(null);
+
         story.setExpiresAt(
                 LocalDateTime.now().plusHours(24)
         );
@@ -224,6 +249,7 @@ public class AdminStoryServiceImpl implements AdminStoryService {
         }
 
         story.setRestoreRequested(false);
+        story.setRestoreRequestedAt(null);
 
         storyRepository.save(story);
 
@@ -295,6 +321,8 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         story.setExpiresAt(LocalDateTime.now());
         story.setIsActive(false);
+        story.setRestoreRequested(false);
+        story.setRestoreRequestedAt(null);
 
         logger.info(
                 "Force expiring story | storyId: {}",
@@ -325,13 +353,11 @@ public class AdminStoryServiceImpl implements AdminStoryService {
                 .mediaUrl(story.getMediaUrl())
                 .mediaType(story.getMediaType())
                 .deleted(story.getDeleted())
+                .deletedByAdmin(story.getDeletedByAdmin())
+                .deletedByAdminAt(story.getDeletedByAdminAt())
                 .isActive(story.getIsActive())
-                .restoreRequested(
-                        story.getRestoreRequested()
-                )
-                .reportCount(
-                        (long) story.getReports().size()
-                )
+                .restoreRequested(story.getRestoreRequested())
+                .reportCount((long) story.getReports().size())
                 .viewCount(story.getViewCount())
                 .reactionCount(story.getReactionCount())
                 .replyCount(story.getReplyCount())

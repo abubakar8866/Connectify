@@ -22,6 +22,10 @@ public class AdminStoryResponse {
 
     private Boolean deleted;
 
+    private Boolean deletedByAdmin;
+
+    private LocalDateTime deletedByAdminAt;
+
     private Boolean isActive;
 
     private Boolean restoreRequested;

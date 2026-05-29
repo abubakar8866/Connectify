@@ -162,7 +162,7 @@ public class AdminDashboardServiceImpl
                         );
 
         Long expiredStories =
-                storyRepository.countByExpiresAtBefore(
+                storyRepository.countByExpiresAtBeforeAndDeletedFalse(
                         LocalDateTime.now()
                 );
 

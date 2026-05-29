@@ -3,6 +3,7 @@ package com.abubakar.connectify.specification;
 import com.abubakar.connectify.dto.request.AdminStoryFilterRequest;
 import com.abubakar.connectify.entity.Story;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -19,6 +20,15 @@ public class StorySpecification {
     ) {
 
         return (root, query, criteriaBuilder) -> {
+
+            if (query != null && query.getResultType() != Long.class) {
+
+                root.fetch("user", JoinType.LEFT);
+                root.fetch("reports", JoinType.LEFT);
+
+                query.distinct(true);
+
+            }
 
             List<Predicate> predicates =
                     new ArrayList<>();
@@ -150,6 +160,7 @@ public class StorySpecification {
                     predicates.toArray(new Predicate[0])
             );
         };
+
     }
 
 }

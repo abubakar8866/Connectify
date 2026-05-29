@@ -5,6 +5,8 @@ import com.abubakar.connectify.entity.StoryView;
 import com.abubakar.connectify.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,6 +26,17 @@ public interface StoryViewRepository
             Story story,
             Long cursor,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT sv.story.id
+        FROM StoryView sv
+        WHERE sv.viewer.id = :viewerId
+        AND sv.story.id IN :storyIds
+    """)
+    List<Long> findViewedStoryIds(
+            @Param("viewerId") Long viewerId,
+            @Param("storyIds") List<Long> storyIds
     );
 
 }

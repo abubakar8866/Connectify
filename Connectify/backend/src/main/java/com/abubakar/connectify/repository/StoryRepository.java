@@ -6,6 +6,7 @@ import com.abubakar.connectify.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -13,55 +14,119 @@ import java.util.List;
 
 @Repository
 public interface StoryRepository
-        extends JpaRepository<Story, Long> ,
+        extends JpaRepository<Story, Long>,
         JpaSpecificationExecutor<Story> {
 
-    List<Story>
-    findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+    // ================= ACTIVE STORIES =================
+
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        ORDER BY s.id DESC
+    """)
+    List<Story> findActiveStories(
             LocalDateTime now,
             Pageable pageable
     );
 
-    List<Story>
-    findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        AND s.id < :cursor
+        ORDER BY s.id DESC
+    """)
+    List<Story> findActiveStoriesByCursor(
             LocalDateTime now,
             Long cursor,
             Pageable pageable
     );
 
-    List<Story> findByExpiresAtBefore(
+    // ================= MY STORIES =================
+
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.user = :user
+        AND s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        ORDER BY s.id DESC
+    """)
+    List<Story> findMyActiveStories(
+            User user,
+            LocalDateTime now,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.user = :user
+        AND s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        AND s.id < :cursor
+        ORDER BY s.id DESC
+    """)
+    List<Story> findMyActiveStoriesByCursor(
+            User user,
+            LocalDateTime now,
+            Long cursor,
+            Pageable pageable
+    );
+
+    // ================= USER STORIES =================
+
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.user = :user
+        AND s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        ORDER BY s.id DESC
+    """)
+    List<Story> findUserActiveStories(
+            User user,
+            LocalDateTime now,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT s
+        FROM Story s
+        JOIN FETCH s.user
+        WHERE s.user = :user
+        AND s.deleted = false
+        AND s.isActive = true
+        AND s.expiresAt > :now
+        AND s.id < :cursor
+        ORDER BY s.id DESC
+    """)
+    List<Story> findUserActiveStoriesByCursor(
+            User user,
+            LocalDateTime now,
+            Long cursor,
+            Pageable pageable
+    );
+
+    // ================= OTHER =================
+
+    List<Story>
+    findByExpiresAtBeforeAndDeletedFalse(
             LocalDateTime now
     );
-
-    // USER ACTIVE STORIES
-    List<Story>
-    findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
-            User user,
-            LocalDateTime now,
-            Pageable pageable
-    );
-
-    List<Story>
-    findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
-            User user,
-            LocalDateTime now,
-            Long cursor,
-            Pageable pageable
-    );
-
-    // RESTORE REQUESTS
-    List<Story>
-    findByRestoreRequestedTrueOrderByIdDesc(
-            Pageable pageable
-    );
-
-    List<Story>
-    findByRestoreRequestedTrueAndIdLessThanOrderByIdDesc(
-            Long cursor,
-            Pageable pageable
-    );
-
-    // ================= ANALYTICS =================
 
     Long countByDeletedFalse();
 
@@ -71,17 +136,15 @@ public interface StoryRepository
             LocalDateTime now
     );
 
-    Long countByExpiresAtBefore(
+    Long countByExpiresAtBeforeAndDeletedFalse(
             LocalDateTime now
     );
 
     Long countByRestoreRequestedTrue();
 
-    // TOP VIEWED STORIES
     List<Story>
     findTop10ByDeletedFalseOrderByViewCountDescIdDesc();
 
-    // TOP REACTED STORIES
     List<Story>
     findTop10ByDeletedFalseOrderByReactionCountDescIdDesc();
 

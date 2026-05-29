@@ -13,7 +13,6 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.MediaType;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.StoryReactionRepository;
 import com.abubakar.connectify.repository.StoryReplyRepository;
 import com.abubakar.connectify.repository.StoryRepository;
@@ -37,7 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -159,7 +160,12 @@ public class StoryServiceImpl implements StoryService {
                 currentUser.getId()
         );
 
-        return mapToResponse(savedStory);
+        return mapToResponse(
+                savedStory,
+                currentUser,
+                Set.of(),
+                Set.of()
+        );
     }
 
     // ================= GET ACTIVE STORIES =================
@@ -175,6 +181,14 @@ public class StoryServiceImpl implements StoryService {
                 size
         );
 
+        User currentUser = this.authUtil.getCurrentUser();
+
+        logger.debug(
+                "Validating story owner account status while getting active stories | ownerId: {}",
+                currentUser.getId()
+        );
+        userAccessValidator.getValidUser(currentUser.getId());
+
         Pageable pageable =
                 PaginationUtil.createCursorPageable(
                         size
@@ -186,7 +200,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+                            .findActiveStories(
                                     LocalDateTime.now(),
                                     pageable
                             );
@@ -195,7 +209,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+                            .findActiveStoriesByCursor(
                                     LocalDateTime.now(),
                                     cursor,
                                     pageable
@@ -203,19 +217,16 @@ public class StoryServiceImpl implements StoryService {
         }
 
         logger.info(
-                "Active stories fetched successfully | count: {} | nextCursor: {}",
-                stories.size(),
-                stories.isEmpty()
-                        ? null
-                        : stories.get(stories.size() - 1).getId()
+                "Active stories fetched successfully | count: {}",
+                stories.size()
         );
 
-        return CursorPaginationUtil.buildResponse(
+        return buildStoryResponse(
                 stories,
                 size,
-                Story::getId,
-                this::mapToResponse
+                currentUser
         );
+
     }
 
     // ================= VIEW STORY =================
@@ -495,6 +506,10 @@ public class StoryServiceImpl implements StoryService {
 
         story.setRestoreRequested(true);
 
+        story.setRestoreRequestedAt(
+                LocalDateTime.now()
+        );
+
         storyRepository.save(story);
 
         logger.info(
@@ -513,21 +528,42 @@ public class StoryServiceImpl implements StoryService {
                 storyId
         );
 
-        Story story = storyAccessValidator.getActiveStory(storyId);
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        Story story =
+                storyAccessValidator.getStory(
+                        storyId
+                );
 
         logger.debug(
                 "Validating story ownership for deletion | ownerId: {} | requesterId: {}",
                 story.getUser().getId(),
-                this.authUtil.getCurrentUser().getId()
+                currentUser.getId()
         );
-        this.ownershipValidator.validate(
+
+        ownershipValidator.validate(
                 story.getUser().getId(),
-                this.authUtil.getCurrentUser(),
+                currentUser,
                 "You are not authorized to access this story"
         );
 
+        // ALREADY DELETED VALIDATION
+        if (Boolean.TRUE.equals(story.getDeleted())) {
+
+            logger.warn(
+                    "Story already deleted | storyId: {}",
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "Story already deleted"
+            );
+        }
+
         story.setDeleted(true);
         story.setIsActive(false);
+
         storyRepository.save(story);
 
         logger.info(
@@ -636,7 +672,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+                            .findMyActiveStories(
                                     currentUser,
                                     LocalDateTime.now(),
                                     pageable
@@ -646,7 +682,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+                            .findMyActiveStoriesByCursor(
                                     currentUser,
                                     LocalDateTime.now(),
                                     cursor,
@@ -660,12 +696,12 @@ public class StoryServiceImpl implements StoryService {
                 stories.size()
         );
 
-        return CursorPaginationUtil.buildResponse(
+        return buildStoryResponse(
                 stories,
                 size,
-                Story::getId,
-                this::mapToResponse
+                currentUser
         );
+
     }
 
     // ================= GET Active User STORY =================
@@ -696,7 +732,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueOrderByIdDesc(
+                            .findUserActiveStories(
                                     user,
                                     LocalDateTime.now(),
                                     pageable
@@ -706,7 +742,7 @@ public class StoryServiceImpl implements StoryService {
 
             stories =
                     storyRepository
-                            .findByUserAndDeletedFalseAndExpiresAtAfterAndIsActiveTrueAndIdLessThanOrderByIdDesc(
+                            .findUserActiveStoriesByCursor(
                                     user,
                                     LocalDateTime.now(),
                                     cursor,
@@ -720,38 +756,35 @@ public class StoryServiceImpl implements StoryService {
                 stories.size()
         );
 
-        return CursorPaginationUtil.buildResponse(
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        return buildStoryResponse(
                 stories,
                 size,
-                Story::getId,
-                this::mapToResponse
+                currentUser
         );
+
     }
 
-    // ================= MAP RESPONSE =================
-    private StoryResponse mapToResponse(Story story) {
-
-        User currentUser = this.authUtil.getCurrentUser();
-
-        boolean viewed =
-                storyViewRepository
-                        .existsByStoryAndViewer(
-                                story,
-                                currentUser
-                        );
-
-        boolean reacted =
-                storyReactionRepository
-                        .findByStoryAndUser(
-                                story,
-                                currentUser
-                        )
-                        .isPresent();
+    // ================= PRIVATE METHODS =================
+    private StoryResponse mapToResponse(
+            Story story,
+            User currentUser,
+            Set<Long> viewedStoryIds,
+            Set<Long> reactedStoryIds
+    ) {
 
         return StoryResponse.builder()
                 .id(story.getId())
-                .mediaUrl(story.getMediaUrl())
-                .mediaType(story.getMediaType())
+
+                .mediaUrl(
+                        story.getMediaUrl()
+                )
+
+                .mediaType(
+                        story.getMediaType()
+                )
 
                 .username(
                         story.getUser().getUname()
@@ -764,17 +797,92 @@ public class StoryServiceImpl implements StoryService {
                 .isVerified(
                         story.getUser().getIsVerified()
                 )
-                .viewCount(story.getViewCount())
-                .reactionCount(story.getReactionCount())
-                .replyCount(story.getReplyCount())
 
-                .viewed(viewed)
-                .reacted(reacted)
+                .viewCount(
+                        story.getViewCount()
+                )
 
-                .createdAt(story.getCreatedAt())
-                .expiresAt(story.getExpiresAt())
+                .reactionCount(
+                        story.getReactionCount()
+                )
+
+                .replyCount(
+                        story.getReplyCount()
+                )
+
+                .viewed(
+                        viewedStoryIds.contains(
+                                story.getId()
+                        )
+                )
+
+                .reacted(
+                        reactedStoryIds.contains(
+                                story.getId()
+                        )
+                )
+
+                .createdAt(
+                        story.getCreatedAt()
+                )
+
+                .expiresAt(
+                        story.getExpiresAt()
+                )
+
+                .userId(
+                        story.getUser().getId()
+                )
+
+                .isMine(
+                        story.getUser()
+                                .getId()
+                                .equals(currentUser.getId())
+                )
 
                 .build();
+    }
+
+    private CursorPageResponse<StoryResponse>
+    buildStoryResponse(
+            List<Story> stories,
+            int size,
+            User currentUser
+    ) {
+
+        List<Long> storyIds =
+                stories.stream()
+                        .map(Story::getId)
+                        .toList();
+
+        Set<Long> viewedStoryIds =
+                new HashSet<>(
+                        storyViewRepository.findViewedStoryIds(
+                                currentUser.getId(),
+                                storyIds
+                        )
+                );
+
+        Set<Long> reactedStoryIds =
+                new HashSet<>(
+                        storyReactionRepository.findReactedStoryIds(
+                                currentUser.getId(),
+                                storyIds
+                        )
+                );
+
+        return CursorPaginationUtil.buildResponse(
+                stories,
+                size,
+                Story::getId,
+                story -> mapToResponse(
+                        story,
+                        currentUser,
+                        viewedStoryIds,
+                        reactedStoryIds
+                )
+        );
+
     }
 
 }

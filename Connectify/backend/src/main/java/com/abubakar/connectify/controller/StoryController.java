@@ -91,11 +91,6 @@ public class StoryController {
 
         storyService.viewStory(storyId);
 
-        logger.info(
-                "Story viewed successfully | storyId: {}",
-                storyId
-        );
-
         return ResponseEntity.ok(
                 "Story viewed successfully"
         );
@@ -116,11 +111,6 @@ public class StoryController {
         storyService.reactStory(
                 storyId,
                 request
-        );
-
-        logger.info(
-                "Story reaction processed successfully | storyId: {}",
-                storyId
         );
 
         return ResponseEntity.ok(
@@ -145,11 +135,6 @@ public class StoryController {
                 request
         );
 
-        logger.info(
-                "Story reply added successfully | storyId: {}",
-                storyId
-        );
-
         return ResponseEntity.ok(
                 "Story reply sent successfully"
         );
@@ -167,11 +152,6 @@ public class StoryController {
         );
 
         storyService.deleteStory(storyId);
-
-        logger.info(
-                "Story deleted successfully | storyId: {}",
-                storyId
-        );
 
         return ResponseEntity.ok(
                 "Story deleted successfully"
@@ -204,11 +184,6 @@ public class StoryController {
                         cursor,
                         size
                 );
-
-        logger.info(
-                "Story viewers fetched successfully | totalViewers: {}",
-                viewers.getCurrentPageData()
-        );
 
         return ResponseEntity.ok(viewers);
     }

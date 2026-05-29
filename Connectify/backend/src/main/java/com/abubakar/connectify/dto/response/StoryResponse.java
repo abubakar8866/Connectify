@@ -16,11 +16,15 @@ public class StoryResponse {
 
     private MediaType mediaType;
 
+    private Long userId;
+
     private String username;
 
     private String profileImageUrl;
 
     private Boolean isVerified;
+
+    private Boolean isMine;
 
     private Long viewCount;
 
