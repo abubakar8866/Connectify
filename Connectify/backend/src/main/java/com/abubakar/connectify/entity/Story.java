@@ -71,7 +71,9 @@ public class Story extends BaseEntity {
 
     // REPORTS
     @OneToMany(
-            mappedBy = "story"
+            mappedBy = "story",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
     private List<Report> reports = new ArrayList<>();
 

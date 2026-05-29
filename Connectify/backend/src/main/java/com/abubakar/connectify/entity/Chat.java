@@ -8,7 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "chats")
+@Table(
+        indexes = {
+
+                @Index(
+                        name = "idx_chat_deleted_active",
+                        columnList = "deletedByAdmin, isActive"
+                ),
+
+                @Index(
+                        name = "idx_chat_last_message_at",
+                        columnList = "lastMessageAt"
+                ),
+
+                @Index(
+                        name = "idx_chat_restore_requested",
+                        columnList = "restoreRequested"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -53,6 +71,14 @@ public class Chat extends BaseEntity {
             orphanRemoval = true
     )
     private List<Message> messages =
+            new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "chat",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Report> reports =
             new ArrayList<>();
 
 }

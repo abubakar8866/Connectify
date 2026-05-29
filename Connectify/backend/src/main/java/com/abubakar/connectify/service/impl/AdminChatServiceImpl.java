@@ -72,11 +72,15 @@ public class AdminChatServiceImpl
                 Fetching chats
                 | keyword: {}
                 | deletedByAdmin: {}
+                | restoreRequested: {}
+                | reportedOnly: {}
                 | cursor: {}
                 | size: {}
                 """,
                 request.getKeyword(),
                 request.getDeletedByAdmin(),
+                request.getRestoreRequested(),
+                request.getReportedOnly(),
                 cursor,
                 size
         );
@@ -95,6 +99,8 @@ public class AdminChatServiceImpl
                 ChatSpecification.searchChats(
                         request.getKeyword(),
                         request.getDeletedByAdmin(),
+                        request.getRestoreRequested(),
+                        request.getReportedOnly(),
                         cursor
                 );
 
@@ -134,6 +140,8 @@ public class AdminChatServiceImpl
                 | username: {}
                 | messageType: {}
                 | deletedByAdmin: {}
+                | restoreRequested: {}
+                | reportedOnly: {}
                 | cursor: {}
                 | size: {}
                 """,
@@ -142,6 +150,8 @@ public class AdminChatServiceImpl
                 request.getUsername(),
                 request.getMessageType(),
                 request.getDeletedByAdmin(),
+                request.getRestoreRequested(),
+                request.getReportedOnly(),
                 cursor,
                 size
         );
@@ -164,6 +174,8 @@ public class AdminChatServiceImpl
                         request.getUsername(),
                         request.getMessageType(),
                         request.getDeletedByAdmin(),
+                        request.getRestoreRequested(),
+                        request.getReportedOnly(),
                         cursor
                 ).and(
                         MessageSpecification.hasChatId(
@@ -559,6 +571,12 @@ public class AdminChatServiceImpl
                 .deletedByAdmin(
                         chat.getDeletedByAdmin()
                 )
+                .restoreRequested(
+                        chat.getRestoreRequested()
+                )
+                .reportCount(
+                        (long) chat.getReports().size()
+                )
                 .createdAt(chat.getCreatedAt())
                 .build();
     }
@@ -584,6 +602,12 @@ public class AdminChatServiceImpl
                 )
                 .deletedByAdmin(
                         message.getDeletedByAdmin()
+                )
+                .restoreRequested(
+                        message.getRestoreRequested()
+                )
+                .reportCount(
+                        (long) message.getReports().size()
                 )
                 .createdAt(message.getCreatedAt())
                 .build();

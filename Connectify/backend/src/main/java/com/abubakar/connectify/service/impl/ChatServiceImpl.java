@@ -430,25 +430,40 @@ public class ChatServiceImpl implements ChatService {
 
         List<ChatParticipant> participants;
 
+        List<Long> ids;
+
         if (cursor == null) {
 
-            participants =
+            ids =
                     chatParticipantRepository
-                            .findByUserAndDeletedFalseOrderByChatLastMessageAtDesc(
+                            .findChatParticipantIds(
                                     currentUser,
                                     pageable
                             );
 
         } else {
 
-            participants =
+            ids =
                     chatParticipantRepository
-                            .findByUserAndDeletedFalseAndChatIdLessThanOrderByChatLastMessageAtDesc(
+                            .findChatParticipantIdsWithCursor(
                                     currentUser,
                                     cursor,
                                     pageable
                             );
         }
+
+        if (ids.isEmpty()) {
+
+            return CursorPageResponse.<ChatResponse>builder()
+                    .content(List.of())
+                    .hasNext(false)
+                    .nextCursor(null)
+                    .build();
+        }
+
+        participants =
+                chatParticipantRepository
+                        .findChatsWithParticipants(ids);
 
         logger.debug(
                 "Chats fetched successfully | userId: {} | totalChats: {}",
@@ -1216,11 +1231,14 @@ public class ChatServiceImpl implements ChatService {
     ) {
 
         ChatParticipant currentParticipant =
-                chatParticipantRepository
-                        .findByChatAndUser(
-                                chat,
-                                currentUser
+                chat.getParticipants()
+                        .stream()
+                        .filter(participant ->
+                                participant.getUser()
+                                        .getId()
+                                        .equals(currentUser.getId())
                         )
+                        .findFirst()
                         .orElse(null);
 
         ChatParticipant otherParticipant =
@@ -1277,12 +1295,10 @@ public class ChatServiceImpl implements ChatService {
     ) {
 
         boolean deletedForMe =
-                message.getDeletedForUsers()
-                        .stream()
-                        .anyMatch(user ->
-                                user.getId()
-                                        .equals(currentUser.getId())
-                        );
+                messageRepository.isMessageDeletedForUser(
+                        message.getId(),
+                        currentUser.getId()
+                );
 
         Message replyMessage =
                 message.getReplyToMessage();

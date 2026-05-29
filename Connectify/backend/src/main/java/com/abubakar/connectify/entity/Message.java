@@ -9,7 +9,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "messages")
+@Table(
+        name = "messages",
+        indexes = {
+
+                @Index(
+                        name = "idx_message_chat_id",
+                        columnList = "chat_id"
+                ),
+
+                @Index(
+                        name = "idx_message_chat_id_id",
+                        columnList = "chat_id, id"
+                ),
+
+                @Index(
+                        name = "idx_message_deleted_admin",
+                        columnList = "deletedByAdmin"
+                ),
+
+                @Index(
+                        name = "idx_message_restore_requested",
+                        columnList = "restoreRequested"
+                ),
+
+                @Index(
+                        name = "idx_message_sender",
+                        columnList = "sender_id"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -96,6 +125,14 @@ public class Message extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> deletedForUsers =
+            new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "message",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Report> reports =
             new ArrayList<>();
 
 }

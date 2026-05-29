@@ -15,6 +15,18 @@ import java.time.LocalDateTime;
                                 "user_id"
                         }
                 )
+        },
+        indexes = {
+
+                @Index(
+                        name = "idx_chat_participant_user_deleted",
+                        columnList = "user_id, deleted"
+                ),
+
+                @Index(
+                        name = "idx_chat_participant_chat_user",
+                        columnList = "chat_id, user_id"
+                )
         }
 )
 @Getter

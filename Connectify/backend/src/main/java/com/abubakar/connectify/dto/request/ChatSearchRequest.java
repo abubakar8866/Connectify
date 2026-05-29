@@ -11,5 +11,7 @@ public class ChatSearchRequest {
 
     private Boolean restoreRequested;
 
+    private Boolean reportedOnly;
+
 }
 

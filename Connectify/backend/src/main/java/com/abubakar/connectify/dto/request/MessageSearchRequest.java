@@ -16,5 +16,7 @@ public class MessageSearchRequest {
 
     private Boolean restoreRequested;
 
+    private Boolean reportedOnly;
+
 }
 

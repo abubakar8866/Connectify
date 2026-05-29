@@ -4,6 +4,7 @@ import com.abubakar.connectify.entity.Message;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.MessageType;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -17,12 +18,18 @@ public class MessageSpecification {
             String username,
             MessageType messageType,
             Boolean deletedByAdmin,
+            Boolean restoreRequested,
+            Boolean reportedOnly,
             Long cursor
     ) {
 
         return (root, query, cb) -> {
 
             if (query != null && query.getResultType() != Long.class) {
+
+                root.fetch("sender", JoinType.LEFT);
+                root.fetch("chat", JoinType.LEFT);
+                root.fetch("reports", JoinType.LEFT);
                 query.distinct(true);
             }
 
@@ -86,6 +93,27 @@ public class MessageSpecification {
                 );
             }
 
+            if (restoreRequested != null) {
+
+                predicates.add(
+
+                        cb.equal(
+                                root.get("restoreRequested"),
+                                restoreRequested
+                        )
+                );
+            }
+
+            if (Boolean.TRUE.equals(reportedOnly)) {
+
+                predicates.add(
+                        cb.greaterThan(
+                                cb.size(root.get("reports")),
+                                0
+                        )
+                );
+            }
+
             if (cursor != null) {
 
                 predicates.add(
@@ -101,6 +129,7 @@ public class MessageSpecification {
                     predicates.toArray(new Predicate[0])
             );
         };
+
     }
 
     public static Specification<Message> hasChatId(

@@ -16,13 +16,22 @@ public class ChatSpecification {
     public static Specification<Chat> searchChats(
             String keyword,
             Boolean deletedByAdmin,
+            Boolean restoreRequested,
+            Boolean reportedOnly,
             Long cursor
     ) {
 
         return (root, query, cb) -> {
 
             if (query != null && query.getResultType() != Long.class) {
+
+                root.fetch("participants", JoinType.LEFT)
+                        .fetch("user", JoinType.LEFT);
+
+                root.fetch("reports", JoinType.LEFT);
+
                 query.distinct(true);
+
             }
 
             query.orderBy(
@@ -77,6 +86,27 @@ public class ChatSpecification {
                 );
             }
 
+            if (restoreRequested != null) {
+
+                predicates.add(
+
+                        cb.equal(
+                                root.get("restoreRequested"),
+                                restoreRequested
+                        )
+                );
+            }
+
+            if (Boolean.TRUE.equals(reportedOnly)) {
+
+                predicates.add(
+                        cb.greaterThan(
+                                cb.size(root.get("reports")),
+                                0
+                        )
+                );
+            }
+
             if (cursor != null) {
 
                 predicates.add(
@@ -92,6 +122,7 @@ public class ChatSpecification {
                     predicates.toArray(new Predicate[0])
             );
         };
+
     }
 
 }

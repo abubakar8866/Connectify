@@ -32,6 +32,10 @@ public class AdminMessageResponse {
 
     private Boolean deletedByAdmin;
 
+    private Boolean restoreRequested;
+
+    private Long reportCount;
+
     private LocalDateTime createdAt;
 
 }

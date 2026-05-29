@@ -19,6 +19,9 @@ public interface MessageRepository
     @Query("""
         SELECT m
         FROM Message m
+        LEFT JOIN FETCH m.sender
+        LEFT JOIN FETCH m.replyToMessage rm
+        LEFT JOIN FETCH rm.sender
         WHERE m.chat = :chat
         AND m.deletedByAdmin = false
         AND m.chat.deletedByAdmin = false
@@ -37,6 +40,9 @@ public interface MessageRepository
     @Query("""
         SELECT m
         FROM Message m
+        LEFT JOIN FETCH m.sender
+        LEFT JOIN FETCH m.replyToMessage rm
+        LEFT JOIN FETCH rm.sender
         WHERE m.chat = :chat
         AND m.id < :cursor
         AND m.deletedByAdmin = false
@@ -62,32 +68,20 @@ public interface MessageRepository
             Long senderId
     );
 
-    List<Message>
-    findByChatAndDeletedByAdminFalseOrderByIdDesc(
-            Chat chat,
-            Pageable pageable
-    );
-
-    List<Message>
-    findByChatAndDeletedByAdminFalseAndIdLessThanOrderByIdDesc(
-            Chat chat,
-            Long id,
-            Pageable pageable
-    );
-
-    List<Message> findByChatOrderByIdDesc(
-            Chat chat,
-            Pageable pageable
-    );
-
-    List<Message> findByChatAndIdLessThanOrderByIdDesc(
-            Chat chat,
-            Long id,
-            Pageable pageable
-    );
-
     Long countByCreatedAtAfterAndDeletedByAdminFalse(
             LocalDateTime time
+    );
+
+    @Query("""
+        SELECT COUNT(m) > 0
+        FROM Message m
+        JOIN m.deletedForUsers u
+        WHERE m.id = :messageId
+        AND u.id = :userId
+    """)
+    boolean isMessageDeletedForUser(
+            Long messageId,
+            Long userId
     );
 
 }

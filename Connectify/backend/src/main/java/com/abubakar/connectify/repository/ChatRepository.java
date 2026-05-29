@@ -32,16 +32,6 @@ public interface ChatRepository
             Long userTwoId
     );
 
-    // ADMIN
-    List<Chat> findAllByOrderByIdDesc(
-            Pageable pageable
-    );
-
-    List<Chat> findByIdLessThanOrderByIdDesc(
-            Long id,
-            Pageable pageable
-    );
-
     Long countByDeletedByAdminFalse();
 
     Long countByDeletedByAdminFalseAndIsActiveTrue();

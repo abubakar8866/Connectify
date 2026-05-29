@@ -51,12 +51,14 @@ public class AdminChatController {
                 | keyword: {}
                 | deletedByAdmin: {}
                 | restoreRequested: {}
+                | reportedOnly: {}
                 | cursor: {}
                 | size: {}
                 """,
                 request.getKeyword(),
                 request.getDeletedByAdmin(),
                 request.getRestoreRequested(),
+                request.getReportedOnly(),
                 cursor,
                 size
         );
@@ -101,15 +103,17 @@ public class AdminChatController {
                 | messageType: {}
                 | deletedByAdmin: {}
                 | restoreRequested: {}
+                | reportedOnly: {}
                 | cursor: {}
                 | size: {}
-                """,
+               """,
                 chatId,
                 request.getKeyword(),
                 request.getUsername(),
                 request.getMessageType(),
                 request.getDeletedByAdmin(),
                 request.getRestoreRequested(),
+                request.getReportedOnly(),
                 cursor,
                 size
         );
