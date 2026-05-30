@@ -19,6 +19,14 @@ public interface AuthService {
 
     AuthResponse createAdmin(RegisterRequest request);
 
+    // ================= REFRESH TOKEN =================
+
+    AuthResponse refreshToken(
+            String refreshToken
+    );
+
+    void logout();
+
     // ================= USER =================
 
     UserResponse getCurrentUser();

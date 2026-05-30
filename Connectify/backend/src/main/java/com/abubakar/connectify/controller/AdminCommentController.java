@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/admin/comments")
+@RequestMapping("/api/v1/admin/comments")
 public class AdminCommentController {
 
     private static final Logger logger =

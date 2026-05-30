@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.abubakar.connectify.dto.response.AuthResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import com.abubakar.connectify.exception.OperationFailException;
+import com.abubakar.connectify.service.RefreshTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -36,6 +37,9 @@ public class OAuth2SuccessHandler
 
 	@Autowired
 	private UserRepository userRepo;
+
+	@Autowired
+	private RefreshTokenService refreshTokenService;
 
 	@Autowired
 	private JwtUtils jwtUtils;
@@ -291,8 +295,13 @@ public class OAuth2SuccessHandler
 
 		// ================= GENERATE JWT =================
 
-		String token =
+		String accessToken =
 				jwtUtils.generateToken(user);
+
+		String refreshToken =
+				refreshTokenService
+						.createRefreshToken(user)
+						.getToken();
 
 		// ================= RESPONSE =================
 
@@ -308,7 +317,8 @@ public class OAuth2SuccessHandler
 
 		AuthResponse authResponse =
 				new AuthResponse(
-						token,
+						accessToken,
+						refreshToken,
 						"Bearer",
 						userResponse
 				);

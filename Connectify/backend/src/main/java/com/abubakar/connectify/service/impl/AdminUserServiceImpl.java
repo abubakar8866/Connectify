@@ -9,12 +9,12 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.AdminUserService;
 import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.service.RefreshTokenService;
 import com.abubakar.connectify.specification.UserSpecification;
 
 import com.abubakar.connectify.util.*;
@@ -37,6 +37,9 @@ public class AdminUserServiceImpl
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     @Autowired
     private PostRepository postRepository;
@@ -298,6 +301,8 @@ public class AdminUserServiceImpl
 
         userRepository.save(user);
 
+        refreshTokenService.deleteByUser(user);
+
         notificationService.createNotification(
                 user.getId(),
                 admin.getId(),
@@ -434,12 +439,12 @@ public class AdminUserServiceImpl
 
         User user = userAccessValidator.getValidUser(userId);
 
-        if (!Boolean.TRUE.equals(user.getRestoreRequested())) {
+        if (!Boolean.TRUE.equals(user.getUnbanRequested())) {
 
-            logger.warn("Restore unban request not found");
+            logger.warn("Unban request not found");
 
             throw new OperationFailException(
-                    "Restore unban request not found"
+                    "Unban request not found"
             );
 
         }
@@ -544,6 +549,8 @@ public class AdminUserServiceImpl
         user.setAccountStatus(AccountStatus.DEACTIVATED);
 
         userRepository.save(user);
+
+        refreshTokenService.deleteByUser(user);
 
         notificationService.createNotification(
                 user.getId(),

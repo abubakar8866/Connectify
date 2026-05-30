@@ -1,4 +1,4 @@
-package com.abubakar.connectify.configuration;
+package com.abubakar.connectify.scheduler;
 
 import com.abubakar.connectify.entity.Story;
 import com.abubakar.connectify.repository.StoryRepository;

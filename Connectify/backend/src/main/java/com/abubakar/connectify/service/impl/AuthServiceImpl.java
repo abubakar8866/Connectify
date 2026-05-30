@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.abubakar.connectify.dto.request.UpdateProfileRequest;
+import com.abubakar.connectify.entity.RefreshToken;
+import com.abubakar.connectify.service.RefreshTokenService;
 import com.abubakar.connectify.util.AuthUtil;
 import com.abubakar.connectify.util.UserAccessValidator;
 import org.modelmapper.ModelMapper;
@@ -48,6 +50,9 @@ public class AuthServiceImpl implements AuthService {
 
 	@Autowired
 	private UserRepository userRepo;
+
+	@Autowired
+	private RefreshTokenService refreshTokenService;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -148,7 +153,13 @@ public class AuthServiceImpl implements AuthService {
 			);
 		}
 
-		return new AuthResponse("","none",this.mapToResponse(user));
+		return new AuthResponse(
+				null,
+				null,
+				"Bearer",
+				this.mapToResponse(user)
+		);
+
 	}
 
 	// ================= LOGIN =================
@@ -179,7 +190,12 @@ public class AuthServiceImpl implements AuthService {
 
 			userRepo.save(user);
 
-			String token = jwtUtil.generateToken(user);
+			String accessToken = jwtUtil.generateToken(user);
+
+			String refreshToken =
+					refreshTokenService
+							.createRefreshToken(user)
+							.getToken();
 
 			logger.info(
 					"Login successful | userId: {} | email: {}",
@@ -187,7 +203,12 @@ public class AuthServiceImpl implements AuthService {
 					user.getEmail()
 			);
 
-			return new AuthResponse(token, "Bearer", this.mapToResponse(user));
+			return new AuthResponse(
+					accessToken,
+					refreshToken,
+					"Bearer",
+					this.mapToResponse(user)
+			);
 
 		} catch (BadCredentialsException e) {
 
@@ -201,6 +222,75 @@ public class AuthServiceImpl implements AuthService {
 					"Invalid email or password"
 			);
 		}
+	}
+
+	// ================= REFRESH TOKEN =================
+	@Override
+	@Transactional
+	public AuthResponse refreshToken(
+			String refreshToken
+	) {
+
+		logger.debug(
+				"Refresh token request received"
+		);
+
+		RefreshToken token =
+				refreshTokenService
+						.verifyRefreshToken(
+								refreshToken
+						);
+
+		User user =
+				token.getUser();
+
+		userAccessValidator.validateActiveUser(
+				user
+		);
+
+		String accessToken =
+				jwtUtil.generateToken(user);
+
+		// ROTATE REFRESH TOKEN
+		refreshTokenService.deleteByUser(
+				user
+		);
+
+		RefreshToken newRefreshToken =
+				refreshTokenService.createRefreshToken(
+						user
+				);
+
+		logger.info(
+				"Access token refreshed | userId: {}",
+				user.getId()
+		);
+
+		return new AuthResponse(
+				accessToken,
+				newRefreshToken.getToken(),
+				"Bearer",
+				mapToResponse(user)
+		);
+	}
+
+	// ================= LOGOUT =================
+	@Override
+	@Transactional
+	public void logout() {
+
+		User currentUser =
+				authUtil.getCurrentUser();
+
+		refreshTokenService.deleteByUser(
+				currentUser
+		);
+
+		logger.info(
+				"User logged out | userId: {}",
+				currentUser.getId()
+		);
+
 	}
 
 	// ================= GET CURRENT USER =================
@@ -582,13 +672,21 @@ public class AuthServiceImpl implements AuthService {
 				admin.getId()
 		);
 
-		String token = jwtUtil.generateToken(admin);
+		String accessToken =
+				jwtUtil.generateToken(admin);
+
+		String refreshToken =
+				refreshTokenService
+						.createRefreshToken(admin)
+						.getToken();
 
 		return new AuthResponse(
-				token,
+				accessToken,
+				refreshToken,
 				"Bearer",
 				mapToResponse(admin)
 		);
+
 	}
 
 	// ================= SEND EMAIL VERIFICATION =================
@@ -739,6 +837,8 @@ public class AuthServiceImpl implements AuthService {
 		);
 
 		userRepo.save(currentUser);
+
+		refreshTokenService.deleteByUser(currentUser);
 
 		logger.info(
 				"Account deactivated successfully | userId: {}",

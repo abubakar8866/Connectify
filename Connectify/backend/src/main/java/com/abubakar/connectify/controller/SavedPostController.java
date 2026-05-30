@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/saved-posts")
+@RequestMapping("/api/v1/saved-posts")
 public class SavedPostController {
 
     private static final Logger logger = LoggerFactory.getLogger(SavedPostController.class);

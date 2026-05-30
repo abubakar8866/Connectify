@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/stories")
+@RequestMapping("/api/v1/stories")
 public class StoryController {
 
     private static final Logger logger =

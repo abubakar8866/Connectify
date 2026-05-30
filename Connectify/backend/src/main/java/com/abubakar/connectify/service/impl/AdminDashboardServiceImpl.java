@@ -6,6 +6,7 @@ import com.abubakar.connectify.dto.response.UserSummaryResponse;
 import com.abubakar.connectify.entity.Story;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.AccountStatus;
+import com.abubakar.connectify.enums.ReportStatus;
 import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.AdminDashboardService;
 
@@ -50,6 +51,9 @@ public class AdminDashboardServiceImpl
 
     @Autowired
     private StoryRepository storyRepository;
+
+    @Autowired
+    private ReportRepository reportRepository;
 
     @Autowired
     private AuthUtil authUtil;
@@ -221,6 +225,54 @@ public class AdminDashboardServiceImpl
                 topReactedStories.size()
         );
 
+        // ================= REPORT ANALYTICS =================
+
+        Long totalReports =
+                reportRepository.count();
+
+        Long reportsToday =
+                reportRepository.countByCreatedAtAfter(
+                        startOfDay
+                );
+
+        Long pendingReports =
+                reportRepository.countByStatus(
+                        ReportStatus.PENDING
+                );
+
+        Long reviewedReports =
+                reportRepository.countByStatus(
+                        ReportStatus.REVIEWED
+                );
+
+        Long resolvedReports =
+                reportRepository.countByStatus(
+                        ReportStatus.RESOLVED
+                );
+
+        Long rejectedReports =
+                reportRepository.countByStatus(
+                        ReportStatus.REJECTED
+                );
+
+        logger.debug(
+                """
+                Report analytics fetched
+                | totalReports: {}
+                | reportsToday: {}
+                | pendingReports: {}
+                | reviewedReports: {}
+                | resolvedReports: {}
+                | rejectedReports: {}
+                """,
+                totalReports,
+                reportsToday,
+                pendingReports,
+                reviewedReports,
+                resolvedReports,
+                rejectedReports
+        );
+
         // ================= MOST ACTIVE USERS =================
 
         List<UserSummaryResponse> mostActiveUsers =
@@ -274,6 +326,14 @@ public class AdminDashboardServiceImpl
                 .restoreRequestsCount(restoreRequestsCount)
                 .topViewedStories(topViewedStories)
                 .topReactedStories(topReactedStories)
+
+                // REPORT ANALYTICS
+                .totalReports(totalReports)
+                .reportsToday(reportsToday)
+                .pendingReports(pendingReports)
+                .reviewedReports(reviewedReports)
+                .resolvedReports(resolvedReports)
+                .rejectedReports(rejectedReports)
 
                 // ACTIVE USERS
                 .mostActiveUsers(mostActiveUsers)

@@ -68,6 +68,45 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    // ================= REFRESH TOKEN =================
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody
+            RefreshTokenRequest request
+    ) {
+
+        logger.info(
+                "Refresh token API initiated"
+        );
+
+        AuthResponse response =
+                authService.refreshToken(
+                        request.getRefreshToken()
+                );
+
+        return ResponseEntity.ok(
+                response
+        );
+    }
+
+    // ================= LOGOUT =================
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+
+        logger.info(
+                "Logout API initiated"
+        );
+
+        authService.logout();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Logout successful"
+                )
+        );
+    }
+
     // ================= CURRENT USER =================
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser() {
@@ -251,7 +290,6 @@ public class AuthController {
         );
 
     }
-
 
 }
 

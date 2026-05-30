@@ -52,6 +52,19 @@ public class AdminDashboardResponse {
 
     private Long restoreRequestsCount;
 
+    // REPORT ANALYTICS
+    private Long totalReports;
+
+    private Long reportsToday;
+
+    private Long pendingReports;
+
+    private Long reviewedReports;
+
+    private Long resolvedReports;
+
+    private Long rejectedReports;
+
     private List<StorySummaryResponse> topViewedStories;
 
     private List<StorySummaryResponse> topReactedStories;
