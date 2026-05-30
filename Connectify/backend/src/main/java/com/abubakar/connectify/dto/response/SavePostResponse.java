@@ -10,5 +10,6 @@ public class SavePostResponse {
     private Boolean saved;
 
     private Long postId;
+
 }
 

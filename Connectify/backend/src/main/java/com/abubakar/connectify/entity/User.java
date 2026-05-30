@@ -22,10 +22,31 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Table(
         name = "users",
         indexes = {
-                @Index(name = "idx_user_email", columnList = "email"),
-                @Index(name = "idx_user_username", columnList = "username"),
-                @Index(name = "idx_user_status", columnList = "accountStatus"),
-                @Index(name = "idx_user_active", columnList = "isActive")
+
+                @Index(
+                        name = "idx_user_email",
+                        columnList = "email"
+                ),
+
+                @Index(
+                        name = "idx_user_username",
+                        columnList = "username"
+                ),
+
+                @Index(
+                        name = "idx_user_city",
+                        columnList = "city"
+                ),
+
+                @Index(
+                        name = "idx_user_followers",
+                        columnList = "followers_count"
+                ),
+
+                @Index(
+                        name = "idx_user_visibility",
+                        columnList = "deleted,is_active,account_status"
+                )
         }
         )
 @Getter

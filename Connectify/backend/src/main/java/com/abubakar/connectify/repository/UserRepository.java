@@ -43,28 +43,6 @@ public interface UserRepository extends
     );
 
     @Query("""
-        SELECT DISTINCT r.reportedUser
-        FROM Report r
-        WHERE r.reportedUser IS NOT NULL
-        ORDER BY r.reportedUser.id DESC
-    """)
-    List<User> findReportedUsers(
-            Pageable pageable
-    );
-
-    @Query("""
-        SELECT DISTINCT r.reportedUser
-        FROM Report r
-        WHERE r.reportedUser IS NOT NULL
-        AND r.reportedUser.id < :cursor
-        ORDER BY r.reportedUser.id DESC
-    """)
-    List<User> findReportedUsersByCursor(
-            Long cursor,
-            Pageable pageable
-    );
-
-    @Query("""
         SELECT u
         FROM User u
         WHERE u.deleted = false

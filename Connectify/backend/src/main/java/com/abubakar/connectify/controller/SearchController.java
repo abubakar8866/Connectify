@@ -1,11 +1,10 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.request.UserSearchRequest;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.dto.response.UserSearchResponse;
-import com.abubakar.connectify.enums.AccountStatus;
-import com.abubakar.connectify.enums.Gender;
 import com.abubakar.connectify.service.SearchService;
 
 import com.abubakar.connectify.util.PaginationConstants;
@@ -30,32 +29,12 @@ public class SearchController {
     @GetMapping("/users")
     public ResponseEntity<CursorPageResponse<UserSearchResponse>>
     searchUsers(
-
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Boolean verified,
-
-            @RequestParam(required = false)
-            Boolean emailVerified,
-
-            @RequestParam(required = false)
-            Boolean isPrivate,
-
-            @RequestParam(required = false)
-            String city,
-
-            @RequestParam(required = false)
-            Gender gender,
-
-            @RequestParam(required = false)
-            Long minFollowers,
-
+            UserSearchRequest request,
             @RequestParam(required = false)
             Long cursor,
-
-            @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
+            @RequestParam(
+                    defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
             int size
 
     ) {
@@ -73,27 +52,20 @@ public class SearchController {
                 | cursor: {}
                 | size: {}
                 """,
-                keyword,
-                verified,
-                emailVerified,
-                isPrivate,
-                city,
-                gender,
-                minFollowers,
+                request.getKeyword(),
+                request.getVerified(),
+                request.getEmailVerified(),
+                request.getIsPrivate(),
+                request.getCity(),
+                request.getGender(),
+                request.getMinFollowers(),
                 cursor,
                 size
         );
 
         return ResponseEntity.ok(
-
                 searchService.searchUsers(
-                        keyword,
-                        verified,
-                        emailVerified,
-                        isPrivate,
-                        city,
-                        gender,
-                        minFollowers,
+                        request,
                         cursor,
                         size
                 )

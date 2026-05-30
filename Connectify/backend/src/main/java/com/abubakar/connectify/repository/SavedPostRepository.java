@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.abubakar.connectify.enums.AccountStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,7 +22,12 @@ public interface SavedPostRepository
             Post post
     );
 
-    // ================= FIRST PAGE =================
+    @EntityGraph(attributePaths = {
+            "post",
+            "post.user",
+            "post.mediaList",
+            "post.hashtags"
+    })
     List<SavedPost>
     findByUserAndPostDeletedFalseAndPostUserDeletedFalseAndPostUserIsActiveTrueAndPostUserAccountStatusNotOrderByIdDesc(
             User user,
@@ -29,7 +35,12 @@ public interface SavedPostRepository
             Pageable pageable
     );
 
-    // ================= CURSOR PAGINATION =================
+    @EntityGraph(attributePaths = {
+            "post",
+            "post.user",
+            "post.mediaList",
+            "post.hashtags"
+    })
     List<SavedPost>
     findByUserAndPostDeletedFalseAndPostUserDeletedFalseAndPostUserIsActiveTrueAndPostUserAccountStatusNotAndIdLessThanOrderByIdDesc(
             User user,

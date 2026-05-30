@@ -3,12 +3,10 @@ package com.abubakar.connectify.service.impl;
 import com.abubakar.connectify.dto.request.CreateReportRequest;
 import com.abubakar.connectify.dto.response.ReportResponse;
 import com.abubakar.connectify.entity.*;
-import com.abubakar.connectify.enums.AccountStatus;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.enums.ReportStatus;
 import com.abubakar.connectify.enums.Role;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.ReportService;
@@ -18,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,25 +31,10 @@ public class ReportServiceImpl implements ReportService {
     private ReportRepository reportRepository;
 
     @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private ChatRepository chatRepository;
-
-    @Autowired
     private ChatParticipantRepository chatParticipantRepository;
-
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Autowired
-    private StoryRepository storyRepository;
 
     @Autowired
     private AuthUtil authUtil;
@@ -112,14 +96,12 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndPost(
+                        .existsByReportedByAndPost(
                                 currentUser,
                                 post
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -134,50 +116,66 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report = Report.builder()
-                .reportedBy(currentUser)
-                .post(post)
-                .reason(request.getReason())
-                .description(request.getDescription())
-                .status(ReportStatus.PENDING)
-                .build();
+        try{
 
-        reportRepository.save(report);
+            Report report = Report.builder()
+                    .reportedBy(currentUser)
+                    .post(post)
+                    .reason(request.getReason())
+                    .description(request.getDescription())
+                    .status(ReportStatus.PENDING)
+                    .build();
 
-        // NOTIFY POST OWNER
-        notificationService.createNotification(
-                post.getUser().getId(),                 // receiver
-                currentUser.getId(),                   // sender
-                currentUser.getUname() +
-                        " reported your post",
-                NotificationType.POST_REPORTED,
-                post.getId(),
-                null
-        );
+            reportRepository.saveAndFlush(report);
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            // NOTIFY POST OWNER
+            notificationService.createNotification(
+                    post.getUser().getId(),                 // receiver
+                    currentUser.getId(),                   // sender
+                    currentUser.getUname() +
+                            " reported your post",
+                    NotificationType.POST_REPORTED,
+                    post.getId(),
+                    null
+            );
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname() +
-                                " reported a post",
-                        NotificationType.POST_REPORTED,
-                        post.getId(),
-                        null
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "Post reported successfully | postId: {} | reporterId: {}",
-                postId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname() +
+                                    " reported a post",
+                            NotificationType.POST_REPORTED,
+                            post.getId(),
+                            null
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "Post reported successfully | postId: {} | reporterId: {}",
+                    postId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate post report prevented by database | reporterId: {} | postId: {}",
+                    currentUser.getId(),
+                    postId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this post"
+            );
+        }
+
     }
 
     @Override
@@ -218,11 +216,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndComment(
+                        .existsByReportedByAndComment(
                                 currentUser,
                                 comment
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -237,50 +234,66 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report = Report.builder()
-                .reportedBy(currentUser)
-                .comment(comment)
-                .reason(request.getReason())
-                .description(request.getDescription())
-                .status(ReportStatus.PENDING)
-                .build();
+        try{
 
-        reportRepository.save(report);
+            Report report = Report.builder()
+                    .reportedBy(currentUser)
+                    .comment(comment)
+                    .reason(request.getReason())
+                    .description(request.getDescription())
+                    .status(ReportStatus.PENDING)
+                    .build();
 
-        // NOTIFY COMMENT OWNER
-        notificationService.createNotification(
-                comment.getUser().getId(),
-                currentUser.getId(),
-                currentUser.getUname() +
-                        " reported your comment",
-                NotificationType.COMMENT_REPORTED,
-                comment.getPost().getId(),
-                comment.getId()
-        );
+            reportRepository.saveAndFlush(report);
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            // NOTIFY COMMENT OWNER
+            notificationService.createNotification(
+                    comment.getUser().getId(),
+                    currentUser.getId(),
+                    currentUser.getUname() +
+                            " reported your comment",
+                    NotificationType.COMMENT_REPORTED,
+                    comment.getPost().getId(),
+                    comment.getId()
+            );
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname() +
-                                " reported a comment",
-                        NotificationType.COMMENT_REPORTED,
-                        comment.getPost().getId(),
-                        comment.getId()
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "Comment reported successfully | commentId: {} | reporterId: {}",
-                commentId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname() +
+                                    " reported a comment",
+                            NotificationType.COMMENT_REPORTED,
+                            comment.getPost().getId(),
+                            comment.getId()
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "Comment reported successfully | commentId: {} | reporterId: {}",
+                    commentId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate comment report prevented by database | reporterId: {} | commentId: {}",
+                    currentUser.getId(),
+                    commentId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this comment."
+            );
+        }
+
     }
 
     @Override
@@ -297,6 +310,21 @@ public class ReportServiceImpl implements ReportService {
         User currentUser = this.authUtil.getCurrentUser();
 
         User user = this.userAccessValidator.getValidUser(userId);
+        userAccessValidator.validateActiveUser(user);
+
+        // ADMIN REPORT VALIDATION
+        if (user.getRole() == Role.ADMIN) {
+
+            logger.warn(
+                    "Admin report blocked | reporterId: {} | targetUserId: {}",
+                    currentUser.getId(),
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "Admin accounts cannot be reported"
+            );
+        }
 
         if (user.getId().equals(currentUser.getId())) {
 
@@ -318,11 +346,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndReportedUser(
+                        .existsByReportedByAndReportedUser(
                                 currentUser,
                                 user
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -337,50 +364,66 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report = Report.builder()
-                .reportedBy(currentUser)
-                .reportedUser(user)
-                .reason(request.getReason())
-                .description(request.getDescription())
-                .status(ReportStatus.PENDING)
-                .build();
+        try{
 
-        reportRepository.save(report);
+            Report report = Report.builder()
+                    .reportedBy(currentUser)
+                    .reportedUser(user)
+                    .reason(request.getReason())
+                    .description(request.getDescription())
+                    .status(ReportStatus.PENDING)
+                    .build();
 
-        // NOTIFY REPORTED USER
-        notificationService.createNotification(
-                user.getId(),
-                currentUser.getId(),
-                currentUser.getUname() +
-                        " reported your profile",
-                NotificationType.USER_REPORTED,
-                null,
-                null
-        );
+            reportRepository.saveAndFlush(report);
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            // NOTIFY REPORTED USER
+            notificationService.createNotification(
+                    user.getId(),
+                    currentUser.getId(),
+                    currentUser.getUname() +
+                            " reported your profile",
+                    NotificationType.USER_REPORTED,
+                    null,
+                    null
+            );
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname() +
-                                " reported a user",
-                        NotificationType.USER_REPORTED,
-                        null,
-                        null
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "User reported successfully | targetUserId: {} | reporterId: {}",
-                userId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname() +
+                                    " reported a user",
+                            NotificationType.USER_REPORTED,
+                            null,
+                            null
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "User reported successfully | targetUserId: {} | reporterId: {}",
+                    userId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate user report prevented by database | reporterId: {} | userId: {}",
+                    currentUser.getId(),
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this user."
+            );
+        }
+
     }
 
     @Override
@@ -422,11 +465,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndChat(
+                        .existsByReportedByAndChat(
                                 currentUser,
                                 chat
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -441,40 +483,56 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report =
-                Report.builder()
-                        .reportedBy(currentUser)
-                        .chat(chat)
-                        .reason(request.getReason())
-                        .description(request.getDescription())
-                        .status(ReportStatus.PENDING)
-                        .build();
+        try{
 
-        reportRepository.save(report);
+            Report report =
+                    Report.builder()
+                            .reportedBy(currentUser)
+                            .chat(chat)
+                            .reason(request.getReason())
+                            .description(request.getDescription())
+                            .status(ReportStatus.PENDING)
+                            .build();
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            reportRepository.saveAndFlush(report);
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname()
-                                + " reported a chat",
-                        NotificationType.CHAT_REPORTED,
-                        null,
-                        null
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "Chat reported successfully | chatId: {} | reporterId: {}",
-                chatId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname()
+                                    + " reported a chat",
+                            NotificationType.CHAT_REPORTED,
+                            null,
+                            null
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "Chat reported successfully | chatId: {} | reporterId: {}",
+                    chatId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate chat report prevented by database | reporterId: {} | chatId: {}",
+                    currentUser.getId(),
+                    chatId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this chat."
+            );
+        }
+
     }
 
     @Override
@@ -531,14 +589,12 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        // DUPLICATE REPORT VALIDATION
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndMessage(
+                        .existsByReportedByAndMessage(
                                 currentUser,
                                 message
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -553,50 +609,66 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report = Report.builder()
-                .reportedBy(currentUser)
-                .message(message)
-                .reason(request.getReason())
-                .description(request.getDescription())
-                .status(ReportStatus.PENDING)
-                .build();
+        try{
 
-        reportRepository.save(report);
+            Report report = Report.builder()
+                    .reportedBy(currentUser)
+                    .message(message)
+                    .reason(request.getReason())
+                    .description(request.getDescription())
+                    .status(ReportStatus.PENDING)
+                    .build();
 
-        // NOTIFY MESSAGE OWNER
-        notificationService.createNotification(
-                message.getSender().getId(),
-                currentUser.getId(),
-                currentUser.getUname() +
-                " reported your message",
-                NotificationType.MESSAGE_REPORTED,
-                null,
-                null
-        );
+            reportRepository.saveAndFlush(report);
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            // NOTIFY MESSAGE OWNER
+            notificationService.createNotification(
+                    message.getSender().getId(),
+                    currentUser.getId(),
+                    currentUser.getUname() +
+                            " reported your message",
+                    NotificationType.MESSAGE_REPORTED,
+                    null,
+                    null
+            );
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname() +
-                        " reported a message",
-                        NotificationType.MESSAGE_REPORTED,
-                        null,
-                        null
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "Message reported successfully | messageId: {} | reporterId: {}",
-                messageId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname() +
+                                    " reported a message",
+                            NotificationType.MESSAGE_REPORTED,
+                            null,
+                            null
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "Message reported successfully | messageId: {} | reporterId: {}",
+                    messageId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate message report prevented by database | reporterId: {} | messageId: {}",
+                    currentUser.getId(),
+                    messageId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this message."
+            );
+        }
+
     }
 
     @Override
@@ -630,14 +702,12 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        // DUPLICATE REPORT VALIDATION
         boolean alreadyReported =
                 reportRepository
-                        .findByReportedByAndStory(
+                        .existsByReportedByAndStory(
                                 currentUser,
                                 story
-                        )
-                        .isPresent();
+                        );
 
         if (alreadyReported) {
 
@@ -652,51 +722,67 @@ public class ReportServiceImpl implements ReportService {
             );
         }
 
-        Report report =
-                Report.builder()
-                        .reportedBy(currentUser)
-                        .story(story)
-                        .reason(request.getReason())
-                        .description(request.getDescription())
-                        .status(ReportStatus.PENDING)
-                        .build();
+        try{
 
-        reportRepository.save(report);
+            Report report =
+                    Report.builder()
+                            .reportedBy(currentUser)
+                            .story(story)
+                            .reason(request.getReason())
+                            .description(request.getDescription())
+                            .status(ReportStatus.PENDING)
+                            .build();
 
-        // NOTIFY STORY OWNER
-        notificationService.createNotification(
-                story.getUser().getId(),
-                currentUser.getId(),
-                currentUser.getUname()
-                        + " reported your story",
-                NotificationType.STORY_REPORTED,
-                null,
-                null
-        );
+            reportRepository.saveAndFlush(report);
 
-        // NOTIFY ADMIN
-        userRepository.findByRole(
-                Role.ADMIN
-        ).ifPresent(admin ->
+            // NOTIFY STORY OWNER
+            notificationService.createNotification(
+                    story.getUser().getId(),
+                    currentUser.getId(),
+                    currentUser.getUname()
+                            + " reported your story",
+                    NotificationType.STORY_REPORTED,
+                    null,
+                    null
+            );
 
-                notificationService.createNotification(
-                        admin.getId(),
-                        currentUser.getId(),
-                        currentUser.getUname()
-                                + " reported a story",
-                        NotificationType.STORY_REPORTED,
-                        null,
-                        null
-                )
-        );
+            // NOTIFY ADMIN
+            userRepository.findByRole(
+                    Role.ADMIN
+            ).ifPresent(admin ->
 
-        logger.info(
-                "Story reported successfully | storyId: {} | reporterId: {}",
-                storyId,
-                currentUser.getId()
-        );
+                    notificationService.createNotification(
+                            admin.getId(),
+                            currentUser.getId(),
+                            currentUser.getUname()
+                                    + " reported a story",
+                            NotificationType.STORY_REPORTED,
+                            null,
+                            null
+                    )
+            );
 
-        return mapToResponse(report);
+            logger.info(
+                    "Story reported successfully | storyId: {} | reporterId: {}",
+                    storyId,
+                    currentUser.getId()
+            );
+
+            return mapToResponse(report);
+
+        } catch (DataIntegrityViolationException ex) {
+
+            logger.warn(
+                    "Duplicate story report prevented by database | reporterId: {} | storyId: {}",
+                    currentUser.getId(),
+                    storyId
+            );
+
+            throw new OperationFailException(
+                    "You already reported this story."
+            );
+        }
+
     }
 
     // ================= HELPERS =================

@@ -28,6 +28,10 @@ public class AdminDashboardResponse {
     // ENGAGEMENT
     private Long totalLikes;
 
+    private Long activeComments;
+
+    private Long deletedComments;
+
     private Long totalComments;
 
     // CHAT ANALYTICS

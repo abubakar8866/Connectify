@@ -88,5 +88,56 @@ public interface ReportRepository
             List<Long> postIds
     );
 
+    boolean existsByReportedByAndPost(
+            User reportedBy,
+            Post post
+    );
+
+    boolean existsByReportedByAndComment(
+            User reportedBy,
+            Comment comment
+    );
+
+    boolean existsByReportedByAndReportedUser(
+            User reportedBy,
+            User reportedUser
+    );
+
+    boolean existsByReportedByAndStory(
+            User reportedBy,
+            Story story
+    );
+
+    boolean existsByReportedByAndChat(
+            User reportedBy,
+            Chat chat
+    );
+
+    boolean existsByReportedByAndMessage(
+            User reportedBy,
+            Message message
+    );
+
+    List<Report> findByStatusOrderByIdDesc(
+            ReportStatus status,
+            Pageable pageable
+    );
+
+    List<Report> findByStatusAndIdLessThanOrderByIdDesc(
+            ReportStatus status,
+            Long cursor,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT r
+        FROM Report r
+        JOIN FETCH r.reportedBy
+        WHERE r.id = :reportId
+    """)
+    Optional<Report> findWithReporterById(
+            Long reportId
+    );
+
 }
 

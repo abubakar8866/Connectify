@@ -43,5 +43,7 @@ public interface CommentRepository
 
     Long countByDeletedFalse();
 
+    Long countByDeletedTrue();
+
 }
 

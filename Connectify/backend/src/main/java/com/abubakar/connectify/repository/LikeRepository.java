@@ -18,8 +18,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
-    Optional<Like> findByUserAndPost(User user, Post post);
-
     boolean existsByUserAndPost(User user,Post post);
 
     boolean existsByUserAndComment(
@@ -60,17 +58,6 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     void deleteByUserAndPost(
             @Param("user") User user,
             @Param("post") Post post
-    );
-
-    @Modifying
-    @Query("""
-        DELETE FROM Like l
-        WHERE l.user = :user
-        AND l.comment = :comment
-    """)
-    void deleteByUserAndComment(
-            @Param("user") User user,
-            @Param("comment") Comment comment
     );
 
 }

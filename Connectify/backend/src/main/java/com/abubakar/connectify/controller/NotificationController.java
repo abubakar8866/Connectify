@@ -4,6 +4,8 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.NotificationResponse;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.util.PaginationConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,11 @@ public class NotificationController {
 
     @Autowired
     private NotificationService notificationService;
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    NotificationController.class
+            );
 
     @GetMapping
     public ResponseEntity<
@@ -26,6 +33,12 @@ public class NotificationController {
             @RequestParam(defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE_STRING)
             int size
     ) {
+
+        logger.info(
+                "GET /api/notifications | cursor: {} | size: {}",
+                cursor,
+                size
+        );
 
         return ResponseEntity.ok(
 
@@ -42,6 +55,11 @@ public class NotificationController {
             @PathVariable Long id
     ) {
 
+        logger.info(
+                "PUT /api/notifications/{}/read",
+                id
+        );
+
         notificationService.markAsRead(id);
 
         return ResponseEntity.ok(
@@ -51,6 +69,10 @@ public class NotificationController {
 
     @PutMapping("/read-all")
     public ResponseEntity<String> markAllAsRead() {
+
+        logger.info(
+                "PUT /api/notifications/read-all"
+        );
 
         notificationService.markAllAsRead();
 
@@ -64,6 +86,11 @@ public class NotificationController {
             @PathVariable Long id
     ) {
 
+        logger.info(
+                "DELETE /api/notifications/{}",
+                id
+        );
+
         notificationService.deleteNotification(id);
 
         return ResponseEntity.ok(
@@ -74,9 +101,14 @@ public class NotificationController {
     @GetMapping("/unread-count")
     public ResponseEntity<Long> getUnreadCount() {
 
+        logger.info(
+                "GET /api/notifications/unread-count"
+        );
+
         return ResponseEntity.ok(
                 notificationService.getUnreadCount()
         );
+
     }
 
 }

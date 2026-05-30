@@ -63,6 +63,12 @@ public class AdminDashboardServiceImpl
         User admin = authUtil.getCurrentUser();
         adminValidator.validateAdmin(admin);
 
+        LocalDateTime now = LocalDateTime.now();
+
+        LocalDateTime startOfDay =
+                LocalDate.now()
+                        .atStartOfDay();
+
         logger.info(
                 "Fetching admin dashboard analytics | adminId: {}",
                 admin.getId()
@@ -82,7 +88,7 @@ public class AdminDashboardServiceImpl
 
         Long newUsersToday =
                 userRepository.countByCreatedAtAfter(
-                        LocalDateTime.now().minusDays(1)
+                        startOfDay
                 );
 
         logger.debug(
@@ -99,7 +105,7 @@ public class AdminDashboardServiceImpl
 
         Long postsCreatedToday =
                 postRepository.countByCreatedAtAfter(
-                        LocalDateTime.now().minusDays(1)
+                        startOfDay
                 );
 
         Long deletedPosts =
@@ -116,13 +122,27 @@ public class AdminDashboardServiceImpl
         Long totalLikes =
                 likeRepository.count();
 
-        Long totalComments =
+        Long activeComments =
                 commentRepository.countByDeletedFalse();
 
+        Long deletedComments =
+                commentRepository.countByDeletedTrue();
+
+        Long totalComments =
+                activeComments + deletedComments;
+
         logger.debug(
-                "Engagement analytics fetched | totalLikes: {} | totalComments: {}",
+                """
+                Engagement analytics fetched
+                | totalLikes: {}
+                | totalComments: {}
+                | activeComments: {}
+                | deletedComments: {}
+                """,
                 totalLikes,
-                totalComments
+                totalComments,
+                activeComments,
+                deletedComments
         );
 
         // ================= CHAT ANALYTICS =================
@@ -131,9 +151,6 @@ public class AdminDashboardServiceImpl
 
         Long activeChats =
                 chatRepository.countByDeletedByAdminFalseAndIsActiveTrue();
-
-        LocalDateTime startOfDay = LocalDate.now()
-                .atStartOfDay();
 
         Long messagesToday =
                 messageRepository
@@ -150,7 +167,7 @@ public class AdminDashboardServiceImpl
 
         // ================= STORY ANALYTICS =================
         Long totalStories =
-                storyRepository.countByDeletedFalse();
+                storyRepository.count();
 
         Long deletedStories =
                 storyRepository.countByDeletedTrue();
@@ -158,12 +175,12 @@ public class AdminDashboardServiceImpl
         Long activeStories =
                 storyRepository
                         .countByDeletedFalseAndIsActiveTrueAndExpiresAtAfter(
-                                LocalDateTime.now()
+                                now
                         );
 
         Long expiredStories =
                 storyRepository.countByExpiresAtBeforeAndDeletedFalse(
-                        LocalDateTime.now()
+                        now
                 );
 
         Long restoreRequestsCount =
@@ -241,6 +258,8 @@ public class AdminDashboardServiceImpl
                 // ENGAGEMENT
                 .totalLikes(totalLikes)
                 .totalComments(totalComments)
+                .activeComments(activeComments)
+                .deletedComments(deletedComments)
 
                 // CHATS
                 .totalChats(totalChats)

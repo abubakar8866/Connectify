@@ -35,6 +35,9 @@ public class NotificationServiceImpl
     private NotificationRepository notificationRepository;
 
     @Autowired
+    private NotificationAccessValidator notificationAccessValidator;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -78,8 +81,10 @@ public class NotificationServiceImpl
         }
 
         User receiver = userAccessValidator.getValidUser(receiverId);
+        userAccessValidator.validateActiveUser(receiver);
 
         User sender = userAccessValidator.getValidUser(senderId);
+        userAccessValidator.validateActiveUser(sender);
 
         Notification notification =
                 Notification.builder()
@@ -207,12 +212,8 @@ public class NotificationServiceImpl
         );
 
         Notification notification =
-                notificationRepository.findById(notificationId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Notification not found"
-                                )
-                        );
+                notificationAccessValidator
+                        .getNotification(notificationId);
 
         if (Boolean.TRUE.equals(notification.getIsRead())) {
 
@@ -274,13 +275,12 @@ public class NotificationServiceImpl
                 currentUser.getId()
         );
 
-        List<Notification> unreadNotifications =
-                notificationRepository
-                        .findByReceiverAndIsReadFalse(
-                                currentUser
-                        );
+        int updatedCount =
+                notificationRepository.markAllAsRead(
+                        currentUser
+                );
 
-        if (unreadNotifications.isEmpty()) {
+        if (updatedCount == 0) {
 
             logger.info(
                     "No unread notifications found | userId: {}",
@@ -292,26 +292,12 @@ public class NotificationServiceImpl
 
         logger.info(
                 """
-                Updating unread notifications
+                All notifications marked as read
                 | userId: {}
-                | unreadCount: {}
+                | updatedCount: {}
                 """,
                 currentUser.getId(),
-                unreadNotifications.size()
-        );
-
-        unreadNotifications.forEach(
-                notification ->
-                        notification.setIsRead(true)
-        );
-
-        notificationRepository.saveAll(
-                unreadNotifications
-        );
-
-        logger.info(
-                "All notifications marked as read | count: {}",
-                unreadNotifications.size()
+                updatedCount
         );
     }
 
@@ -354,12 +340,8 @@ public class NotificationServiceImpl
         );
 
         Notification notification =
-                notificationRepository.findById(notificationId)
-                        .orElseThrow(() ->
-                                new ResourceNotFound(
-                                        "Notification not found"
-                                )
-                        );
+                notificationAccessValidator
+                        .getNotification(notificationId);
 
         // OWNERSHIP CHECK
         logger.debug(

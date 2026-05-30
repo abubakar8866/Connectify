@@ -1,5 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.request.UserSearchRequest;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.HashtagResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
@@ -54,21 +55,31 @@ public class SearchServiceImpl implements SearchService {
     // ================= SEARCH USERS =================
     @Override
     public CursorPageResponse<UserSearchResponse> searchUsers(
-
-            String keyword,
-            Boolean verified,
-            Boolean emailVerified,
-            Boolean isPrivate,
-            String city,
-            Gender gender,
-            Long minFollowers,
+            UserSearchRequest request,
             Long cursor,
             int size
     ) {
 
         logger.info(
-                "Search users request | keyword: {} | cursor: {} | size: {}",
-                keyword,
+                """
+                Search users request
+                | keyword: {}
+                | verified: {}
+                | emailVerified: {}
+                | isPrivate: {}
+                | city: {}
+                | gender: {}
+                | minFollowers: {}
+                | cursor: {}
+                | size: {}
+                """,
+                request.getKeyword(),
+                request.getVerified(),
+                request.getEmailVerified(),
+                request.getIsPrivate(),
+                request.getCity(),
+                request.getGender(),
+                request.getMinFollowers(),
                 cursor,
                 size
         );
@@ -90,27 +101,27 @@ public class SearchServiceImpl implements SearchService {
 
                 Specification
                         .where(
-                                UserSpecification.searchByKeyword(keyword)
+                                UserSpecification.searchByKeyword(request.getKeyword())
                         )
                         .and(
-                                UserSpecification.hasVerified(verified)
+                                UserSpecification.hasVerified(request.getVerified())
                         )
                         .and(
                                 UserSpecification.hasEmailVerified(
-                                        emailVerified
+                                        request.getEmailVerified()
                                 )
                         )
                         .and(
-                                UserSpecification.hasPrivateAccount(isPrivate)
+                                UserSpecification.hasPrivateAccount(request.getIsPrivate())
                         )
                         .and(
-                                UserSpecification.hasCity(city)
+                                UserSpecification.hasCity(request.getCity())
                         )
                         .and(
-                                UserSpecification.hasGender(gender)
+                                UserSpecification.hasGender(request.getGender())
                         )
                         .and(
-                                UserSpecification.hasMinFollowers(minFollowers)
+                                UserSpecification.hasMinFollowers(request.getMinFollowers())
                         )
                         .and(
                                 UserSpecification.excludeCurrentUser(

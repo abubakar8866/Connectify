@@ -65,9 +65,10 @@ public class SavedPostServiceImpl implements SavedPostService {
 
         User currentUser = authUtil.getCurrentUser();
 
-        logger.debug(
-                "Authenticated user fetched | userId: {}",
-                currentUser.getId()
+        logger.info(
+                "Toggle save post request | userId: {} | postId: {}",
+                currentUser.getId(),
+                postId
         );
 
         Post post = postAccessValidator.getActivePost(postId);
