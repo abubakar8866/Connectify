@@ -10,7 +10,9 @@ public class EmailNotFound extends BaseException {
     private static final long serialVersionUID = 1L;
 
 	public EmailNotFound(String msg) {
+
         super(msg, HttpStatus.NOT_FOUND, "EMAIL_NOT_FOUND");
+
     }
     
 }

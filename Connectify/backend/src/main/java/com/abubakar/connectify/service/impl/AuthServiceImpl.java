@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -74,6 +75,9 @@ public class AuthServiceImpl implements AuthService {
 
 	@Autowired
 	private UserAccessValidator userAccessValidator;
+
+	@Value("${app.frontend.url}")
+	private String frontendUrl;
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
@@ -526,13 +530,14 @@ public class AuthServiceImpl implements AuthService {
 
 		userRepo.save(user);
 
-		String resetUrl =
-				"http://localhost:3000/reset-password?token="
-						+ token;
+		String resetLink =
+				frontendUrl +
+						"/reset-password?token=" +
+						token;
 
 		sendResetEmail(
 				user.getEmail().trim().toLowerCase(),
-				resetUrl
+				resetLink
 		);
 
 		logger.info(
@@ -727,7 +732,8 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(currentUser);
 
 		String verificationUrl =
-				"http://localhost:3000/verify-email?token="
+				frontendUrl +
+						"/verify-email?token="
 						+ token;
 
 		try {

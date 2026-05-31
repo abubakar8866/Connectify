@@ -6,8 +6,10 @@ import com.abubakar.connectify.dto.response.PostCountResponse;
 import com.abubakar.connectify.dto.response.PostResponse;
 import com.abubakar.connectify.service.PostService;
 
+import com.abubakar.connectify.util.JsonRequestParser;
 import com.abubakar.connectify.util.PaginationConstants;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,42 +29,95 @@ public class PostController {
     @Autowired
     private PostService postService;
 
+    @Autowired
+    private JsonRequestParser jsonRequestParser;
+
     private static final Logger logger =
             LoggerFactory.getLogger(PostController.class);
 
    // CREATE POST
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<PostResponse> createPost(
-            @Valid @RequestPart("data") CreatePostRequest request,
-            @RequestPart(value = "files",required = false)
-            List<MultipartFile> files
-    ) {
+   @PostMapping(
+           consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+   )
+   public ResponseEntity<PostResponse>
+   createPost(
 
-        logger.info(
-                "Create post API initiated"
-        );
+           @RequestPart("data")
+           String dataJson,
 
-        PostResponse response =
-                postService.createPost(request, files);
+           @RequestPart(
+                   value = "files",
+                   required = false
+           )
+           List<MultipartFile> files
+   ) {
 
-        return ResponseEntity.ok(response);
-    }
+       logger.info(
+               """
+               Create post API initiated
+               | mediaCount: {}
+               """,
+               files == null ? 0 : files.size()
+       );
+
+       CreatePostRequest request =
+               jsonRequestParser.parseAndValidate(
+                       dataJson,
+                       CreatePostRequest.class
+               );
+
+       PostResponse response =
+               postService.createPost(
+                       request,
+                       files
+               );
+
+       return ResponseEntity.ok(
+               response
+       );
+   }
 
     // UPDATE POST
-    @PutMapping(value = "/{postId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(
+            value = "/{postId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<PostResponse> updatePost(
+
             @PathVariable Long postId,
-            @Valid @RequestPart("data") CreatePostRequest request,
-            @RequestPart(value = "files",required = false)
+
+            @RequestPart("data")
+            String dataJson,
+
+            @RequestPart(
+                    value = "files",
+                    required = false
+            )
             List<MultipartFile> files
     ) {
 
         logger.info(
-                "Update post API called | postId: {}",
-                postId
+                """
+                Update post API called
+                | postId: {}
+                | mediaCount: {}
+                """,
+                postId,
+                files == null ? 0 : files.size()
         );
 
-        PostResponse response =postService.updatePost(postId,request,files);
+        CreatePostRequest request =
+                jsonRequestParser.parseAndValidate(
+                        dataJson,
+                        CreatePostRequest.class
+                );
+
+        PostResponse response =
+                postService.updatePost(
+                        postId,
+                        request,
+                        files
+                );
 
         return ResponseEntity.ok(response);
     }
@@ -174,7 +229,8 @@ public class PostController {
 
     // DELETE POST
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable Long postId) {
+    public ResponseEntity<String> deletePost(
+            @PathVariable Long postId) {
 
         logger.info(
                 "Soft delete post API called | postId: {}",

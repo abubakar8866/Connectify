@@ -105,7 +105,7 @@ public class JwtFilter extends OncePerRequestFilter {
                                 "message":"Invalid JWT token",
                                 "success":false,
                                 "status":401,
-                                "errorCode":"INVALID_JWT",
+                                "errorCode":"ACCESS_TOKEN_EXPIRED",
                                 "timestamp":%d
                             }
                             """.formatted(

@@ -3,6 +3,7 @@ package com.abubakar.connectify.controller;
 import java.util.Map;
 
 import com.abubakar.connectify.dto.request.*;
+import com.abubakar.connectify.util.JsonRequestParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private JsonRequestParser jsonRequestParser;
 
     private static final Logger logger =
             LoggerFactory.getLogger(AuthController.class);
@@ -124,15 +128,30 @@ public class AuthController {
             value = "/update-profile/{userId}",
             consumes = "multipart/form-data"
     )
-    public ResponseEntity<UserResponse> updateProfile(@PathVariable Long userId,@Valid @RequestPart("data") UpdateProfileRequest request,
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
+    public ResponseEntity<UserResponse> updateProfile(
+            @PathVariable Long userId,
+            @Valid @RequestPart("data") String data,
+            @RequestPart(value = "file", required = false)
+            MultipartFile file
+    ){
 
         logger.info("Profile Api initiated for userId: {}",userId);
 
-        UserResponse response =authService.updateProfile(userId,request,file);
+        UpdateProfileRequest request =
+                jsonRequestParser.parseAndValidate(
+                        data,
+                        UpdateProfileRequest.class
+                );
+
+        UserResponse response =
+                authService.updateProfile(
+                        userId,
+                        request,
+                        file
+                );
 
         return ResponseEntity.ok(response);
+
     }
 
     // ================= FORGOT PASSWORD =================

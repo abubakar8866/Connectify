@@ -7,6 +7,7 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.MessageResponse;
 import com.abubakar.connectify.service.ChatService;
 
+import com.abubakar.connectify.util.JsonRequestParser;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -23,6 +24,9 @@ public class ChatController {
 
     @Autowired
     private ChatService chatService;
+
+    @Autowired
+    private JsonRequestParser jsonRequestParser;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
@@ -90,9 +94,8 @@ public class ChatController {
 
             @PathVariable Long chatId,
 
-            @Valid
             @RequestPart("request")
-            SendMessageRequest request,
+            String requestJson,
 
             @RequestPart(
                     value = "media",
@@ -102,9 +105,20 @@ public class ChatController {
     ) {
 
         logger.info(
-                "Send message API request received | chatId: {}",
-                chatId
+                """
+                Send message API request received
+                | chatId: {}
+                | mediaPresent: {}
+                """,
+                chatId,
+                media != null
         );
+
+        SendMessageRequest request =
+                jsonRequestParser.parseAndValidate(
+                        requestJson,
+                        SendMessageRequest.class
+                );
 
         MessageResponse response =
                 chatService.sendMessage(
@@ -114,7 +128,7 @@ public class ChatController {
                 );
 
         return ResponseEntity.ok(
-                        response
+                response
         );
     }
 
