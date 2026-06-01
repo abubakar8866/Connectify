@@ -1,11 +1,8 @@
 package com.abubakar.connectify.service;
 
-import com.abubakar.connectify.dto.request.UpdateProfileRequest;
+import com.abubakar.connectify.dto.request.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.abubakar.connectify.dto.request.LoginRequest;
-import com.abubakar.connectify.dto.request.RegisterRequest;
-import com.abubakar.connectify.dto.request.ResetPasswordRequest;
 import com.abubakar.connectify.dto.response.AuthResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 
@@ -39,7 +36,7 @@ public interface AuthService {
 
     // ================= PASSWORD =================
 
-    void forgotPassword(String email);
+    void forgotPassword(ForgotPasswordRequest request);
 
     void resetPassword(
             String token,

@@ -18,3 +18,4 @@ public class CommentMappingData {
     private Set<Long> likedCommentIds;
 
 }
+

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -37,34 +38,23 @@ public class RefreshTokenServiceImpl
     private Long refreshTokenExpiration;
 
     @Override
-    public RefreshToken createRefreshToken(
-            User user
-    ) {
+    @Transactional
+    public RefreshToken createRefreshToken(User user) {
 
-        refreshTokenRepo.deleteByUser(user);
-
-        RefreshToken refreshToken =
-                new RefreshToken();
+        RefreshToken refreshToken = refreshTokenRepo
+                .findByUser(user)
+                .orElse(new RefreshToken());
 
         refreshToken.setUser(user);
-
-        refreshToken.setToken(
-                generateRefreshToken()
-        );
-
+        refreshToken.setToken(generateRefreshToken());
         refreshToken.setExpiryDate(
-                LocalDateTime.now()
-                        .plusSeconds(
-                                refreshTokenExpiration
-                        )
+                LocalDateTime.now().plusSeconds(refreshTokenExpiration)
         );
 
-        refreshToken = refreshTokenRepo.save(
-                refreshToken
-        );
+        refreshToken = refreshTokenRepo.save(refreshToken);
 
         logger.info(
-                "Refresh token created | userId: {}",
+                "Refresh token created/updated | userId: {}",
                 user.getId()
         );
 

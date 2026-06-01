@@ -14,3 +14,4 @@ public class ForgotPasswordRequest {
     private String email;
 
 }
+

@@ -19,3 +19,4 @@ public class FileUploadResponse implements Serializable {
     private List<String> failedFiles;
 
 }
+

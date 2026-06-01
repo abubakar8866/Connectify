@@ -165,7 +165,7 @@ public class AuthController {
                 request.getEmail()
         );
 
-        authService.forgotPassword(request.getEmail());
+        authService.forgotPassword(request);
 
         return ResponseEntity.ok(
                 Map.of(

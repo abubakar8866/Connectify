@@ -24,3 +24,4 @@ public class ApiErrorResponse implements Serializable {
     private long timestamp;
 
 }
+

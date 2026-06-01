@@ -1,10 +1,11 @@
 package com.abubakar.connectify.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.abubakar.connectify.dto.request.UpdateProfileRequest;
+import com.abubakar.connectify.dto.request.*;
 import com.abubakar.connectify.entity.RefreshToken;
 import com.abubakar.connectify.service.RefreshTokenService;
 import com.abubakar.connectify.util.AuthUtil;
@@ -26,9 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.abubakar.connectify.dto.request.LoginRequest;
-import com.abubakar.connectify.dto.request.RegisterRequest;
-import com.abubakar.connectify.dto.request.ResetPasswordRequest;
 import com.abubakar.connectify.dto.response.AuthResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import com.abubakar.connectify.entity.User;
@@ -168,6 +166,7 @@ public class AuthServiceImpl implements AuthService {
 
 	// ================= LOGIN =================
 	@Override
+	@Transactional
 	public AuthResponse login(LoginRequest request) {
 
 		logger.debug(
@@ -489,11 +488,13 @@ public class AuthServiceImpl implements AuthService {
 	// ================= FORGOT PASSWORD =================
 	@Override
 	@Transactional
-	public void forgotPassword(String email) {
+	public void forgotPassword(ForgotPasswordRequest request) {
 
 		logger.debug(
 				"Starting forgot password flow"
 		);
+
+		String email = request.getEmail();
 
 		User user =
 				userRepo.findByEmail(
@@ -509,7 +510,7 @@ public class AuthServiceImpl implements AuthService {
 					"Forgot password requested for non-existing email"
 			);
 
-			return;
+			throw new OperationFailException("Email is not registered.");
 		}
 
 		userAccessValidator.validateActiveUser(user);
@@ -558,7 +559,16 @@ public class AuthServiceImpl implements AuthService {
 				"Starting password reset"
 		);
 
-		User user = userRepo.findByResetToken(token)
+		if (token == null || token.trim().isEmpty()) {
+			logger.warn(
+					"Password reset failed - invalid token"
+			);
+			throw new OperationFailException("Invalid reset token");
+		}
+
+		String cleanToken = token.trim();
+
+		User user = userRepo.findByResetToken(cleanToken)
 				.orElseThrow(() -> {
 						logger.warn(
 								"Password reset failed - invalid token"
@@ -584,6 +594,17 @@ public class AuthServiceImpl implements AuthService {
 			);
 		}
 
+		if (!cleanToken.equals(user.getResetToken())) {
+
+			logger.warn(
+					"Password reset failed - token expired | userId: {}",
+					user.getId()
+			);
+
+			throw new OperationFailException("Invalid reset token");
+
+		}
+
 		User validateUser = userAccessValidator.getValidUser(user.getId());
 
 		validateUser.setPassword(
@@ -597,8 +618,8 @@ public class AuthServiceImpl implements AuthService {
 		userRepo.save(validateUser);
 
 		logger.info(
-				"Password reset successful | userId: {}",
-				validateUser.getId()
+				"Password reset successful | userId: {} | token: {}",
+				validateUser.getId(),cleanToken
 		);
 	}
 
@@ -976,10 +997,40 @@ public class AuthServiceImpl implements AuthService {
 	// ================= ENTITY TO RESPONSE =================
 	private UserResponse mapToResponse(User user) {
 
-		UserResponse response =
-				modelMapper.map(user, UserResponse.class);
+		UserResponse response = new UserResponse();
 
+		response.setId(user.getId());
+		response.setName(user.getName());
+		response.setUname(user.getUname());
+		response.setEmail(user.getEmail());
+
+		response.setBio(user.getBio());
+		response.setProfileImageUrl(user.getProfileImageUrl());
+
+		response.setRole(user.getRole());
+		response.setGender(user.getGender());
+
+		// IMPORTANT FIX (avoid Hibernate lazy issue)
+		response.setLanguages(
+				user.getLanguages() != null
+						? new ArrayList<>(user.getLanguages())
+						: new ArrayList<>()
+		);
+
+		response.setDateOfBirth(user.getDateOfBirth());
 		response.setAge(user.getAge());
+
+		response.setCity(user.getCity());
+
+		response.setAccountStatus(user.getAccountStatus());
+		response.setProvider(user.getProvider());
+
+		response.setIsActive(user.getIsActive());
+		response.setIsEmailVerified(user.getIsEmailVerified());
+
+		response.setCreatedAt(user.getCreatedAt());
+		response.setUpdatedAt(user.getUpdatedAt());
+		response.setLastLoginAt(user.getLastLoginAt());
 
 		return response;
 
