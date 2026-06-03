@@ -21,17 +21,14 @@ public interface PostRepository extends JpaRepository<Post, Long>,
 
     @EntityGraph(attributePaths = {
             "user",
-            "mediaList",
-            "hashtags"
+            "mediaList"
     })
     Optional<Post> findWithDetailsById(Long id);
 
     // ================= PERSONALIZED FEED =================
 
     @EntityGraph(attributePaths = {
-            "user",
-            "mediaList",
-            "hashtags"
+            "user"
     })
     List<Post>
     findByUserInAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
@@ -41,9 +38,7 @@ public interface PostRepository extends JpaRepository<Post, Long>,
     );
 
     @EntityGraph(attributePaths = {
-            "user",
-            "mediaList",
-            "hashtags"
+            "user"
     })
     List<Post>
     findByUserInAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(
@@ -56,9 +51,7 @@ public interface PostRepository extends JpaRepository<Post, Long>,
     // ================= USER POSTS =================
 
     @EntityGraph(attributePaths = {
-            "user",
-            "mediaList",
-            "hashtags"
+            "user"
     })
     List<Post>
     findByUserAndDeletedFalseAndUserDeletedFalseAndUserAccountStatusNotOrderByIdDesc(
@@ -68,9 +61,7 @@ public interface PostRepository extends JpaRepository<Post, Long>,
     );
 
     @EntityGraph(attributePaths = {
-            "user",
-            "mediaList",
-            "hashtags"
+            "user"
     })
     List<Post>
     findByUserAndDeletedFalseAndUserDeletedFalseAndIdLessThanAndUserAccountStatusNotOrderByIdDesc(

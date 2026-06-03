@@ -34,10 +34,16 @@ public class Comment extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Builder.Default
+    @Column(nullable = false)
     private Long likeCount = 0L;
 
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean deleted = false;
 
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean restoreRequested = false;
 
     // COMMENT OWNER
@@ -77,6 +83,22 @@ public class Comment extends BaseEntity {
             fetch = FetchType.LAZY
     )
     private List<Like> likes = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+
+        if (likeCount == null) {
+            likeCount = 0L;
+        }
+
+        if (deleted == null) {
+            deleted = false;
+        }
+
+        if (restoreRequested == null) {
+            restoreRequested = false;
+        }
+    }
 
 }
 

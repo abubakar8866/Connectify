@@ -8,6 +8,7 @@ import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.repository.CommentRepository;
+import com.abubakar.connectify.repository.NotificationRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminCommentService;
 import com.abubakar.connectify.service.NotificationService;
@@ -42,6 +43,9 @@ public class AdminCommentServiceImpl
 
     @Autowired
     private CommentAccessValidator commentAccessValidator;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private NotificationService notificationService;
@@ -155,6 +159,16 @@ public class AdminCommentServiceImpl
                         commentId
                 );
 
+        if (comment.getDeleted()) {
+
+            logger.warn("Comment is already moderated.");
+
+            throw new OperationFailException(
+                    "Comment is already moderated"
+            );
+
+        }
+
         comment.setDeleted(true);
 
         // RESET RESTORE REQUEST
@@ -162,7 +176,7 @@ public class AdminCommentServiceImpl
 
         commentRepository.save(comment);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
 
                 comment.getUser().getId(),
 
@@ -170,11 +184,7 @@ public class AdminCommentServiceImpl
 
                 "Your comment was removed by admin.",
 
-                NotificationType.COMMENT,
-
-                comment.getPost().getId(),
-
-                comment.getId()
+                NotificationType.COMMENT
         );
 
         logger.info(
@@ -233,7 +243,7 @@ public class AdminCommentServiceImpl
 
         commentRepository.save(comment);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
 
                 comment.getUser().getId(),
 
@@ -241,11 +251,7 @@ public class AdminCommentServiceImpl
 
                 "Your comment has been restored by admin.",
 
-                NotificationType.COMMENT,
-
-                comment.getPost().getId(),
-
-                comment.getId()
+                NotificationType.COMMENT
         );
 
         logger.info(
@@ -290,7 +296,7 @@ public class AdminCommentServiceImpl
 
         commentRepository.save(comment);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
 
                 comment.getUser().getId(),
 
@@ -298,11 +304,7 @@ public class AdminCommentServiceImpl
 
                 "Your comment restore request was rejected.",
 
-                NotificationType.COMMENT,
-
-                comment.getPost().getId(),
-
-                comment.getId()
+                NotificationType.COMMENT
         );
 
         logger.info(
@@ -335,19 +337,11 @@ public class AdminCommentServiceImpl
 
         Comment comment = commentAccessValidator.getComment(commentId);
 
-        notificationService.createNotification(
-
+        notificationService.createSystemNotification(
                 comment.getUser().getId(),
-
                 admin.getId(),
-
                 "Your comment was permanently removed by admin.",
-
-                NotificationType.COMMENT,
-
-                null,
-
-                null
+                NotificationType.COMMENT
         );
 
         logger.debug(
@@ -355,6 +349,12 @@ public class AdminCommentServiceImpl
                 comment.getUser().getId(),
                 comment.getId()
         );
+
+        // remove all notifications referencing comment
+        notificationRepository.deleteByComment_Id(commentId);
+
+        // flush delete immediately
+        notificationRepository.flush();
 
         commentRepository.delete(comment);
 

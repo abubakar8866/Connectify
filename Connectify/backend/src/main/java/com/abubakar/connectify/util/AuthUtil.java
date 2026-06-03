@@ -2,7 +2,6 @@ package com.abubakar.connectify.util;
 
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.exception.UserNotAuthenticatedException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +23,36 @@ public class AuthUtil {
             );
 
     public User getCurrentUser() {
+
+        User user =
+                getAuthenticatedValidUser();
+
+        userAccessValidator.validateActiveUser(
+                user
+        );
+
+        logger.debug(
+                "Authenticated active user fetched successfully | userId: {}",
+                user.getId()
+        );
+
+        return user;
+    }
+
+    public User getCurrentUserAllowDeactivated() {
+
+        User user =
+                getAuthenticatedValidUser();
+
+        logger.debug(
+                "Authenticated user fetched successfully (deactivated allowed) | userId: {}",
+                user.getId()
+        );
+
+        return user;
+    }
+
+    private User getAuthenticatedValidUser() {
 
         Authentication authentication =
                 SecurityContextHolder
@@ -50,7 +79,8 @@ public class AuthUtil {
             );
         }
 
-        Object principal = authentication.getPrincipal();
+        Object principal =
+                authentication.getPrincipal();
 
         if (!(principal instanceof User user)) {
 
@@ -63,21 +93,9 @@ public class AuthUtil {
             );
         }
 
-        User validUser =
-                this.userAccessValidator.getValidUser(
-                        user.getId()
-                );
-
-        this.userAccessValidator.validateActiveUser(
-                validUser
+        return userAccessValidator.getValidUser(
+                user.getId()
         );
-
-        logger.debug(
-                "Authenticated user fetched successfully | userId: {}",
-                validUser.getId()
-        );
-
-        return validUser;
     }
 
 }

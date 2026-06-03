@@ -6,6 +6,7 @@ import { saveAuth } from "../../utils/authStorage";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { showSuccess, showError } from "../../utils/toast";
+import { scheduleAutoRefresh } from "../../utils/tokenRefreshScheduler";
 import {
   faEnvelope,
   faLock,
@@ -117,6 +118,8 @@ export default function Login() {
         accessToken: res.accessToken,
         refreshToken: res.refreshToken,
       });
+
+     scheduleAutoRefresh(res.accessToken, res.refreshToken);
 
      showSuccess("Login successful");
 

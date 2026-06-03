@@ -298,6 +298,7 @@ public class AuthServiceImpl implements AuthService {
 
 	// ================= GET CURRENT USER =================
 	@Override
+	@Transactional(readOnly = true)
 	public UserResponse getCurrentUser() {
 
 		logger.debug(
@@ -698,17 +699,9 @@ public class AuthServiceImpl implements AuthService {
 				admin.getId()
 		);
 
-		String accessToken =
-				jwtUtil.generateToken(admin);
-
-		String refreshToken =
-				refreshTokenService
-						.createRefreshToken(admin)
-						.getToken();
-
 		return new AuthResponse(
-				accessToken,
-				refreshToken,
+				null,
+				null,
 				"Bearer",
 				mapToResponse(admin)
 		);
@@ -754,7 +747,7 @@ public class AuthServiceImpl implements AuthService {
 
 		String verificationUrl =
 				frontendUrl +
-						"/verify-email?token="
+						"/email/verify?token="
 						+ token;
 
 		try {
@@ -877,60 +870,75 @@ public class AuthServiceImpl implements AuthService {
 	// ================= REQUEST ACCOUNT RESTORE =================
 	@Override
 	@Transactional
-	public void requestAccountRestore() {
+	public void requestAccountRestore(
+			Long userId
+	) {
 
-		User currentUser = this.authUtil.getCurrentUser();
+		User user =
+				userAccessValidator.getValidUser(
+						userId
+				);
 
 		logger.debug(
 				"Starting account restore request | userId: {}",
-				currentUser.getId()
+				user.getId()
 		);
 
-		if (!Boolean.TRUE.equals(currentUser.getDeleted())) {
+		if (!Boolean.TRUE.equals(user.getDeleted())) {
 
 			logger.warn(
-					"Restore request failed - account not deactivated | userId: {}",
-					currentUser.getId()
+					"Restore request failed - account not deleted | userId: {}",
+					user.getId()
 			);
 
 			throw new OperationFailException(
-					"Account is not deactivated"
+					"Account is not deleted"
 			);
 		}
 
-		currentUser.setRestoreRequested(true);
+		if (Boolean.TRUE.equals(user.getRestoreRequested())) {
 
-		userRepo.save(currentUser);
+			throw new OperationFailException(
+					"Restore request already submitted"
+			);
+		}
+
+		user.setRestoreRequested(true);
+
+		userRepo.save(user);
 
 		logger.info(
 				"Restore request submitted successfully | userId: {}",
-				currentUser.getId()
+				user.getId()
 		);
-
 	}
 
 	// ================= REQUEST UNBAN APPEAL =================
 	@Override
 	@Transactional
 	public void requestUnbanAppeal(
+			Long userId,
 			String message
 	) {
 
-		User currentUser = this.authUtil.getCurrentUser();
+		User user =
+				userAccessValidator.getValidUser(
+						userId
+				);
 
 		logger.debug(
 				"Starting unban appeal request | userId: {}",
-				currentUser.getId()
+				user.getId()
 		);
 
 		if (
-				currentUser.getAccountStatus()
+				user.getAccountStatus()
 						!= AccountStatus.BANNED
 		) {
 
 			logger.warn(
 					"Unban appeal failed - user not banned | userId: {}",
-					currentUser.getId()
+					user.getId()
 			);
 
 			throw new OperationFailException(
@@ -938,17 +946,25 @@ public class AuthServiceImpl implements AuthService {
 			);
 		}
 
-		currentUser.setUnbanRequested(true);
+		if (Boolean.TRUE.equals(user.getUnbanRequested())) {
 
-		currentUser.setUnbanAppealMessage(message);
+			throw new OperationFailException(
+					"Unban appeal already submitted"
+			);
+		}
 
-		userRepo.save(currentUser);
+		user.setUnbanRequested(true);
+
+		user.setUnbanAppealMessage(
+				message
+		);
+
+		userRepo.save(user);
 
 		logger.info(
 				"Unban appeal submitted successfully | userId: {}",
-				currentUser.getId()
+				user.getId()
 		);
-
 	}
 
 	// ================= SEND RESET EMAIL =================

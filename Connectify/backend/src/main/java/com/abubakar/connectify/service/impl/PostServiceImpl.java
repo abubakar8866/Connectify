@@ -82,7 +82,7 @@ public class PostServiceImpl implements PostService {
             post.setCommentCount(0L);
 
             // HASHTAGS
-            List<Hashtag> extractedTags =
+            Set<Hashtag> extractedTags =
                     processHashtags(request.getCaption());
 
             post.setHashtags(extractedTags);
@@ -186,7 +186,7 @@ public class PostServiceImpl implements PostService {
             );
 
             // REMOVE OLD HASHTAG COUNTS
-            List<Hashtag> oldTags =
+            Set<Hashtag> oldTags =
                     post.getHashtags();
 
             for (Hashtag hashtag : oldTags) {
@@ -204,7 +204,7 @@ public class PostServiceImpl implements PostService {
             }
 
             // NEW HASHTAGS
-            List<Hashtag> extractedTags =
+            Set<Hashtag> extractedTags =
                     processHashtags(
                             request.getCaption()
                     );
@@ -626,7 +626,7 @@ public class PostServiceImpl implements PostService {
                 postId
         );
 
-        Post post = postAccessValidator.getPost(postId);
+        Post post = postAccessValidator.getActivePost(postId);
 
         User currentUser =
                 authUtil.getCurrentUser();
@@ -763,6 +763,10 @@ public class PostServiceImpl implements PostService {
                                 .equals(post.getUser().getId())
                 )
 
+                .deleted(post.getDeleted())
+
+                .restoreRequested(post.getRestoreRequested())
+
                 .createdAt(post.getCreatedAt())
 
                 .updatedAt(post.getUpdatedAt())
@@ -786,14 +790,14 @@ public class PostServiceImpl implements PostService {
                 .build();
     }
 
-    private List<Hashtag> processHashtags(String caption) {
+    private Set<Hashtag> processHashtags(String caption) {
 
         logger.debug("Processing hashtags from caption");
 
         Set<String> extractedTags =
                 HashtagUtil.extractHashtags(caption);
 
-        List<Hashtag> hashtags = new ArrayList<>();
+        Set<Hashtag> hashtags = new HashSet<>();
 
         for (String tagName : extractedTags) {
 

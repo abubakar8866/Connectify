@@ -98,7 +98,7 @@ public class CommentServiceImpl implements CommentService {
                 );
             }
 
-            if (parentComment.getDeleted()) {
+            if (Boolean.TRUE.equals(parentComment.getDeleted())) {
 
                 logger.warn(
                         "Reply attempt on deleted comment | parentCommentId: {}",

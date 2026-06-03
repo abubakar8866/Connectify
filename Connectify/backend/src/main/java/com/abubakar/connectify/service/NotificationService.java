@@ -15,6 +15,13 @@ public interface NotificationService {
             Long commentId
     );
 
+    void createSystemNotification(
+            Long receiverId,
+            Long senderId,
+            String message,
+            NotificationType type
+    );
+
     CursorPageResponse<NotificationResponse>
     getMyNotifications(
             Long cursor,

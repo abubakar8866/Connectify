@@ -13,6 +13,7 @@ import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.repository.UserRepository;
 import com.abubakar.connectify.service.AdminUserService;
+import com.abubakar.connectify.service.FileService;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.RefreshTokenService;
 import com.abubakar.connectify.specification.UserSpecification;
@@ -46,6 +47,9 @@ public class AdminUserServiceImpl
 
     @Autowired
     private ReportRepository reportRepository;
+
+    @Autowired
+    private FileService fileService;
 
     @Autowired
     private NotificationService notificationService;
@@ -218,6 +222,9 @@ public class AdminUserServiceImpl
                 .isActive(user.getIsActive())
                 .isPrivate(user.getIsPrivate())
                 .isVerified(user.getIsVerified())
+                .isDeleted(user.getDeleted())
+                .restoreRequested(user.getRestoreRequested())
+                .unbanRequested(user.getUnbanRequested())
 
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
@@ -249,6 +256,31 @@ public class AdminUserServiceImpl
 
         User user = userAccessValidator.getValidUser(userId);
 
+        if (Boolean.TRUE.equals(user.getDeleted())) {
+
+            logger.warn(
+                    "User Ban failed - user is not deleted | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "Deleted account cannot be banned"
+            );
+
+        }
+
+        if (user.getAccountStatus() == AccountStatus.BANNED) {
+
+            logger.warn(
+                    "User ban failed - user is already banned | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User is already banned"
+            );
+        }
+
         validateSelfAction(admin, user, "ban");
 
         // VALIDATION
@@ -267,7 +299,6 @@ public class AdminUserServiceImpl
                     "Ban duration is required for temporary ban"
             );
         }
-
 
         user.setAccountStatus(
                 AccountStatus.BANNED
@@ -303,13 +334,11 @@ public class AdminUserServiceImpl
 
         refreshTokenService.deleteByUser(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
-                "Your account has been banned by admin.",
-                NotificationType.ACCOUNT_BANNED,
-                null,
-                null
+                "Your account has been Banned by admin.",
+                NotificationType.ACCOUNT_BANNED
         );
 
         logger.info(
@@ -336,7 +365,31 @@ public class AdminUserServiceImpl
 
         User user = userAccessValidator.getValidUser(userId);
 
-        if (!Boolean.TRUE.equals(user.getRestoreRequested())) {
+        if (!Boolean.TRUE.equals(user.getDeleted())) {
+
+            logger.warn(
+                    "Restore failed - user is not deleted | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User account is not deleted"
+            );
+        }
+
+        if (user.getAccountStatus() != AccountStatus.DEACTIVATED) {
+
+            logger.warn(
+                    "Restore failed - user is not deactivated | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User account is not deactivated"
+            );
+        }
+
+        if (Boolean.FALSE.equals(user.getRestoreRequested())) {
 
             logger.warn("Restore request not found");
 
@@ -361,13 +414,11 @@ public class AdminUserServiceImpl
         user.setRestoredAt(LocalDateTime.now());
         userRepository.save(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
                 "Your account has been restored.",
-                NotificationType.ACCOUNT_RESTORED,
-                null,
-                null
+                NotificationType.ACCOUNT_RESTORED
         );
 
         logger.info(
@@ -385,6 +436,7 @@ public class AdminUserServiceImpl
 
         User admin =
                 authUtil.getCurrentUser();
+        System.out.println(admin.getName());
 
         adminValidator.validateAdmin(admin);
 
@@ -396,25 +448,41 @@ public class AdminUserServiceImpl
 
         User user = userAccessValidator.getValidUser(userId);
 
-        validateSelfAction(admin, user, "reject unban request");
+        validateSelfAction(admin, user, "reject restore request");
 
-        validateSelfAction(
-                admin,
-                user,
-                "reject restore request"
-        );
+        if (!Boolean.TRUE.equals(user.getRestoreRequested())) {
+
+            logger.warn(
+                    "Reject restore failed - request not found | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "Restore request not found"
+            );
+        }
+
+        if (!Boolean.TRUE.equals(user.getDeleted())) {
+
+            logger.warn(
+                    "Reject restore failed - account not deleted | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User account is not deleted"
+            );
+        }
 
         user.setRestoreRequested(false);
 
         userRepository.save(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
                 "Your account restore request has been rejected.",
-                NotificationType.RESTORE_REQUEST_REJECTED,
-                null,
-                null
+                NotificationType.RESTORE_REQUEST_REJECTED
         );
 
         logger.info(
@@ -438,6 +506,18 @@ public class AdminUserServiceImpl
         );
 
         User user = userAccessValidator.getValidUser(userId);
+
+        if (user.getAccountStatus() != AccountStatus.BANNED) {
+
+            logger.warn(
+                    "Approve unban request failed - user is not banned | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User is not banned"
+            );
+        }
 
         if (!Boolean.TRUE.equals(user.getUnbanRequested())) {
 
@@ -468,13 +548,11 @@ public class AdminUserServiceImpl
 
         userRepository.save(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
-                "Your unban request has been approved.",
-                NotificationType.UNBAN_APPROVED,
-                null,
-                null
+                "Your unban request is approved by admin and User is unban.",
+                NotificationType.UNBAN_APPROVED
         );
 
         logger.info(
@@ -499,6 +577,36 @@ public class AdminUserServiceImpl
 
         User user = userAccessValidator.getValidUser(userId);
 
+        validateSelfAction(
+                admin,
+                user,
+                "reject unban request"
+        );
+
+        if (user.getAccountStatus() != AccountStatus.BANNED) {
+
+            logger.warn(
+                    "Reject unban request failed - user is not banned | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User is not banned"
+            );
+        }
+
+        if (!Boolean.TRUE.equals(user.getUnbanRequested())) {
+
+            logger.warn(
+                    "Reject unban request failed - request not found | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "Unban request not found"
+            );
+        }
+
         user.setAdminNote(
                 "Your unban request was rejected by admin."
         );
@@ -510,13 +618,11 @@ public class AdminUserServiceImpl
 
         userRepository.save(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
-                "Your unban request has been rejected.",
-                NotificationType.UNBAN_REJECTED,
-                null,
-                null
+                "Your account unban request has been rejected.",
+                NotificationType.UNBAN_REJECTED
         );
 
         logger.info(
@@ -531,6 +637,7 @@ public class AdminUserServiceImpl
 
         User admin =
                 authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.debug(
@@ -539,26 +646,48 @@ public class AdminUserServiceImpl
                 userId
         );
 
-        User user = userAccessValidator.getValidUser(userId);
+        User user =
+                userAccessValidator.getValidUser(userId);
 
-        validateSelfAction(admin, user, "delete");
+        if (Boolean.TRUE.equals(user.getDeleted())) {
+
+            logger.warn(
+                    "Delete failed - user already deleted | targetUserId: {}",
+                    userId
+            );
+
+            throw new OperationFailException(
+                    "User is already deleted"
+            );
+        }
+
+        validateSelfAction(
+                admin,
+                user,
+                "delete"
+        );
 
         user.setDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
+
+        user.setDeletedAt(
+                LocalDateTime.now()
+        );
+
         user.setIsActive(false);
-        user.setAccountStatus(AccountStatus.DEACTIVATED);
+
+        user.setAccountStatus(
+                AccountStatus.DELETED
+        );
 
         userRepository.save(user);
 
         refreshTokenService.deleteByUser(user);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 user.getId(),
                 admin.getId(),
                 "Your account has been deleted by admin.",
-                NotificationType.ACCOUNT_DELETED,
-                null,
-                null
+                NotificationType.ACCOUNT_DELETED
         );
 
         logger.info(
@@ -566,7 +695,6 @@ public class AdminUserServiceImpl
                 admin.getId(),
                 userId
         );
-
     }
 
     // ================= PRIVATE =================

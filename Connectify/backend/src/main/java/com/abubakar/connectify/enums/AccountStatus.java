@@ -8,7 +8,8 @@ public enum AccountStatus {
     DEACTIVATED,
     PUBLIC,
     PRIVATE,
-    VERIFIED
+    VERIFIED,
+    DELETED
 
 }
 

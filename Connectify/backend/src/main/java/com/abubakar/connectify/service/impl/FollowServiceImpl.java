@@ -119,9 +119,10 @@ public class FollowServiceImpl implements FollowService {
             );
 
             return FollowResponse.builder()
+                    .targetUserId(targetUser.getId())
                     .following(false)
-                    .followersCount(targetUser.getFollowersCount())
-                    .followingCount(currentUser.getFollowingCount())
+                    .targetFollowersCount(targetUser.getFollowersCount())
+                    .currentUserFollowingCount(currentUser.getFollowingCount())
                     .build();
         }
 
@@ -181,9 +182,10 @@ public class FollowServiceImpl implements FollowService {
         );
 
         return FollowResponse.builder()
+                .targetUserId(targetUser.getId())
                 .following(true)
-                .followersCount(targetUser.getFollowersCount())
-                .followingCount(currentUser.getFollowingCount())
+                .targetFollowersCount(targetUser.getFollowersCount())
+                .currentUserFollowingCount(currentUser.getFollowingCount())
                 .build();
     }
 
@@ -466,7 +468,7 @@ public class FollowServiceImpl implements FollowService {
                 .isVerified(
                         user.getIsVerified()
                 )
-                .following(
+                .followedByCurrentUser(
                         followingIds.contains(
                                 user.getId()
                         )

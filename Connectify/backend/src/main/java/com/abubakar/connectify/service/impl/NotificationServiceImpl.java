@@ -125,6 +125,47 @@ public class NotificationServiceImpl
 
     }
 
+    @Override
+    public void createSystemNotification(
+            Long receiverId,
+            Long senderId,
+            String message,
+            NotificationType type
+    ) {
+
+        logger.info(
+                "Creating system notification | receiverId: {} | senderId: {}",
+                receiverId,
+                senderId
+        );
+
+        if (receiverId.equals(senderId)) {
+            return;
+        }
+
+        User receiver =
+                userAccessValidator.getValidUser(receiverId);
+
+        User sender =
+                userAccessValidator.getValidUser(senderId);
+
+        Notification notification =
+                Notification.builder()
+                        .receiver(receiver)
+                        .sender(sender)
+                        .message(message)
+                        .type(type)
+                        .isRead(false)
+                        .build();
+
+        notificationRepository.save(notification);
+
+        logger.info(
+                "System notification created successfully | receiverId: {}",
+                receiverId
+        );
+    }
+
     // ================= GET MY NOTIFICATIONS =================
     @Override
     @Transactional(readOnly = true)

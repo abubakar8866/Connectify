@@ -7,11 +7,13 @@ import lombok.Data;
 @Builder
 public class FollowResponse {
 
+    private Long targetUserId;
+
     private Boolean following;
 
-    private Long followersCount;
+    private Long targetFollowersCount;
 
-    private Long followingCount;
+    private Long currentUserFollowingCount;
 
 }
 

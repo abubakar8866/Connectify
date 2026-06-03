@@ -14,10 +14,10 @@ public class BanUserRequest {
             message = "Reason must be between 5 and 500 characters")
     private String reason;
 
-    @Min(value = 1,
-            message = "Ban duration must be at least 1 day")
-    @Max(value = 3650,
-            message = "Ban duration cannot exceed 3650 days")
+    @Min(value = 0,
+            message = "Ban duration must be at least 0 day")
+    @Max(value = 1,
+            message = "Ban duration cannot exceed 1 days")
     private Integer durationInDays;
 
     @Size(max = 1000,

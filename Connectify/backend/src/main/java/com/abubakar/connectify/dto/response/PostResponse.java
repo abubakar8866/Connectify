@@ -32,6 +32,10 @@ public class PostResponse {
 
     private Boolean mine;
 
+    private Boolean deleted;
+
+    private Boolean restoreRequested;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime savedAt;

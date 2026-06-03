@@ -10,10 +10,13 @@ import { useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import Profile from "./pages/user/Profile";
 
 import AuthInitializer from "./components/AuthInitializer";
 
@@ -23,47 +26,10 @@ import PublicLayout from "./components/layout/PublicLayout";
 
 import { useAppSelector } from "./hooks/reduxHooks";
 
-function AuthWatcher() {
-
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const isAuthenticated = useAppSelector(
-    (state) => state.auth.isAuthenticated
-  );
-
-  const publicRoutes = [
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password"
-  ];
-
-  useEffect(() => {
-
-    if (
-      !isAuthenticated &&
-      !publicRoutes.includes(location.pathname)
-    ) {
-      navigate("/login", {
-        replace: true,
-      });
-    }
-
-  }, [
-    isAuthenticated,
-    location.pathname,
-    navigate,
-  ]);
-
-  return null;
-}
-
 function App() {
   return (
     <>
       <AuthInitializer />
-      <AuthWatcher />
 
       <ToastContainer
           position="top-right"
@@ -87,14 +53,21 @@ function App() {
 
         </Route>
 
-        {/* PRIVATE LAYOUT (TopNavbar + Sidebar) */}
-        <Route element={<MainLayout />}>
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
 
-          <Route
-            path="/"
-            element={<h1 className="text-white">Home Page</h1>}
-          />
+            <Route
+              path="/"
+              element={<h1 className="text-white">Home Page</h1>}
+            />
 
+            {/* PROFILE */}
+            <Route
+              path="/profile"
+              element={<Profile />}
+            />
+
+          </Route>
         </Route>
 
       </Routes>

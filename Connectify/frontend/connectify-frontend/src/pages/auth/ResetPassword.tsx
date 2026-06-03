@@ -93,32 +93,30 @@ export default function ResetPassword() {
         </div>
 
         {/* PASSWORD */}
-                <div className="mb-4 relative">
+        <div className="mb-4 relative">
+            <FontAwesomeIcon
+                icon={faLock}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
-                  <FontAwesomeIcon
-                    icon={faLock}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
+            {/* CONFIRM PASSWORD */}
+            <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                className="w-full pl-10 pr-12 p-3 rounded bg-gray-700 text-white"
+            />
 
-                  {/* CONFIRM PASSWORD */}
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={loading}
-                    className="w-full pl-10 pr-12 p-3 rounded bg-gray-700 text-white"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  >
-                    <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
-                  </button>
-
-                </div>
+            <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+            >
+                <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+            </button>
+        </div>
 
         <div className="flex gap-3">
 

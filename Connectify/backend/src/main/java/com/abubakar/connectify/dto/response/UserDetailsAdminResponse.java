@@ -28,6 +28,12 @@ public class UserDetailsAdminResponse {
 
     private Boolean isVerified;
 
+    private Boolean isDeleted;
+
+    private Boolean restoreRequested;
+
+    private Boolean unbanRequested;
+
     private Long followersCount;
 
     private Long followingCount;

@@ -15,7 +15,7 @@ public class UserPreviewResponse {
 
     private Boolean isVerified;
 
-    private Boolean following;
+    private Boolean followedByCurrentUser;
 
 }
 

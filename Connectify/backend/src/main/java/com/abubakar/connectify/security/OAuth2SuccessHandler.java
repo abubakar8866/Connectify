@@ -2,6 +2,8 @@ package com.abubakar.connectify.security;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.abubakar.connectify.dto.response.AuthResponse;
@@ -49,6 +51,9 @@ public class OAuth2SuccessHandler
 
 	@Autowired
 	private ModelMapper modelMapper;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	private static final Logger logger = LoggerFactory.getLogger(OAuth2SuccessHandler.class);
 
@@ -305,22 +310,11 @@ public class OAuth2SuccessHandler
 
 		// ================= RESPONSE =================
 
-		UserResponse userResponse =
-				modelMapper.map(
-						user,
-						UserResponse.class
-				);
-
-		userResponse.setAge(
-				user.getAge()
-		);
-
 		AuthResponse authResponse =
-				new AuthResponse(
+				buildAuthResponse(
+						user,
 						accessToken,
-						refreshToken,
-						"Bearer",
-						userResponse
+						refreshToken
 				);
 
 		response.setContentType(
@@ -331,11 +325,56 @@ public class OAuth2SuccessHandler
 				"UTF-8"
 		);
 
-		new ObjectMapper()
-				.writeValue(
-						response.getWriter(),
-						authResponse
-				);
+		objectMapper.writeValue(
+				response.getWriter(),
+				authResponse
+		);
+	}
+
+	private AuthResponse buildAuthResponse(
+			User user,
+			String accessToken,
+			String refreshToken
+	) {
+
+		UserResponse userResponse = new UserResponse();
+
+		userResponse.setId(user.getId());
+		userResponse.setName(user.getName());
+		userResponse.setUname(user.getUname());
+		userResponse.setEmail(user.getEmail());
+		userResponse.setBio(user.getBio());
+		userResponse.setProfileImageUrl(user.getProfileImageUrl());
+
+		userResponse.setRole(user.getRole());
+		userResponse.setGender(user.getGender());
+
+		userResponse.setLanguages(
+				user.getLanguages() == null
+						? List.of()
+						: new ArrayList<>(user.getLanguages())
+		);
+
+		userResponse.setDateOfBirth(user.getDateOfBirth());
+		userResponse.setAge(user.getAge());
+		userResponse.setCity(user.getCity());
+
+		userResponse.setAccountStatus(user.getAccountStatus());
+		userResponse.setProvider(user.getProvider());
+
+		userResponse.setIsActive(user.getIsActive());
+		userResponse.setIsEmailVerified(user.getIsEmailVerified());
+
+		userResponse.setCreatedAt(user.getCreatedAt());
+		userResponse.setUpdatedAt(user.getUpdatedAt());
+		userResponse.setLastLoginAt(user.getLastLoginAt());
+
+		return new AuthResponse(
+				accessToken,
+				refreshToken,
+				"Bearer",
+				userResponse
+		);
 	}
 
 }

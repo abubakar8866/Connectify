@@ -55,10 +55,11 @@ public interface AuthService {
     void deactivateMyAccount();
 
     // User requests restore after self deactivation
-    void requestAccountRestore();
+    void requestAccountRestore(Long userId);
 
     // User appeals admin ban
     void requestUnbanAppeal(
+            Long userId,
             String message
     );
 

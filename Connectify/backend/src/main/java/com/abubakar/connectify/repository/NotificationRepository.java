@@ -1,6 +1,7 @@
 package com.abubakar.connectify.repository;
 
 import com.abubakar.connectify.entity.Notification;
+import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
 
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -59,6 +61,12 @@ public interface NotificationRepository
     int markAllAsRead(
             @Param("receiver") User receiver
     );
+
+    @Modifying
+    void deleteByPost(Post post);
+
+    @Transactional
+    void deleteByComment_Id(Long commentId);
 
 }
 

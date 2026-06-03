@@ -233,7 +233,7 @@ public class AuthController {
     }
 
     // ================= VERIFY EMAIL =================
-    @GetMapping("/email/verify")
+    @PostMapping("/email/verify")
     public ResponseEntity<String> verifyEmail(
             @RequestParam String token
     ) {
@@ -269,14 +269,19 @@ public class AuthController {
     }
 
     // ================= REQUEST ACCOUNT RESTORE =================
-    @PostMapping("/restore-request")
-    public ResponseEntity<?> requestAccountRestore() {
+    @PostMapping("/restore-request/{userId}")
+    public ResponseEntity<?> requestAccountRestore(
+            @PathVariable Long userId
+    ) {
 
         logger.info(
-                "Account restore api initiated"
+                "Account restore api initiated | userId: {}",
+                userId
         );
 
-        authService.requestAccountRestore();
+        authService.requestAccountRestore(
+                userId
+        );
 
         return ResponseEntity.ok(
                 Map.of(
@@ -284,21 +289,24 @@ public class AuthController {
                         "Restore request submitted successfully"
                 )
         );
-
     }
 
     // ================= REQUEST UNBAN APPEAL =================
-    @PostMapping("/unban-request")
+    @PostMapping("/unban-request/{userId}")
     public ResponseEntity<?> requestUnbanAppeal(
-            @RequestBody Map<String, String> request
+            @PathVariable Long userId,
+            @Valid @RequestBody
+            UnbanAppealRequest request
     ) {
 
         logger.info(
-                "Unban appeal api initiated"
+                "Unban appeal api initiated | userId: {}",
+                userId
         );
 
         authService.requestUnbanAppeal(
-                request.get("message")
+                userId,
+                request.getMessage()
         );
 
         return ResponseEntity.ok(
@@ -307,7 +315,6 @@ public class AuthController {
                         "Unban appeal submitted successfully"
                 )
         );
-
     }
 
 }

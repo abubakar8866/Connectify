@@ -11,6 +11,7 @@ import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.exception.ResourceNotFound;
 import com.abubakar.connectify.repository.HashtagRepository;
+import com.abubakar.connectify.repository.NotificationRepository;
 import com.abubakar.connectify.repository.PostRepository;
 import com.abubakar.connectify.repository.ReportRepository;
 import com.abubakar.connectify.service.AdminPostService;
@@ -45,6 +46,9 @@ public class AdminPostServiceImpl
 
     @Autowired
     private HashtagRepository hashtagRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private FileService fileService;
@@ -280,6 +284,16 @@ public class AdminPostServiceImpl
 
         }
 
+        if (!post.getRestoreRequested()) {
+
+            logger.warn("No restore request found when calling restore post.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+
+        }
+
         post.setDeleted(false);
 
         post.setRestoreRequested(false);
@@ -370,11 +384,13 @@ public class AdminPostServiceImpl
     }
 
     @Override
+    @Transactional
     public void permanentlyDeletePost(
             Long postId
     ) {
 
         User admin = authUtil.getCurrentUser();
+
         adminValidator.validateAdmin(admin);
 
         logger.info(
@@ -385,31 +401,47 @@ public class AdminPostServiceImpl
 
         Post post = postAccessValidator.getPost(postId);
 
-        // DELETE MEDIA FILES FROM STORAGE
-        for (Media media : post.getMediaList()) {
+        // STORE FILE NAMES BEFORE DELETE
+        List<String> mediaFiles =
+                post.getMediaList()
+                        .stream()
+                        .map(Media::getUrl)
+                        .toList();
+
+        // REMOVE NOTIFICATIONS REFERENCING THIS POST
+        notificationRepository.deleteByPost(post);
+
+        // HARD DELETE FROM DATABASE
+        postRepository.delete(post);
+
+        // EXECUTE DELETE NOW (FK ISSUES SURFACE HERE)
+        postRepository.flush();
+
+        logger.debug(
+                "Post deleted from database | postId: {}",
+                postId
+        );
+
+        // DELETE FILES ONLY AFTER DB DELETE SUCCESS
+        for (String fileName : mediaFiles) {
 
             fileService.deleteFile(
-                    media.getUrl(),
+                    fileName,
                     "posts"
             );
         }
 
         logger.debug(
-                "Deleting {} media files from storage | postId: {}",
-                post.getMediaList().size(),
+                "Deleted {} media files from storage | postId: {}",
+                mediaFiles.size(),
                 postId
         );
 
-        // HARD DELETE FROM DATABASE
-        postRepository.delete(post);
-
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 post.getUser().getId(),
-                this.authUtil.getCurrentUser().getId(),
-                "Your post was permanently removed due to policy violation",
-                NotificationType.POST_REMOVED,
-                post.getId(),
-                null
+                admin.getId(),
+                "Your post was permanently removed due to policy violation.",
+                NotificationType.POST_REMOVED
         );
 
         logger.info(
