@@ -2,13 +2,8 @@ package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.EditMessageRequest;
 import com.abubakar.connectify.dto.request.SendMessageRequest;
-import com.abubakar.connectify.dto.response.ChatResponse;
-import com.abubakar.connectify.dto.response.CursorPageResponse;
-import com.abubakar.connectify.dto.response.MessageResponse;
-import com.abubakar.connectify.entity.Chat;
-import com.abubakar.connectify.entity.ChatParticipant;
-import com.abubakar.connectify.entity.Message;
-import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.dto.response.*;
+import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.MessageType;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.enums.Role;
@@ -33,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -133,9 +130,6 @@ public class ChatServiceImpl implements ChatService {
         }
 
         Chat chat = Chat.builder()
-                .lastMessage(null)
-                .lastMessageAt(null)
-                .isActive(true)
                 .build();
 
         Chat savedChat =
@@ -145,23 +139,24 @@ public class ChatServiceImpl implements ChatService {
                 ChatParticipant.builder()
                         .chat(savedChat)
                         .user(currentUser)
-                        .unreadCount(0L)
-                        .isArchived(false)
-                        .isMuted(false)
                         .build();
 
         ChatParticipant otherParticipant =
                 ChatParticipant.builder()
                         .chat(savedChat)
                         .user(otherUser)
-                        .unreadCount(0L)
-                        .isArchived(false)
-                        .isMuted(false)
                         .build();
 
         chatParticipantRepository.save(currentParticipant);
 
         chatParticipantRepository.save(otherParticipant);
+
+        // IMPORTANT: KEEP BOTH PARTICIPANTS IN MEMORY
+        savedChat.getParticipants()
+                .add(currentParticipant);
+
+        savedChat.getParticipants()
+                .add(otherParticipant);
 
         logger.info(
                 "Private chat created successfully | chatId: {} | participantOneId: {} | participantTwoId: {}",
@@ -181,7 +176,7 @@ public class ChatServiceImpl implements ChatService {
     public MessageResponse sendMessage(
             Long chatId,
             SendMessageRequest request,
-            MultipartFile mediaFile
+            List<MultipartFile> mediaFiles
     ) {
 
         logger.info(
@@ -199,64 +194,22 @@ public class ChatServiceImpl implements ChatService {
                 request.getMessageType()
         );
 
-        Chat chat = chatAccessValidator.getActiveChat(chatId);
+        Chat chat =
+                chatAccessValidator.getActiveChat(chatId);
 
         validateChatParticipant(
                 chat,
                 currentUser
         );
 
-        String content = request.getContent();
-
-        String mediaUrl = null;
+        String content =
+                request.getContent();
 
         MessageType messageType =
                 request.getMessageType();
 
-        // MEDIA MESSAGE
-        if (
-                messageType == MessageType.IMAGE
-                        ||
-                        messageType == MessageType.VIDEO
-        ) {
+        // ================= VALIDATION =================
 
-            if (mediaFile == null || mediaFile.isEmpty()) {
-
-                logger.warn(
-                        "Media file is required"
-                );
-
-                throw new OperationFailException(
-                        "Media file is required"
-                );
-            }
-
-            mediaUrl =
-                    fileService.uploadFile(
-                            mediaFile,
-                            currentUser.getId(),
-                            null,
-                            "messages"
-                    );
-
-            // VALIDATE MEDIA UPLOAD
-            if (mediaUrl == null || mediaUrl.isBlank()) {
-
-                logger.error(
-                        "Media upload failed | chatId: {} | senderId: {} | messageType: {}",
-                        chatId,
-                        currentUser.getId(),
-                        messageType
-                );
-
-                throw new OperationFailException(
-                        "Media upload failed"
-                );
-            }
-
-        }
-
-        // TEXT MESSAGE
         if (
                 messageType == MessageType.TEXT
                         &&
@@ -272,14 +225,33 @@ public class ChatServiceImpl implements ChatService {
             );
         }
 
+        if (
+                (messageType == MessageType.IMAGE
+                        || messageType == MessageType.VIDEO)
+                        &&
+                        (mediaFiles == null || mediaFiles.isEmpty())
+        ) {
+
+            logger.warn(
+                    "Media files are required"
+            );
+
+            throw new OperationFailException(
+                    "Media files are required"
+            );
+        }
+
+        // ================= REPLY MESSAGE =================
+
         Message replyMessage = null;
 
         if (request.getReplyToMessageId() != null) {
 
-            replyMessage = messageAccessValidator
-                    .getActiveMessage(request.getReplyToMessageId());
+            replyMessage =
+                    messageAccessValidator.getActiveMessage(
+                            request.getReplyToMessageId()
+                    );
 
-            // SECURITY CHECK
             if (
                     !replyMessage.getChat()
                             .getId()
@@ -295,10 +267,11 @@ public class ChatServiceImpl implements ChatService {
                 );
             }
 
-            // DELETED MESSAGE CHECK
-            if (Boolean.TRUE.equals(
-                    replyMessage.getDeletedForEveryone()
-            )) {
+            if (
+                    Boolean.TRUE.equals(
+                            replyMessage.getDeletedForEveryone()
+                    )
+            ) {
 
                 logger.error(
                         "Cannot reply to deleted message"
@@ -310,23 +283,74 @@ public class ChatServiceImpl implements ChatService {
             }
         }
 
+        // ================= CREATE MESSAGE =================
+
         Message message =
                 Message.builder()
                         .chat(chat)
                         .sender(currentUser)
                         .content(content)
-                        .mediaUrl(mediaUrl)
                         .messageType(messageType)
                         .replyToMessage(replyMessage)
-                        .isSeen(false)
-                        .isEdited(false)
-                        .deletedForEveryone(false)
                         .build();
+
+        // ================= MEDIA UPLOAD =================
+
+        if (
+                mediaFiles != null
+                        &&
+                        !mediaFiles.isEmpty()
+        ) {
+
+            FileUploadResponse uploadResponse =
+                    fileService.uploadMultipleFiles(
+                            mediaFiles,
+                            currentUser.getId(),
+                            null,
+                            "messages"
+                    );
+
+            List<String> uploadedFiles =
+                    uploadResponse.getUploadedFiles();
+
+            if (
+                    uploadedFiles == null
+                            ||
+                            uploadedFiles.isEmpty()
+            ) {
+
+                logger.error(
+                        "Media upload failed | chatId: {}",
+                        chatId
+                );
+
+                throw new OperationFailException(
+                        "Media upload failed"
+                );
+            }
+
+            int orderIndex = 0;
+
+            for (String mediaUrl : uploadedFiles) {
+
+                MessageMedia media =
+                        MessageMedia.builder()
+                                .message(message)
+                                .mediaUrl(mediaUrl)
+                                .mediaType(messageType)
+                                .orderIndex(orderIndex++)
+                                .build();
+
+                message.getMediaFiles()
+                        .add(media);
+            }
+        }
 
         Message savedMessage =
                 messageRepository.save(message);
 
-        // UPDATE CHAT
+        // ================= UPDATE CHAT =================
+
         chat.setLastMessage(
                 buildLastMessage(
                         messageType,
@@ -338,7 +362,6 @@ public class ChatServiceImpl implements ChatService {
                 LocalDateTime.now()
         );
 
-        // INCREMENT TOTAL MESSAGE COUNT
         chat.setTotalMessages(
                 chat.getTotalMessages() == null
                         ? 1L
@@ -347,21 +370,21 @@ public class ChatServiceImpl implements ChatService {
 
         chatRepository.save(chat);
 
-        // UPDATE PARTICIPANTS
+        // ================= UPDATE PARTICIPANTS =================
+
         List<ChatParticipant> participants =
                 chatParticipantRepository.findByChat(chat);
 
         for (ChatParticipant participant : participants) {
 
-            // RESTORE CHAT IF USER HAD DELETED IT
-            if (Boolean.TRUE.equals(participant.getDeleted())) {
+            if (Boolean.TRUE.equals(
+                    participant.getDeleted()
+            )) {
 
                 participant.setDeleted(false);
-
                 participant.setDeletedAt(null);
             }
 
-            // INCREMENT UNREAD COUNT FOR RECEIVER
             if (
                     !participant.getUser()
                             .getId()
@@ -373,8 +396,8 @@ public class ChatServiceImpl implements ChatService {
                 );
 
                 notificationService.createNotification(
-                        participant.getUser().getId(), // receiver
-                        currentUser.getId(),           // sender
+                        participant.getUser().getId(),
+                        currentUser.getId(),
                         buildNotificationMessage(
                                 currentUser.getUname(),
                                 messageType
@@ -384,10 +407,11 @@ public class ChatServiceImpl implements ChatService {
                         null
                 );
             }
-
         }
 
-        chatParticipantRepository.saveAll(participants);
+        chatParticipantRepository.saveAll(
+                participants
+        );
 
         logger.info(
                 "Message sent successfully | messageId: {} | chatId: {} | senderId: {} | messageType: {}",
@@ -845,8 +869,6 @@ public class ChatServiceImpl implements ChatService {
                 "This message was deleted"
         );
 
-        message.setMediaUrl(null);
-
         // CLEAR CHILD REPLIES
         for (Message reply : message.getReplies()) {
 
@@ -1230,6 +1252,11 @@ public class ChatServiceImpl implements ChatService {
             User currentUser
     ) {
 
+        logger.info(
+                "Participants loaded: {}",
+                chat.getParticipants().size()
+        );
+
         ChatParticipant currentParticipant =
                 chat.getParticipants()
                         .stream()
@@ -1300,6 +1327,74 @@ public class ChatServiceImpl implements ChatService {
                         currentUser.getId()
                 );
 
+        MessageResponse.MessageResponseBuilder builder =
+                MessageResponse.builder()
+
+                        .id(message.getId())
+
+                        .messageType(
+                                message.getMessageType()
+                        )
+
+                        .senderId(
+                                message.getSender().getId()
+                        )
+
+                        .senderUsername(
+                                message.getSender().getUname()
+                        )
+
+                        .senderProfileImage(
+                                message.getSender()
+                                        .getProfileImageUrl()
+                        )
+
+                        .isSeen(
+                                message.getIsSeen()
+                        )
+
+                        .seenAt(
+                                message.getSeenAt()
+                        )
+
+                        .isDeletedForMe(
+                                deletedForMe
+                        )
+
+                        .deletedForEveryone(
+                                message.getDeletedForEveryone()
+                        )
+
+                        .createdAt(
+                                message.getCreatedAt()
+                        );
+
+        // MESSAGE DELETED FOR EVERYONE
+        if (
+                Boolean.TRUE.equals(
+                        message.getDeletedForEveryone()
+                )
+        ) {
+
+            return builder
+                    .content(
+                            "This message was deleted"
+                    )
+                    .mediaFiles(
+                            Collections.emptyList()
+                    )
+                    .isEdited(false)
+                    .editedAt(null)
+                    .replyMessageId(null)
+                    .replyMessageContent(null)
+                    .replySenderUsername(null)
+                    .replyMessageType(null)
+                    .replyMediaFiles(
+                            Collections.emptyList()
+                    )
+                    .build();
+        }
+
         Message replyMessage =
                 message.getReplyToMessage();
 
@@ -1307,48 +1402,33 @@ public class ChatServiceImpl implements ChatService {
 
         if (replyMessage != null) {
 
-            if (replyMessage.getDeletedForEveryone()) {
-
-                replyContent = "This message was deleted";
-
-            } else {
-
-                replyContent =
-                        replyMessage.getContent();
-            }
+            replyContent =
+                    Boolean.TRUE.equals(
+                            replyMessage.getDeletedForEveryone()
+                    )
+                            ? "This message was deleted"
+                            : replyMessage.getContent();
         }
 
-        return MessageResponse.builder()
-                .id(message.getId())
-                .content(message.getContent())
-                .mediaUrl(message.getMediaUrl())
-                .messageType(message.getMessageType())
+        return builder
 
-                .senderId(message.getSender().getId())
-
-                .senderUsername(
-                        message.getSender().getUname()
+                .content(
+                        message.getContent()
                 )
 
-                .senderProfileImage(
-                        message.getSender().getProfileImageUrl()
+                .mediaFiles(
+                        mapMediaFiles(
+                                message.getMediaFiles()
+                        )
                 )
 
-                .isSeen(message.getIsSeen())
-
-                .seenAt(message.getSeenAt())
-
-                .isEdited(message.getIsEdited())
-
-                .editedAt(message.getEditedAt())
-
-                .isDeletedForMe(deletedForMe)
-
-                .deletedForEveryone(
-                        message.getDeletedForEveryone()
+                .isEdited(
+                        message.getIsEdited()
                 )
 
-                // REPLY DATA
+                .editedAt(
+                        message.getEditedAt()
+                )
 
                 .replyMessageId(
                         replyMessage != null
@@ -1356,7 +1436,9 @@ public class ChatServiceImpl implements ChatService {
                                 : null
                 )
 
-                .replyMessageContent(replyContent)
+                .replyMessageContent(
+                        replyContent
+                )
 
                 .replySenderUsername(
                         replyMessage != null
@@ -1372,13 +1454,13 @@ public class ChatServiceImpl implements ChatService {
                                 : null
                 )
 
-                .replyMediaUrl(
+                .replyMediaFiles(
                         replyMessage != null
-                                ? replyMessage.getMediaUrl()
-                                : null
+                                ? mapMediaFiles(
+                                replyMessage.getMediaFiles()
+                        )
+                                : Collections.emptyList()
                 )
-
-                .createdAt(message.getCreatedAt())
 
                 .build();
     }
@@ -1401,6 +1483,42 @@ public class ChatServiceImpl implements ChatService {
                     "You are not part of this chat"
             );
         }
+    }
+
+    private List<MessageMediaResponse> mapMediaFiles(
+            List<MessageMedia> mediaFiles
+    ) {
+
+        if (
+                mediaFiles == null
+                        ||
+                        mediaFiles.isEmpty()
+        ) {
+
+            return Collections.emptyList();
+        }
+
+        return mediaFiles.stream()
+                .sorted(
+                        Comparator.comparing(
+                                MessageMedia::getOrderIndex
+                        )
+                )
+                .map(media ->
+                        MessageMediaResponse.builder()
+                                .id(media.getId())
+                                .mediaUrl(
+                                        media.getMediaUrl()
+                                )
+                                .mediaType(
+                                        media.getMediaType()
+                                )
+                                .orderIndex(
+                                        media.getOrderIndex()
+                                )
+                                .build()
+                )
+                .toList();
     }
 
 }

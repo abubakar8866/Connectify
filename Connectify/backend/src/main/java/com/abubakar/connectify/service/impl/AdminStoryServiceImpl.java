@@ -5,10 +5,12 @@ import com.abubakar.connectify.dto.response.AdminStoryResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Story;
 import com.abubakar.connectify.entity.User;
+import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.repository.StoryRepository;
 import com.abubakar.connectify.service.AdminStoryService;
 import com.abubakar.connectify.service.FileService;
+import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.specification.StorySpecification;
 import com.abubakar.connectify.util.*;
 
@@ -47,6 +49,9 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // ================= GET ALL Stories =================
     @Override
@@ -163,6 +168,13 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         storyRepository.save(story);
 
+        notificationService.createSystemNotification(
+                story.getUser().getId(),
+                authUtil.getCurrentUser().getId(),
+                "Your story was removed by admin.",
+                NotificationType.STORY_REMOVED
+        );
+
         logger.info(
                 "Story moderated successfully | storyId: {}",
                 storyId
@@ -218,6 +230,13 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         storyRepository.save(story);
 
+        notificationService.createSystemNotification(
+                story.getUser().getId(),
+                authUtil.getCurrentUser().getId(),
+                "Your story has been restored by admin.",
+                NotificationType.STORY_RESTORED
+        );
+
         logger.info(
                 "Story restore approved successfully | storyId: {}",
                 storyId
@@ -253,10 +272,18 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         storyRepository.save(story);
 
+        notificationService.createSystemNotification(
+                story.getUser().getId(),
+                authUtil.getCurrentUser().getId(),
+                "Your story restore request was rejected.",
+                NotificationType.STORY_RESTORE_REJECTED
+        );
+
         logger.info(
                 "Story restore rejected successfully | storyId: {}",
                 storyId
         );
+
     }
 
     @Override
@@ -287,6 +314,13 @@ public class AdminStoryServiceImpl implements AdminStoryService {
                     "stories"
             );
         }
+
+        notificationService.createSystemNotification(
+                story.getUser().getId(),
+                authUtil.getCurrentUser().getId(),
+                "Your story was permanently deleted by admin.",
+                NotificationType.STORY_REMOVED
+        );
 
         storyRepository.delete(story);
 

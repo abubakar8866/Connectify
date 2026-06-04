@@ -55,27 +55,38 @@ public class Message extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private String mediaUrl;
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "message",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<MessageMedia> mediaFiles =
+            new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private MessageType messageType;
 
     // ================= MESSAGE STATUS =================
 
+    @Builder.Default
     private Boolean isSeen = false;
 
     private LocalDateTime seenAt;
 
+    @Builder.Default
     private Boolean isEdited = false;
 
     private LocalDateTime editedAt;
 
     // ================= USER DELETE =================
 
+    @Builder.Default
     private Boolean deletedForEveryone = false;
 
     // ================= ADMIN MODERATION =================
 
+    @Builder.Default
     private Boolean deletedByAdmin = false;
 
     private LocalDateTime deletedByAdminAt;
@@ -88,6 +99,7 @@ public class Message extends BaseEntity {
 
     // ================= RESTORE REQUEST =================
 
+    @Builder.Default
     private Boolean restoreRequested = false;
 
     private LocalDateTime restoreRequestedAt;
@@ -100,6 +112,7 @@ public class Message extends BaseEntity {
 
     // ================= REPLIES =================
 
+    @Builder.Default
     @OneToMany(mappedBy = "replyToMessage")
     private List<Message> replies =
             new ArrayList<>();
@@ -118,6 +131,7 @@ public class Message extends BaseEntity {
 
     // ================= DELETE FOR ME =================
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "deleted_messages",
@@ -127,6 +141,7 @@ public class Message extends BaseEntity {
     private List<User> deletedForUsers =
             new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(
             mappedBy = "message",
             cascade = CascadeType.ALL,
@@ -134,6 +149,30 @@ public class Message extends BaseEntity {
     )
     private List<Report> reports =
             new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+
+        if (isSeen == null) {
+            isSeen = false;
+        }
+
+        if (isEdited == null) {
+            isEdited = false;
+        }
+
+        if (deletedForEveryone == null) {
+            deletedForEveryone = false;
+        }
+
+        if (deletedByAdmin == null) {
+            deletedByAdmin = false;
+        }
+
+        if (restoreRequested == null) {
+            restoreRequested = false;
+        }
+    }
 
 }
 

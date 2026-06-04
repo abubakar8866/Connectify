@@ -7,6 +7,8 @@ import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.MessageResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface ChatService {
 
     ChatResponse createChat(Long receiverId);
@@ -19,7 +21,7 @@ public interface ChatService {
     MessageResponse sendMessage(
             Long chatId,
             SendMessageRequest request,
-            MultipartFile media
+            List<MultipartFile> mediaFiles
     );
 
     CursorPageResponse<MessageResponse> getMessages(

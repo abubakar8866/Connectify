@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,7 +15,7 @@ public class MessageResponse {
 
     private String content;
 
-    private String mediaUrl;
+    private List<MessageMediaResponse> mediaFiles;
 
     private MessageType messageType;
 
@@ -44,7 +45,7 @@ public class MessageResponse {
 
     private MessageType replyMessageType;
 
-    private String replyMediaUrl;
+    private List<MessageMediaResponse> replyMediaFiles;
 
     private LocalDateTime createdAt;
 

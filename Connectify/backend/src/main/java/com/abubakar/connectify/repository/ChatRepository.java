@@ -2,6 +2,7 @@ package com.abubakar.connectify.repository;
 
 import com.abubakar.connectify.entity.Chat;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -35,6 +36,14 @@ public interface ChatRepository
     Long countByDeletedByAdminFalse();
 
     Long countByDeletedByAdminFalseAndIsActiveTrue();
+
+    @EntityGraph(attributePaths = {
+            "participants",
+            "participants.user"
+    })
+    Optional<Chat> findWithParticipantsById(
+            Long id
+    );
 
 }
 

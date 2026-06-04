@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,7 +21,7 @@ public class AdminMessageResponse {
 
     private String content;
 
-    private String mediaUrl;
+    private List<MessageMediaResponse> mediaFiles;
 
     private MessageType messageType;
 

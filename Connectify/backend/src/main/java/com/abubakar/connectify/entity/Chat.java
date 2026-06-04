@@ -43,19 +43,24 @@ public class Chat extends BaseEntity {
 
     private LocalDateTime lastMessageAt;
 
+    @Builder.Default
     private Boolean isActive = true;
 
+    @Builder.Default
     private Boolean deletedByAdmin = false;
 
     private LocalDateTime deletedByAdminAt;
 
+    @Builder.Default
     private Long totalMessages = 0L;
 
+    @Builder.Default
     private Boolean restoreRequested = false;
 
     private LocalDateTime restoreRequestedAt;
 
     // PARTICIPANTS
+    @Builder.Default
     @OneToMany(
             mappedBy = "chat",
             cascade = CascadeType.ALL,
@@ -65,6 +70,7 @@ public class Chat extends BaseEntity {
             new ArrayList<>();
 
     // MESSAGES
+    @Builder.Default
     @OneToMany(
             mappedBy = "chat",
             cascade = CascadeType.ALL,
@@ -73,6 +79,7 @@ public class Chat extends BaseEntity {
     private List<Message> messages =
             new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(
             mappedBy = "chat",
             cascade = CascadeType.ALL,
@@ -80,6 +87,26 @@ public class Chat extends BaseEntity {
     )
     private List<Report> reports =
             new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+
+        if (isActive == null) {
+            isActive = true;
+        }
+
+        if (deletedByAdmin == null) {
+            deletedByAdmin = false;
+        }
+
+        if (restoreRequested == null) {
+            restoreRequested = false;
+        }
+
+        if (totalMessages == null) {
+            totalMessages = 0L;
+        }
+    }
 
 }
 

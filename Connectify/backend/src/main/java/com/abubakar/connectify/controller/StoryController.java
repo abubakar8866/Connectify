@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/stories")
 public class StoryController {
@@ -35,17 +37,16 @@ public class StoryController {
     @PostMapping
     public ResponseEntity<StoryResponse> createStory(
 
-            @RequestParam("file")
-            MultipartFile file
+            @RequestParam("files")
+            List<MultipartFile> files
     ) {
 
         logger.info(
-                "Create story Api request received | fileName: {}",
-                file.getOriginalFilename()
+                "Create story Api request received"
         );
 
         StoryResponse response =
-                storyService.createStory(file);
+                storyService.createStory(files);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

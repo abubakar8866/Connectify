@@ -86,7 +86,7 @@ public class StoryServiceImpl implements StoryService {
     // ================= CREATE STORY =================
     @Override
     public StoryResponse createStory(
-            MultipartFile file
+            List<MultipartFile> files
     ) {
 
         logger.info("Creating new story");
@@ -98,6 +98,20 @@ public class StoryServiceImpl implements StoryService {
                 "Create story process started | userId: {}",
                 currentUser.getId()
         );
+
+        if (files.size() > 1) {
+
+            logger.warn(
+                    "Story creation failed | Multiple files uploaded | userId: {}",
+                    currentUser.getId()
+            );
+
+            throw new OperationFailException(
+                    "Only one image or video is allowed per story"
+            );
+        }
+
+        MultipartFile file = files.getFirst();
 
         // UPLOAD MAIN MEDIA
         String uploadedFile =

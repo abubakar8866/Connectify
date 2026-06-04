@@ -7,9 +7,11 @@ import com.abubakar.connectify.dto.response.StoryResponse;
 import com.abubakar.connectify.dto.response.UserResponse;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface StoryService {
 
-    StoryResponse createStory( MultipartFile file);
+    StoryResponse createStory( List<MultipartFile> files);
 
     CursorPageResponse<StoryResponse> getActiveStories(
             Long cursor,

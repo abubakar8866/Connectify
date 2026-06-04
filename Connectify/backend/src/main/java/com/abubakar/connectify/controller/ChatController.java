@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/chats")
 public class ChatController {
@@ -101,7 +103,7 @@ public class ChatController {
                     value = "media",
                     required = false
             )
-            MultipartFile media
+            List<MultipartFile> mediaFiles
     ) {
 
         logger.info(
@@ -111,7 +113,7 @@ public class ChatController {
                 | mediaPresent: {}
                 """,
                 chatId,
-                media != null
+                mediaFiles != null
         );
 
         SendMessageRequest request =
@@ -124,7 +126,7 @@ public class ChatController {
                 chatService.sendMessage(
                         chatId,
                         request,
-                        media
+                        mediaFiles
                 );
 
         return ResponseEntity.ok(
@@ -252,6 +254,7 @@ public class ChatController {
         );
     }
 
+    // ================= DELETE CHAT FOR ME =================
     @DeleteMapping("/{chatId}/me")
     public ResponseEntity<String> deleteChatForMe(
             @PathVariable Long chatId
@@ -269,6 +272,7 @@ public class ChatController {
         );
     }
 
+    // ================= RESTORE REQUEST FOR MESSAGE =================
     @PostMapping("/messages/{messageId}/restore-request")
     public ResponseEntity<String> requestRestoreMessage(
             @PathVariable Long messageId
@@ -288,6 +292,7 @@ public class ChatController {
         );
     }
 
+    // ================= RESTORE REQUEST FOR CHAT =================
     @PostMapping("/{chatId}/restore-request")
     public ResponseEntity<String> requestRestoreChat(
             @PathVariable Long chatId

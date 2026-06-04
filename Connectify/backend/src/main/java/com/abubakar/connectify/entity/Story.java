@@ -28,22 +28,29 @@ public class Story extends BaseEntity {
 
     private LocalDateTime expiresAt;
 
+    @Builder.Default
     private Boolean isActive = true;
 
+    @Builder.Default
     private Boolean deleted = false;
 
+    @Builder.Default
     private Boolean deletedByAdmin = false;
 
     private LocalDateTime deletedByAdminAt;
 
+    @Builder.Default
     private Boolean restoreRequested = false;
 
     private LocalDateTime restoreRequestedAt;
 
+    @Builder.Default
     private Long viewCount = 0L;
 
+    @Builder.Default
     private Long reactionCount = 0L;
 
+    @Builder.Default
     private Long replyCount = 0L;
 
     // STORY OWNER
@@ -82,6 +89,38 @@ public class Story extends BaseEntity {
             orphanRemoval = true
     )
     private List<Report> reports = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+
+        if (isActive == null) {
+            isActive = true;
+        }
+
+        if (deleted == null) {
+            deleted = false;
+        }
+
+        if (deletedByAdmin == null) {
+            deletedByAdmin = false;
+        }
+
+        if (restoreRequested == null) {
+            restoreRequested = false;
+        }
+
+        if (viewCount == null) {
+            viewCount = 0L;
+        }
+
+        if (reactionCount == null) {
+            reactionCount = 0L;
+        }
+
+        if (replyCount == null) {
+            replyCount = 0L;
+        }
+    }
 
 }
 

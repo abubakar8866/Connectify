@@ -1,5 +1,7 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.response.MessageMediaResponse;
+import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
 import com.abubakar.connectify.service.AdminChatService;
@@ -11,10 +13,6 @@ import com.abubakar.connectify.dto.request.MessageSearchRequest;
 import com.abubakar.connectify.dto.response.AdminChatResponse;
 import com.abubakar.connectify.dto.response.AdminMessageResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
-import com.abubakar.connectify.entity.Chat;
-import com.abubakar.connectify.entity.ChatParticipant;
-import com.abubakar.connectify.entity.Message;
-import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.repository.ChatRepository;
 import com.abubakar.connectify.repository.MessageRepository;
 import com.abubakar.connectify.util.*;
@@ -28,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -221,6 +221,17 @@ public class AdminChatServiceImpl
         Chat chat =
                 chatAccessValidator.getActiveChat(chatId);
 
+        if (Boolean.TRUE.equals(
+                chat.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Chat already moderated");
+
+            throw new OperationFailException(
+                    "Chat already moderated"
+            );
+        }
+
         chat.setDeletedByAdmin(true);
 
         chat.setDeletedByAdminAt(
@@ -238,19 +249,11 @@ public class AdminChatServiceImpl
         for (ChatParticipant participant
                 : chat.getParticipants()) {
 
-            notificationService.createNotification(
-
+            notificationService.createSystemNotification(
                     participant.getUser().getId(),
-
                     admin.getId(),
-
                     "A chat was removed by admin",
-
-                    NotificationType.CHAT_DELETED_BY_ADMIN,
-
-                    null,
-
-                    null
+                    NotificationType.CHAT_DELETED_BY_ADMIN
             );
         }
 
@@ -274,6 +277,28 @@ public class AdminChatServiceImpl
         Chat chat =
                 chatAccessValidator.getChat(chatId);
 
+        if (!Boolean.TRUE.equals(
+                chat.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Chat is not moderated");
+
+            throw new OperationFailException(
+                    "Chat is not moderated"
+            );
+        }
+
+        if (!Boolean.TRUE.equals(
+                chat.getRestoreRequested()
+        )) {
+
+            logger.warn("No restore request found");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+        }
+
         chat.setDeletedByAdmin(false);
 
         chat.setDeletedByAdminAt(null);
@@ -289,21 +314,19 @@ public class AdminChatServiceImpl
         for (ChatParticipant participant
                 : chat.getParticipants()) {
 
-            notificationService.createNotification(
-
+            notificationService.createSystemNotification(
                     participant.getUser().getId(),
-
                     admin.getId(),
-
                     "Your chat was restored by admin",
-
-                    NotificationType.CHAT,
-
-                    chat.getId(),
-
-                    null
+                    NotificationType.CHAT_RESTORED
             );
         }
+
+        logger.info(
+                "Chat restore request is approved successfully by admin | chatId: {}",
+                chatId
+        );
+
     }
 
     // ================= REJECT RESTORE CHAT =================
@@ -320,11 +343,40 @@ public class AdminChatServiceImpl
         Chat chat =
                 chatAccessValidator.getChat(chatId);
 
+        if (!Boolean.TRUE.equals(
+                chat.getRestoreRequested()
+        )) {
+
+            logger.warn("No restore request found when rejecting chat restore request.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+        }
+
         chat.setRestoreRequested(false);
 
         chat.setRestoreRequestedAt(null);
 
         chatRepository.save(chat);
+
+        for (ChatParticipant participant
+                : chat.getParticipants()) {
+
+            notificationService.createSystemNotification(
+                    participant.getUser().getId(),
+                    admin.getId(),
+                    "Your chat restore request was rejected",
+                    NotificationType.CHAT_RESTORE_REJECTED
+            );
+
+        }
+
+        logger.info(
+                "Chat restore request is rejected successfully by admin | chatId: {}",
+                chatId
+        );
+
     }
 
     // ================= PERMANENTLY DELETE CHAT =================
@@ -340,6 +392,17 @@ public class AdminChatServiceImpl
 
         Chat chat =
                 chatAccessValidator.getChat(chatId);
+
+        if (!Boolean.TRUE.equals(
+                chat.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Only moderated chats can be permanently deleted");
+
+            throw new OperationFailException(
+                    "Only moderated chats can be permanently deleted"
+            );
+        }
 
         chatRepository.delete(chat);
 
@@ -368,12 +431,19 @@ public class AdminChatServiceImpl
         Message message =
                 messageAccessValidator.getActiveMessage(messageId);
 
+        if (Boolean.TRUE.equals(
+                message.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Message already moderated");
+
+            throw new OperationFailException(
+                    "Message already moderated"
+            );
+        }
+
         message.setOriginalContent(
                 message.getContent()
-        );
-
-        message.setOriginalMediaUrl(
-                message.getMediaUrl()
         );
 
         message.setDeletedByAdmin(true);
@@ -387,8 +457,6 @@ public class AdminChatServiceImpl
         message.setContent(
                 "Message removed by admin"
         );
-
-        message.setMediaUrl(null);
 
         message.setRestoreRequested(false);
 
@@ -407,19 +475,11 @@ public class AdminChatServiceImpl
 
         messageRepository.save(message);
 
-        notificationService.createNotification(
-
+        notificationService.createSystemNotification(
                 message.getSender().getId(),
-
                 admin.getId(),
-
                 "One of your messages was removed by admin",
-
-                NotificationType.MESSAGE_DELETED_BY_ADMIN,
-
-                null,
-
-                null
+                NotificationType.MESSAGE_DELETED_BY_ADMIN
         );
 
         logger.info(
@@ -442,6 +502,28 @@ public class AdminChatServiceImpl
         Message message =
                 messageAccessValidator.getMessage(messageId);
 
+        if (!Boolean.TRUE.equals(
+                message.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Message is not moderated");
+
+            throw new OperationFailException(
+                    "Message is not moderated"
+            );
+        }
+
+        if (!Boolean.TRUE.equals(
+                message.getRestoreRequested()
+        )) {
+
+            logger.warn("No restore request found for restoring message.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+        }
+
         message.setDeletedByAdmin(false);
 
         message.setDeletedByAdminAt(null);
@@ -454,30 +536,22 @@ public class AdminChatServiceImpl
                 message.getOriginalContent()
         );
 
-        message.setMediaUrl(
-                message.getOriginalMediaUrl()
-        );
-
         message.setOriginalContent(null);
 
         message.setOriginalMediaUrl(null);
 
         messageRepository.save(message);
 
-        notificationService.createNotification(
-
+        notificationService.createSystemNotification(
                 message.getSender().getId(),
-
                 admin.getId(),
-
                 "Your message was restored by admin",
-
-                NotificationType.MESSAGE,
-
-                null,
-
-                message.getId()
+                NotificationType.MESSAGE_RESTORED
         );
+
+        logger.info("Your Restore message is approved by admin " +
+                "with MessageId: {}",messageId);
+
     }
 
     // ================= REJECT RESTORE MESSAGE =================
@@ -494,26 +568,33 @@ public class AdminChatServiceImpl
         Message message =
                 messageAccessValidator.getMessage(messageId);
 
+        if (!Boolean.TRUE.equals(
+                message.getRestoreRequested()
+        )) {
+
+            logger.warn("No restore request found for rejecting restoring message request.");
+
+            throw new OperationFailException(
+                    "No restore request found"
+            );
+        }
+
         message.setRestoreRequested(false);
 
         message.setRestoreRequestedAt(null);
 
         messageRepository.save(message);
 
-        notificationService.createNotification(
-
+        notificationService.createSystemNotification(
                 message.getSender().getId(),
-
                 admin.getId(),
-
                 "Your message restore request was rejected",
-
-                NotificationType.RESTORE_REQUEST,
-
-                null,
-
-                message.getId()
+                NotificationType.MESSAGE_RESTORE_REJECTED
         );
+
+        logger.info("Your Restore message is rejected by admin " +
+                "with MessageId: {}",messageId);
+
     }
 
     // ================= PERMANENTLY DELETE MESSAGE =================
@@ -529,6 +610,15 @@ public class AdminChatServiceImpl
 
         Message message =
                 messageAccessValidator.getMessage(messageId);
+
+        if (Boolean.FALSE.equals(message.getDeletedByAdmin())) {
+
+            logger.warn("Only moderated messages can be permanently deleted");
+
+            throw new OperationFailException(
+                    "Only moderated messages can be permanently deleted"
+            );
+        }
 
         messageRepository.delete(message);
 
@@ -593,7 +683,11 @@ public class AdminChatServiceImpl
                         message.getSender().getUname()
                 )
                 .content(message.getContent())
-                .mediaUrl(message.getMediaUrl())
+                .mediaFiles(
+                        mapMediaFiles(
+                                message.getMediaFiles()
+                        )
+                )
                 .messageType(message.getMessageType())
                 .isSeen(message.getIsSeen())
                 .isEdited(message.getIsEdited())
@@ -611,6 +705,37 @@ public class AdminChatServiceImpl
                 )
                 .createdAt(message.getCreatedAt())
                 .build();
+    }
+
+    private List<MessageMediaResponse> mapMediaFiles(
+            List<MessageMedia> mediaFiles
+    ) {
+
+        if (
+                mediaFiles == null
+                        || mediaFiles.isEmpty()
+        ) {
+
+            return Collections.emptyList();
+        }
+
+        return mediaFiles.stream()
+                .sorted(
+                        Comparator.comparing(
+                                MessageMedia::getOrderIndex
+                        )
+                )
+                .map(media ->
+                        MessageMediaResponse.builder()
+                                .id(media.getId())
+                                .mediaUrl(media.getMediaUrl())
+                                .mediaType(media.getMediaType())
+                                .orderIndex(
+                                        media.getOrderIndex()
+                                )
+                                .build()
+                )
+                .toList();
     }
 
 }
