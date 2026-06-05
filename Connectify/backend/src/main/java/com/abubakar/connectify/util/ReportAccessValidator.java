@@ -30,7 +30,7 @@ public class ReportAccessValidator {
                 reportId
         );
 
-        return reportRepository.findWithReporterById(reportId)
+        return reportRepository.findWithDetailsById(reportId)
                 .orElseThrow(() -> {
 
                     logger.warn(

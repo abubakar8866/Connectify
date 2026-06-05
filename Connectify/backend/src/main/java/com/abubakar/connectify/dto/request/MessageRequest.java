@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class SendMessageRequest {
+public class MessageRequest {
 
     @Size(
             max = 5000,

@@ -9,10 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface MessageRepository
         extends JpaRepository<Message, Long>,
         JpaSpecificationExecutor<Message> {
+
+    Optional<Message> findTopByChatAndDeletedByAdminFalseOrderByCreatedAtDesc(
+            Chat chat
+    );
 
     // ================= GET MESSAGES =================
 
@@ -25,10 +30,20 @@ public interface MessageRepository
         WHERE m.chat = :chat
         AND m.deletedByAdmin = false
         AND m.chat.deletedByAdmin = false
+    
+        AND EXISTS (
+            SELECT 1
+            FROM ChatParticipant cp
+            WHERE cp.chat = m.chat
+            AND cp.user.id = :userId
+            AND cp.deleted = false
+        )
+    
         AND :userId NOT IN (
             SELECT u.id
             FROM m.deletedForUsers u
         )
+    
         ORDER BY m.id DESC
     """)
     List<Message> findVisibleMessages(
@@ -47,10 +62,20 @@ public interface MessageRepository
         AND m.id < :cursor
         AND m.deletedByAdmin = false
         AND m.chat.deletedByAdmin = false
+    
+        AND EXISTS (
+            SELECT 1
+            FROM ChatParticipant cp
+            WHERE cp.chat = m.chat
+            AND cp.user.id = :userId
+            AND cp.deleted = false
+        )
+    
         AND :userId NOT IN (
             SELECT u.id
             FROM m.deletedForUsers u
         )
+    
         ORDER BY m.id DESC
     """)
     List<Message> findVisibleMessagesWithCursor(

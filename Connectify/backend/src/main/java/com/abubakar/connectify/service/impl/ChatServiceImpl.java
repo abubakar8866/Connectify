@@ -1,7 +1,6 @@
 package com.abubakar.connectify.service.impl;
 
-import com.abubakar.connectify.dto.request.EditMessageRequest;
-import com.abubakar.connectify.dto.request.SendMessageRequest;
+import com.abubakar.connectify.dto.request.MessageRequest;
 import com.abubakar.connectify.dto.response.*;
 import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.MessageType;
@@ -175,7 +174,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public MessageResponse sendMessage(
             Long chatId,
-            SendMessageRequest request,
+            MessageRequest request,
             List<MultipartFile> mediaFiles
     ) {
 
@@ -202,44 +201,10 @@ public class ChatServiceImpl implements ChatService {
                 currentUser
         );
 
-        String content =
-                request.getContent();
-
-        MessageType messageType =
-                request.getMessageType();
-
-        // ================= VALIDATION =================
-
-        if (
-                messageType == MessageType.TEXT
-                        &&
-                        (content == null || content.isBlank())
-        ) {
-
-            logger.warn(
-                    "Text message content required"
-            );
-
-            throw new OperationFailException(
-                    "Text message content required"
-            );
-        }
-
-        if (
-                (messageType == MessageType.IMAGE
-                        || messageType == MessageType.VIDEO)
-                        &&
-                        (mediaFiles == null || mediaFiles.isEmpty())
-        ) {
-
-            logger.warn(
-                    "Media files are required"
-            );
-
-            throw new OperationFailException(
-                    "Media files are required"
-            );
-        }
+        validateSendMessageRequest(
+                request,
+                mediaFiles
+        );
 
         // ================= REPLY MESSAGE =================
 
@@ -289,62 +254,25 @@ public class ChatServiceImpl implements ChatService {
                 Message.builder()
                         .chat(chat)
                         .sender(currentUser)
-                        .content(content)
-                        .messageType(messageType)
+                        .content(
+                                request.getContent() == null
+                                        ? null
+                                        : request.getContent().trim()
+                        )
+                        .messageType(
+                                request.getMessageType()
+                        )
                         .replyToMessage(replyMessage)
                         .build();
 
         // ================= MEDIA UPLOAD =================
 
-        if (
-                mediaFiles != null
-                        &&
-                        !mediaFiles.isEmpty()
-        ) {
-
-            FileUploadResponse uploadResponse =
-                    fileService.uploadMultipleFiles(
-                            mediaFiles,
-                            currentUser.getId(),
-                            null,
-                            "messages"
-                    );
-
-            List<String> uploadedFiles =
-                    uploadResponse.getUploadedFiles();
-
-            if (
-                    uploadedFiles == null
-                            ||
-                            uploadedFiles.isEmpty()
-            ) {
-
-                logger.error(
-                        "Media upload failed | chatId: {}",
-                        chatId
-                );
-
-                throw new OperationFailException(
-                        "Media upload failed"
-                );
-            }
-
-            int orderIndex = 0;
-
-            for (String mediaUrl : uploadedFiles) {
-
-                MessageMedia media =
-                        MessageMedia.builder()
-                                .message(message)
-                                .mediaUrl(mediaUrl)
-                                .mediaType(messageType)
-                                .orderIndex(orderIndex++)
-                                .build();
-
-                message.getMediaFiles()
-                        .add(media);
-            }
-        }
+        uploadMessageMedia(
+                message,
+                mediaFiles,
+                currentUser.getId(),
+                request.getMessageType()
+        );
 
         Message savedMessage =
                 messageRepository.save(message);
@@ -353,8 +281,8 @@ public class ChatServiceImpl implements ChatService {
 
         chat.setLastMessage(
                 buildLastMessage(
-                        messageType,
-                        content
+                        request.getMessageType(),
+                        request.getContent()
                 )
         );
 
@@ -400,7 +328,7 @@ public class ChatServiceImpl implements ChatService {
                         currentUser.getId(),
                         buildNotificationMessage(
                                 currentUser.getUname(),
-                                messageType
+                                request.getMessageType()
                         ),
                         NotificationType.MESSAGE,
                         null,
@@ -418,7 +346,7 @@ public class ChatServiceImpl implements ChatService {
                 savedMessage.getId(),
                 chatId,
                 currentUser.getId(),
-                messageType
+                request.getMessageType()
         );
 
         return mapToMessageResponse(
@@ -666,7 +594,8 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public MessageResponse editMessage(
             Long messageId,
-            EditMessageRequest request
+            MessageRequest request,
+            List<MultipartFile> mediaFiles
     ) {
 
         logger.info(
@@ -683,7 +612,10 @@ public class ChatServiceImpl implements ChatService {
                 currentUser.getId()
         );
 
-        Message message = messageAccessValidator.getActiveMessage(messageId);
+        Message message =
+                messageAccessValidator.getActiveMessage(
+                        messageId
+                );
 
         if (
                 !message.getSender()
@@ -700,20 +632,11 @@ public class ChatServiceImpl implements ChatService {
             );
         }
 
-        if (message.getMessageType() != MessageType.TEXT) {
-
-            logger.error(
-                    "Only text messages can be edited"
-            );
-
-            throw new OperationFailException(
-                    "Only text messages can be edited"
-            );
-        }
-
-        if (Boolean.TRUE.equals(
-                message.getDeletedForEveryone()
-        )) {
+        if (
+                Boolean.TRUE.equals(
+                        message.getDeletedForEveryone()
+                )
+        ) {
 
             logger.error(
                     "Deleted message cannot be edited"
@@ -724,7 +647,31 @@ public class ChatServiceImpl implements ChatService {
             );
         }
 
-        message.setContent(request.getContent());
+        validateEditMessageRequest(
+                message,
+                request
+        );
+
+        // UPDATE BASIC DATA
+        message.setContent(
+                request.getContent() == null
+                        ? null
+                        : request.getContent().trim()
+        );
+
+        if (
+                mediaFiles != null
+                        &&
+                        !mediaFiles.isEmpty()
+        ) {
+
+            replaceMessageMedia(
+                    message,
+                    mediaFiles,
+                    currentUser.getId(),
+                    request.getMessageType()
+            );
+        }
 
         message.setIsEdited(true);
 
@@ -734,6 +681,10 @@ public class ChatServiceImpl implements ChatService {
 
         Message updatedMessage =
                 messageRepository.save(message);
+
+        updateChatLastMessageIfNeeded(
+                updatedMessage
+        );
 
         logger.info(
                 "Message edited successfully | messageId: {} | userId: {}",
@@ -1051,7 +1002,7 @@ public class ChatServiceImpl implements ChatService {
                                 " requested message restoration",
                                 NotificationType.RESTORE_REQUEST,
                                 null,
-                                message.getId()
+                                null
                         )
                 );
 
@@ -1140,7 +1091,7 @@ public class ChatServiceImpl implements ChatService {
                                 currentUser.getUname() +
                                 " requested chat restoration",
                                 NotificationType.RESTORE_REQUEST,
-                                chat.getId(),
+                                null,
                                 null
                         )
                 );
@@ -1153,6 +1104,273 @@ public class ChatServiceImpl implements ChatService {
     }
 
     // ================= PRIVATE METHODS =================
+
+    private void deleteOldMessageMediaFiles(
+            Message message
+    ) {
+
+        if (
+                message.getMediaFiles() == null
+                        ||
+                        message.getMediaFiles().isEmpty()
+        ) {
+            return;
+        }
+
+        for (MessageMedia media : message.getMediaFiles()) {
+
+            try {
+
+                fileService.deleteFile(
+                        media.getMediaUrl(),
+                        "messages"
+                );
+
+            } catch (Exception ex) {
+
+                logger.error(
+                        "Failed to delete media file | file: {}",
+                        media.getMediaUrl(),
+                        ex
+                );
+            }
+        }
+    }
+
+    private void updateChatLastMessageIfNeeded(
+            Message message
+    ) {
+
+        Chat chat =
+                message.getChat();
+
+        Message latestMessage =
+                messageRepository
+                        .findTopByChatAndDeletedByAdminFalseOrderByCreatedAtDesc(
+                                chat
+                        )
+                        .orElse(null);
+
+        if (
+                latestMessage != null
+                        &&
+                        latestMessage.getId()
+                                .equals(message.getId())
+        ) {
+
+            chat.setLastMessage(
+                    buildLastMessage(
+                            message.getMessageType(),
+                            message.getContent()
+                    )
+            );
+
+            chatRepository.save(chat);
+        }
+    }
+
+    private boolean isMediaMessage(
+            MessageType messageType
+    ) {
+
+        return messageType == MessageType.IMAGE
+                || messageType == MessageType.VIDEO;
+    }
+
+    private void validateSendMessageRequest(
+            MessageRequest request,
+            List<MultipartFile> mediaFiles
+    ) {
+
+        MessageType messageType =
+                request.getMessageType();
+
+        if (
+                messageType == MessageType.TEXT
+                        &&
+                        (
+                                request.getContent() == null
+                                        || request.getContent().isBlank()
+                        )
+        ) {
+
+            logger.error(
+                    "Text message content required when sending message without any files."
+            );
+
+            throw new OperationFailException(
+                    "Text message content required"
+            );
+        }
+
+        if (
+                isMediaMessage(messageType)
+                        &&
+                        (
+                                mediaFiles == null
+                                        || mediaFiles.isEmpty()
+                        )
+        ) {
+
+            logger.error(
+                    "Media files are required"
+            );
+
+            throw new OperationFailException(
+                    "Media files are required"
+            );
+        }
+
+        if (
+                messageType == MessageType.TEXT
+                        &&
+                        mediaFiles != null
+                        &&
+                        !mediaFiles.isEmpty()
+        ) {
+
+            logger.error(
+                    "Text messages cannot contain media files"
+            );
+
+            throw new OperationFailException(
+                    "Text messages cannot contain media files"
+            );
+        }
+    }
+
+    private void validateEditMessageRequest(
+            Message message,
+            MessageRequest request
+    ) {
+
+        LocalDateTime editDeadline =
+                message.getCreatedAt()
+                        .plusMinutes(15);
+
+        if (
+                LocalDateTime.now()
+                        .isAfter(editDeadline)
+        )
+        {
+
+            logger.error("Edit time expired.");
+
+            throw new OperationFailException(
+                    "Edit time expired"
+            );
+
+        }
+
+        if (
+                !message.getMessageType()
+                        .equals(request.getMessageType())
+        ) {
+
+            logger.error(
+                    "Message type cannot be changed"
+            );
+
+            throw new OperationFailException(
+                    "Message type cannot be changed"
+            );
+        }
+
+        if (
+                request.getMessageType() == MessageType.TEXT
+                        &&
+                        (
+                                request.getContent() == null
+                                        || request.getContent().isBlank()
+                        )
+        ) {
+
+            logger.error(
+                    "Text message content required"
+            );
+
+            throw new OperationFailException(
+                    "Text message content required"
+            );
+        }
+
+    }
+
+    private void uploadMessageMedia(
+            Message message,
+            List<MultipartFile> mediaFiles,
+            Long userId,
+            MessageType messageType
+    ) {
+
+        if (
+                mediaFiles == null
+                        ||
+                        mediaFiles.isEmpty()
+        ) {
+            return;
+        }
+
+        FileUploadResponse uploadResponse =
+                fileService.uploadMultipleFiles(
+                        mediaFiles,
+                        userId,
+                        null,
+                        "messages"
+                );
+
+        List<String> uploadedFiles =
+                uploadResponse.getUploadedFiles();
+
+        if (
+                uploadedFiles == null
+                        ||
+                        uploadedFiles.isEmpty()
+        ) {
+
+            logger.error("Media upload failed");
+
+            throw new OperationFailException(
+                    "Media upload failed"
+            );
+        }
+
+        int orderIndex = 0;
+
+        for (String mediaUrl : uploadedFiles) {
+
+            MessageMedia media =
+                    MessageMedia.builder()
+                            .message(message)
+                            .mediaUrl(mediaUrl)
+                            .mediaType(messageType)
+                            .orderIndex(orderIndex++)
+                            .build();
+
+            message.getMediaFiles()
+                    .add(media);
+        }
+    }
+
+    private void replaceMessageMedia(
+            Message message,
+            List<MultipartFile> mediaFiles,
+            Long userId,
+            MessageType messageType
+    ) {
+
+        deleteOldMessageMediaFiles(message);
+
+        message.getMediaFiles().clear();
+
+        uploadMessageMedia(
+                message,
+                mediaFiles,
+                userId,
+                messageType
+        );
+    }
+
     private void validateChatParticipant(
             Chat chat,
             User currentUser

@@ -1,14 +1,12 @@
 package com.abubakar.connectify.controller;
 
-import com.abubakar.connectify.dto.request.EditMessageRequest;
-import com.abubakar.connectify.dto.request.SendMessageRequest;
+import com.abubakar.connectify.dto.request.MessageRequest;
 import com.abubakar.connectify.dto.response.ChatResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.MessageResponse;
 import com.abubakar.connectify.service.ChatService;
 
 import com.abubakar.connectify.util.JsonRequestParser;
-import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,10 +114,10 @@ public class ChatController {
                 mediaFiles != null
         );
 
-        SendMessageRequest request =
+        MessageRequest request =
                 jsonRequestParser.parseAndValidate(
                         requestJson,
-                        SendMessageRequest.class
+                        MessageRequest.class
                 );
 
         MessageResponse response =
@@ -189,15 +187,22 @@ public class ChatController {
     }
 
     // ================= EDIT MESSAGE =================
-    @PutMapping("/messages/{messageId}")
-    public ResponseEntity<MessageResponse>
-    editMessage(
+    @PutMapping(
+            value = "/messages/{messageId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<MessageResponse> editMessage(
 
             @PathVariable Long messageId,
 
-            @Valid
-            @RequestBody
-            EditMessageRequest request
+            @RequestPart("request")
+            String requestJson,
+
+            @RequestPart(
+                    value = "media",
+                    required = false
+            )
+            List<MultipartFile> mediaFiles
     ) {
 
         logger.info(
@@ -205,15 +210,20 @@ public class ChatController {
                 messageId
         );
 
+        MessageRequest request =
+                jsonRequestParser.parseAndValidate(
+                        requestJson,
+                        MessageRequest.class
+                );
+
         MessageResponse response =
                 chatService.editMessage(
                         messageId,
-                        request
+                        request,
+                        mediaFiles
                 );
 
-        return ResponseEntity.ok(
-                        response
-        );
+        return ResponseEntity.ok(response);
     }
 
     // ================= DELETE MESSAGE FOR ME =================

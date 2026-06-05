@@ -1,12 +1,16 @@
 package com.abubakar.connectify.service;
 
+import com.abubakar.connectify.dto.request.RejectReportRequest;
+import com.abubakar.connectify.dto.request.ReportSearchRequest;
+import com.abubakar.connectify.dto.request.ResolveReportRequest;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.AdminReportResponse;
 
 public interface AdminReportService {
 
     CursorPageResponse<AdminReportResponse>
-    getPendingReports(
+    getReports(
+            ReportSearchRequest request,
             Long cursor,
             int size
     );
@@ -16,11 +20,13 @@ public interface AdminReportService {
     );
 
     void resolveReport(
-            Long reportId
+            Long reportId,
+            ResolveReportRequest request
     );
 
     void rejectReport(
-            Long reportId
+            Long reportId,
+            RejectReportRequest request
     );
 
     void deleteReport(

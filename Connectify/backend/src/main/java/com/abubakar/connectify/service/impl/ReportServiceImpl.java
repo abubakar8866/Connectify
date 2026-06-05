@@ -20,6 +20,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class ReportServiceImpl implements ReportService {
@@ -346,9 +348,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndReportedUser(
+                        .existsByReportedByAndReportedUserAndStatus(
                                 currentUser,
-                                user
+                                user,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {

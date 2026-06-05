@@ -1,14 +1,17 @@
 package com.abubakar.connectify.service.impl;
 
+import com.abubakar.connectify.dto.request.RejectReportRequest;
+import com.abubakar.connectify.dto.request.ReportSearchRequest;
+import com.abubakar.connectify.dto.request.ResolveReportRequest;
 import com.abubakar.connectify.dto.response.AdminReportResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
-import com.abubakar.connectify.entity.Report;
-import com.abubakar.connectify.entity.User;
-import com.abubakar.connectify.enums.ReportStatus;
-import com.abubakar.connectify.enums.ReportTargetType;
+import com.abubakar.connectify.entity.*;
+import com.abubakar.connectify.enums.*;
 import com.abubakar.connectify.exception.OperationFailException;
-import com.abubakar.connectify.repository.ReportRepository;
+import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.AdminReportService;
+import com.abubakar.connectify.service.NotificationService;
+import com.abubakar.connectify.specification.ReportSpecification;
 import com.abubakar.connectify.util.*;
 
 import org.slf4j.Logger;
@@ -16,9 +19,11 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -35,6 +40,27 @@ public class AdminReportServiceImpl
     private ReportRepository reportRepository;
 
     @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
+    private StoryRepository storyRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private AuthUtil authUtil;
 
     @Autowired
@@ -46,7 +72,8 @@ public class AdminReportServiceImpl
     // ================= GET PENDING REPORTS =================
     @Override
     public CursorPageResponse<AdminReportResponse>
-    getPendingReports(
+    getReports(
+            ReportSearchRequest request,
             Long cursor,
             int size
     ) {
@@ -60,12 +87,20 @@ public class AdminReportServiceImpl
 
         logger.info(
                 """
-                Fetching pending reports
+                Fetching reports
                 | adminId: {}
+                | status: {}
+                | targetType: {}
+                | reporterKeyword: {}
+                | resolvedOnly: {}
                 | cursor: {}
                 | size: {}
                 """,
                 admin.getId(),
+                request.getStatus(),
+                request.getTargetType(),
+                request.getReporterKeyword(),
+                request.getResolvedOnly(),
                 cursor,
                 size
         );
@@ -75,30 +110,37 @@ public class AdminReportServiceImpl
                         size
                 );
 
+        Specification<Report> specification =
+                ReportSpecification.searchReports(
+                        request.getStatus(),
+                        request.getTargetType(),
+                        request.getReporterKeyword(),
+                        request.getResolvedOnly(),
+                        cursor
+                );
+
         List<Report> reports =
-                cursor == null
-
-                        ? reportRepository
-                        .findByStatusOrderByIdDesc(
-                                ReportStatus.PENDING,
-                                pageable
-                        )
-
-                        : reportRepository
-                        .findByStatusAndIdLessThanOrderByIdDesc(
-                                ReportStatus.PENDING,
-                                cursor,
-                                pageable
-                        );
+                reportRepository.findAll(
+                        specification,
+                        pageable
+                ).getContent();
 
         logger.info(
                 """
-                Pending reports fetched successfully
+                Reports fetched successfully
                 | adminId: {}
-                | count: {}
+                | status: {}
+                | targetType: {}
+                | fetchedCount: {}
+                | nextCursor: {}
                 """,
                 admin.getId(),
-                reports.size()
+                request.getStatus(),
+                request.getTargetType(),
+                reports.size(),
+                reports.isEmpty()
+                        ? null
+                        : reports.getLast().getId()
         );
 
         return CursorPaginationUtil.buildResponse(
@@ -148,7 +190,8 @@ public class AdminReportServiceImpl
     // ================= RESOLVE REPORT =================
     @Override
     public void resolveReport(
-            Long reportId
+            Long reportId,
+            ResolveReportRequest request
     ) {
 
         User admin =
@@ -173,8 +216,38 @@ public class AdminReportServiceImpl
                 ReportStatus.RESOLVED
         );
 
+        report.setAdminAction(
+                request.getAdminAction()
+        );
+
+        applyAdminAction(
+                report,
+                request.getAdminAction()
+        );
+
+        report.setAdminNote(
+                request.getAdminNote()
+        );
+
+        report.setResolvedBy(
+                admin
+        );
+
+        report.setResolvedAt(
+                LocalDateTime.now()
+        );
+
         reportRepository.save(
                 report
+        );
+
+        notificationService.createNotification(
+                report.getReportedBy().getId(),
+                admin.getId(),
+                "Your report has been resolved",
+                NotificationType.REPORT_RESOLVED,
+                null,
+                null
         );
 
         logger.info(
@@ -192,7 +265,8 @@ public class AdminReportServiceImpl
     // ================= REJECT REPORT =================
     @Override
     public void rejectReport(
-            Long reportId
+            Long reportId,
+            RejectReportRequest request
     ) {
 
         User admin =
@@ -217,8 +291,29 @@ public class AdminReportServiceImpl
                 ReportStatus.REJECTED
         );
 
+        report.setAdminNote(
+                request.getAdminNote()
+        );
+
+        report.setResolvedBy(
+                admin
+        );
+
+        report.setResolvedAt(
+                LocalDateTime.now()
+        );
+
         reportRepository.save(
                 report
+        );
+
+        notificationService.createNotification(
+                report.getReportedBy().getId(),
+                admin.getId(),
+                "Your report has been rejected",
+                NotificationType.REPORT_REJECTED,
+                null,
+                null
         );
 
         logger.info(
@@ -272,6 +367,112 @@ public class AdminReportServiceImpl
     }
 
     // ================= PRIVATE METHODS =================
+
+    private void applyAdminAction(
+            Report report,
+            AdminAction action
+    ) {
+
+        switch (action) {
+
+            case NO_VIOLATION:
+            case WARNING:
+                return;
+
+            case HIDE_CONTENT:
+                hideTarget(report);
+                break;
+
+            case DELETE_CONTENT:
+                deleteTarget(report);
+                break;
+
+            case BAN_USER:
+                banTargetUser(report);
+                break;
+        }
+    }
+
+    private void hideTarget(
+            Report report
+    ) {
+
+        if (report.getPost() != null) {
+            report.getPost().setDeleted(true);
+            postRepository.save(report.getPost());
+        }
+
+        if (report.getComment() != null) {
+            report.getComment().setDeleted(true);
+            commentRepository.save(report.getComment());
+        }
+
+        if (report.getStory() != null) {
+            report.getStory().setDeleted(true);
+            report.getStory().setDeletedByAdmin(true);
+            report.getStory().setDeletedByAdminAt(LocalDateTime.now());
+            storyRepository.save(report.getStory());
+        }
+
+        if(report.getMessage() != null){
+            report.getMessage().setDeletedByAdmin(true);
+            report.getMessage().setDeletedByAdminAt(LocalDateTime.now());
+            messageRepository.save(report.getMessage());
+        }
+
+        if(report.getChat() != null){
+            report.getChat().setDeletedByAdmin(true);
+            report.getChat().setDeletedByAdminAt(LocalDateTime.now());
+            messageRepository.save(report.getMessage());
+        }
+    }
+
+    private void deleteTarget(
+            Report report
+    ) {
+
+        if (report.getPost() != null) {
+            Post deletePost = report.getPost();
+            postRepository.delete(deletePost);
+        }
+
+        if (report.getComment() != null) {
+            Comment deleteComment = report.getComment();
+            commentRepository.delete(deleteComment);
+        }
+
+        if (report.getStory() != null) {
+            Story deleteStory = report.getStory();
+            storyRepository.delete(deleteStory);
+        }
+
+        if(report.getMessage() != null){
+            Message deleteMessage = report.getMessage();
+            messageRepository.delete(deleteMessage);
+        }
+
+        if(report.getChat() != null){
+            Chat deleteChat = report.getChat();
+            chatRepository.delete(deleteChat);
+        }
+
+    }
+
+    private void banTargetUser(
+            Report report
+    ) {
+
+        User target = report.getReportedUser();
+
+        if (target == null) {
+            return;
+        }
+
+        target.setAccountStatus(
+                AccountStatus.BANNED
+        );
+    }
+
     private AdminReportResponse mapToResponse(
             Report report
     ) {
@@ -328,7 +529,9 @@ public class AdminReportServiceImpl
                                 : null
                 )
 
-                .reason(report.getReason())
+                .reason(
+                        report.getReason()
+                )
 
                 .description(
                         report.getDescription()
@@ -336,6 +539,30 @@ public class AdminReportServiceImpl
 
                 .status(
                         report.getStatus()
+                )
+
+                .adminAction(
+                        report.getAdminAction()
+                )
+
+                .adminNote(
+                        report.getAdminNote()
+                )
+
+                .resolvedById(
+                        report.getResolvedBy() != null
+                                ? report.getResolvedBy().getId()
+                                : null
+                )
+
+                .resolvedByUsername(
+                        report.getResolvedBy() != null
+                                ? report.getResolvedBy().getUname()
+                                : null
+                )
+
+                .resolvedAt(
+                        report.getResolvedAt()
                 )
 
                 .createdAt(

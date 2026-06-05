@@ -1,64 +1,17 @@
 package com.abubakar.connectify.entity;
 
+import com.abubakar.connectify.enums.AdminAction;
 import com.abubakar.connectify.enums.ReportReason;
 import com.abubakar.connectify.enums.ReportStatus;
 
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "reports",
-        uniqueConstraints = {
-
-                @UniqueConstraint(
-                        name = "uk_report_post",
-                        columnNames = {
-                                "reported_by_id",
-                                "post_id"
-                        }
-                ),
-
-                @UniqueConstraint(
-                        name = "uk_report_comment",
-                        columnNames = {
-                                "reported_by_id",
-                                "comment_id"
-                        }
-                ),
-
-                @UniqueConstraint(
-                        name = "uk_report_user",
-                        columnNames = {
-                                "reported_by_id",
-                                "reported_user_id"
-                        }
-                ),
-
-                @UniqueConstraint(
-                        name = "uk_report_story",
-                        columnNames = {
-                                "reported_by_id",
-                                "story_id"
-                        }
-                ),
-
-                @UniqueConstraint(
-                        name = "uk_report_chat",
-                        columnNames = {
-                                "reported_by_id",
-                                "chat_id"
-                        }
-                ),
-
-                @UniqueConstraint(
-                        name = "uk_report_message",
-                        columnNames = {
-                                "reported_by_id",
-                                "message_id"
-                        }
-                )
-        },
         indexes = {
                 @Index(
                         name = "idx_report_comment",
@@ -85,6 +38,18 @@ public class Report extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ReportStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private AdminAction adminAction;
+
+    @Column(columnDefinition = "TEXT")
+    private String adminNote;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resolved_by_id")
+    private User resolvedBy;
+
+    private LocalDateTime resolvedAt;
 
     // USER WHO REPORTED
     @ManyToOne(fetch = FetchType.LAZY)

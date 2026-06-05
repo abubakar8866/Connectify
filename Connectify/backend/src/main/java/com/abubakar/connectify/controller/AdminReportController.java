@@ -1,10 +1,14 @@
 package com.abubakar.connectify.controller;
 
+import com.abubakar.connectify.dto.request.RejectReportRequest;
+import com.abubakar.connectify.dto.request.ReportSearchRequest;
+import com.abubakar.connectify.dto.request.ResolveReportRequest;
 import com.abubakar.connectify.dto.response.AdminReportResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.service.AdminReportService;
 import com.abubakar.connectify.util.PaginationConstants;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +28,12 @@ public class AdminReportController {
     @Autowired
     private AdminReportService adminReportService;
 
-    @GetMapping("/pending")
+    @GetMapping
     public ResponseEntity<
             CursorPageResponse<AdminReportResponse>
-            > getPendingReports(
+            > getReports(
+
+            ReportSearchRequest request,
 
             @RequestParam(required = false)
             Long cursor,
@@ -40,11 +46,26 @@ public class AdminReportController {
     ) {
 
         logger.info(
-                "API request received | get pending reports"
+                """
+                API request received | get reports
+                | status: {}
+                | targetType: {}
+                | reporterKeyword: {}
+                | resolvedOnly: {}
+                | cursor: {}
+                | size: {}
+                """,
+                request.getStatus(),
+                request.getTargetType(),
+                request.getReporterKeyword(),
+                request.getResolvedOnly(),
+                cursor,
+                size
         );
 
         return ResponseEntity.ok(
-                adminReportService.getPendingReports(
+                adminReportService.getReports(
+                        request,
                         cursor,
                         size
                 )
@@ -72,7 +93,8 @@ public class AdminReportController {
     @PutMapping("/{reportId}/resolve")
     public ResponseEntity<String>
     resolveReport(
-            @PathVariable Long reportId
+            @PathVariable Long reportId,
+            @Valid @RequestBody ResolveReportRequest request
     ) {
 
         logger.info(
@@ -81,7 +103,8 @@ public class AdminReportController {
         );
 
         adminReportService.resolveReport(
-                reportId
+                reportId,
+                request
         );
 
         return ResponseEntity.ok(
@@ -92,7 +115,8 @@ public class AdminReportController {
     @PutMapping("/{reportId}/reject")
     public ResponseEntity<String>
     rejectReport(
-            @PathVariable Long reportId
+            @PathVariable Long reportId,
+            @Valid @RequestBody RejectReportRequest request
     ) {
 
         logger.info(
@@ -101,7 +125,8 @@ public class AdminReportController {
         );
 
         adminReportService.rejectReport(
-                reportId
+                reportId,
+                request
         );
 
         return ResponseEntity.ok(

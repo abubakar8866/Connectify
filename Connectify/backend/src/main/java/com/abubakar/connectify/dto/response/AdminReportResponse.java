@@ -1,5 +1,6 @@
 package com.abubakar.connectify.dto.response;
 
+import com.abubakar.connectify.enums.AdminAction;
 import com.abubakar.connectify.enums.ReportReason;
 import com.abubakar.connectify.enums.ReportStatus;
 
@@ -20,6 +21,16 @@ public class AdminReportResponse {
     private String reportedByUsername;
 
     private ReportTargetType reportedEntityType;
+
+    private AdminAction adminAction;
+
+    private String adminNote;
+
+    private Long resolvedById;
+
+    private String resolvedByUsername;
+
+    private LocalDateTime resolvedAt;
 
     private Long reportedUserId;
 

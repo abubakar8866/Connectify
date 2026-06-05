@@ -1,7 +1,6 @@
 package com.abubakar.connectify.service;
 
-import com.abubakar.connectify.dto.request.EditMessageRequest;
-import com.abubakar.connectify.dto.request.SendMessageRequest;
+import com.abubakar.connectify.dto.request.MessageRequest;
 import com.abubakar.connectify.dto.response.ChatResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.MessageResponse;
@@ -20,7 +19,7 @@ public interface ChatService {
 
     MessageResponse sendMessage(
             Long chatId,
-            SendMessageRequest request,
+            MessageRequest request,
             List<MultipartFile> mediaFiles
     );
 
@@ -32,9 +31,10 @@ public interface ChatService {
 
     void markMessagesAsSeen(Long chatId);
 
-    MessageResponse editMessage(
+    public MessageResponse editMessage(
             Long messageId,
-            EditMessageRequest request
+            MessageRequest request,
+            List<MultipartFile> mediaFiles
     );
 
     void deleteMessageForMe(Long messageId);

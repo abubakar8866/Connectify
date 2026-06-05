@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Transactional
@@ -633,21 +631,14 @@ public class AdminChatServiceImpl
             Chat chat
     ) {
 
-        List<ChatParticipant> participants =
-                chat.getParticipants();
+        List<User> users = chat.getParticipants()
+                .stream()
+                .map(ChatParticipant::getUser)
+                .toList();
 
-        if (participants.size() < 2) {
+        User firstUser = users.get(0);
 
-            throw new OperationFailException(
-                    "Invalid chat participants"
-            );
-        }
-
-        User firstUser =
-                participants.get(0).getUser();
-
-        User secondUser =
-                participants.get(1).getUser();
+        User secondUser = users.get(1);
 
         return AdminChatResponse.builder()
                 .chatId(chat.getId())

@@ -5,7 +5,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -66,8 +68,8 @@ public class Chat extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<ChatParticipant> participants =
-            new ArrayList<>();
+    private Set<ChatParticipant> participants =
+            new HashSet<>();
 
     // MESSAGES
     @Builder.Default
