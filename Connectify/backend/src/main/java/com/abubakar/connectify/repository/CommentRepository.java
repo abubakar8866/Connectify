@@ -2,6 +2,7 @@ package com.abubakar.connectify.repository;
 
 import java.util.List;
 
+import com.abubakar.connectify.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -44,6 +45,19 @@ public interface CommentRepository
     Long countByDeletedFalse();
 
     Long countByDeletedTrue();
+
+    List<Comment>
+    findByUserAndDeletedTrueOrderByIdDesc(
+            User user,
+            Pageable pageable
+    );
+
+    List<Comment>
+    findByUserAndDeletedTrueAndIdLessThanOrderByIdDesc(
+            User user,
+            Long cursor,
+            Pageable pageable
+    );
 
 }
 

@@ -196,6 +196,19 @@ public class ChatServiceImpl implements ChatService {
         Chat chat =
                 chatAccessValidator.getActiveChat(chatId);
 
+        if (Boolean.TRUE.equals(
+                chat.getDeletedByAdmin()
+        )) {
+
+            logger.warn("Chat was removed by admin. " +
+                    "You cannot send messages until it is restored.");
+
+            throw new OperationFailException(
+                    "Chat was removed by admin. " +
+                            "You cannot send messages until it is restored."
+            );
+        }
+
         validateChatParticipant(
                 chat,
                 currentUser
@@ -816,19 +829,6 @@ public class ChatServiceImpl implements ChatService {
 
         message.setDeletedForEveryone(true);
 
-        message.setContent(
-                "This message was deleted"
-        );
-
-        // CLEAR CHILD REPLIES
-        for (Message reply : message.getReplies()) {
-
-            reply.setReplyToMessage(null);
-        }
-
-        // CLEAR PARENT REPLY
-        message.setReplyToMessage(null);
-
         message.setIsEdited(false);
         message.setEditedAt(null);
 
@@ -1098,6 +1098,78 @@ public class ChatServiceImpl implements ChatService {
 
         logger.info(
                 "Chat restore request submitted successfully | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
+        );
+    }
+
+    // ================= RESTORE CHAT when User Delete it =================
+    @Override
+    public void restoreChat(
+            Long chatId
+    ) {
+
+        logger.info(
+                "Restoring chat for current user | chatId: {}",
+                chatId
+        );
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Restore chat request received | chatId: {} | userId: {}",
+                chatId,
+                currentUser.getId()
+        );
+
+        Chat chat =
+                chatAccessValidator.getChat(chatId);
+
+        ChatParticipant participant =
+                chatParticipantRepository
+                        .findByChatAndUser(
+                                chat,
+                                currentUser
+                        )
+                        .orElseThrow(() -> {
+
+                            logger.warn(
+                                    "Participant not found | chatId: {} | userId: {}",
+                                    chatId,
+                                    currentUser.getId()
+                            );
+
+                            return new ResourceNotFound(
+                                    "Participant not found"
+                            );
+                        });
+
+        if (!Boolean.TRUE.equals(
+                participant.getDeleted()
+        )) {
+
+            logger.warn(
+                    "Restore chat failed | chat is not deleted | chatId: {} | userId: {}",
+                    chatId,
+                    currentUser.getId()
+            );
+
+            throw new OperationFailException(
+                    "Chat is not deleted"
+            );
+        }
+
+        participant.setDeleted(false);
+
+        participant.setDeletedAt(null);
+
+        chatParticipantRepository.save(
+                participant
+        );
+
+        logger.info(
+                "Chat restored successfully | chatId: {} | userId: {}",
                 chatId,
                 currentUser.getId()
         );
@@ -1376,10 +1448,6 @@ public class ChatServiceImpl implements ChatService {
             User currentUser
     ) {
 
-        if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
-            throw new ResourceNotFound("Chat not found");
-        }
-
         boolean exists =
                 chatParticipantRepository
                         .existsByChatAndUser(
@@ -1513,6 +1581,12 @@ public class ChatServiceImpl implements ChatService {
         return ChatResponse.builder()
                 .chatId(chat.getId())
                 .otherUserId(otherUser.getId())
+                .deletedByAdmin(
+                        chat.getDeletedByAdmin()
+                )
+                .restoreRequested(
+                        chat.getRestoreRequested()
+                )
                 .username(otherUser.getUname())
                 .profileImageUrl(
                         otherUser.getProfileImageUrl()
@@ -1538,12 +1612,6 @@ public class ChatServiceImpl implements ChatService {
             Message message,
             User currentUser
     ) {
-
-        boolean deletedForMe =
-                messageRepository.isMessageDeletedForUser(
-                        message.getId(),
-                        currentUser.getId()
-                );
 
         MessageResponse.MessageResponseBuilder builder =
                 MessageResponse.builder()
@@ -1575,10 +1643,6 @@ public class ChatServiceImpl implements ChatService {
                                 message.getSeenAt()
                         )
 
-                        .isDeletedForMe(
-                                deletedForMe
-                        )
-
                         .deletedForEveryone(
                                 message.getDeletedForEveryone()
                         )
@@ -1587,12 +1651,34 @@ public class ChatServiceImpl implements ChatService {
                                 message.getCreatedAt()
                         );
 
-        // MESSAGE DELETED FOR EVERYONE
-        if (
-                Boolean.TRUE.equals(
-                        message.getDeletedForEveryone()
-                )
-        ) {
+        // ADMIN DELETED
+        if (Boolean.TRUE.equals(
+                message.getDeletedByAdmin()
+        )) {
+
+            return builder
+                    .content(
+                            "This message was removed by admin"
+                    )
+                    .mediaFiles(
+                            Collections.emptyList()
+                    )
+                    .isEdited(false)
+                    .editedAt(null)
+                    .replyMessageId(null)
+                    .replyMessageContent(null)
+                    .replySenderUsername(null)
+                    .replyMessageType(null)
+                    .replyMediaFiles(
+                            Collections.emptyList()
+                    )
+                    .build();
+        }
+
+        // DELETED FOR EVERYONE
+        if (Boolean.TRUE.equals(
+                message.getDeletedForEveryone()
+        )) {
 
             return builder
                     .content(
@@ -1617,13 +1703,22 @@ public class ChatServiceImpl implements ChatService {
                 message.getReplyToMessage();
 
         String replyContent = null;
+        boolean replyDeletedForMe = false;
 
         if (replyMessage != null) {
 
+            replyDeletedForMe =
+                    messageRepository.isMessageDeletedForUser(
+                            replyMessage.getId(),
+                            currentUser.getId()
+                    );
+
             replyContent =
-                    Boolean.TRUE.equals(
-                            replyMessage.getDeletedForEveryone()
-                    )
+                    replyDeletedForMe
+                            ? "This message is deleted by you"
+                            : Boolean.TRUE.equals(replyMessage.getDeletedByAdmin())
+                            ? "This message was removed by admin"
+                            : Boolean.TRUE.equals(replyMessage.getDeletedForEveryone())
                             ? "This message was deleted"
                             : replyMessage.getContent();
         }
@@ -1674,6 +1769,9 @@ public class ChatServiceImpl implements ChatService {
 
                 .replyMediaFiles(
                         replyMessage != null
+                                && !replyDeletedForMe
+                                && !Boolean.TRUE.equals(replyMessage.getDeletedForEveryone())
+                                && !Boolean.TRUE.equals(replyMessage.getDeletedByAdmin())
                                 ? mapMediaFiles(
                                 replyMessage.getMediaFiles()
                         )

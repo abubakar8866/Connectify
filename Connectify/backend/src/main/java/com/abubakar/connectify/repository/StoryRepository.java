@@ -17,6 +17,17 @@ public interface StoryRepository
         extends JpaRepository<Story, Long>,
         JpaSpecificationExecutor<Story> {
 
+    List<Story> findByUserAndDeletedTrueOrderByIdDesc(
+            User user,
+            Pageable pageable
+    );
+
+    List<Story> findByUserAndDeletedTrueAndIdLessThanOrderByIdDesc(
+            User user,
+            Long cursor,
+            Pageable pageable
+    );
+
     // ================= ACTIVE STORIES =================
 
     @Query("""

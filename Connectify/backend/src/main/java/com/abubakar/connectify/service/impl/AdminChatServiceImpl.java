@@ -236,8 +236,6 @@ public class AdminChatServiceImpl
                 LocalDateTime.now()
         );
 
-        chat.setIsActive(false);
-
         chat.setRestoreRequested(false);
 
         chat.setRestoreRequestedAt(null);
@@ -304,8 +302,6 @@ public class AdminChatServiceImpl
         chat.setRestoreRequested(false);
 
         chat.setRestoreRequestedAt(null);
-
-        chat.setIsActive(true);
 
         chatRepository.save(chat);
 
@@ -377,39 +373,6 @@ public class AdminChatServiceImpl
 
     }
 
-    // ================= PERMANENTLY DELETE CHAT =================
-    @Override
-    public void permanentlyDeleteChat(
-            Long chatId
-    ) {
-
-        User admin =
-                authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        Chat chat =
-                chatAccessValidator.getChat(chatId);
-
-        if (!Boolean.TRUE.equals(
-                chat.getDeletedByAdmin()
-        )) {
-
-            logger.warn("Only moderated chats can be permanently deleted");
-
-            throw new OperationFailException(
-                    "Only moderated chats can be permanently deleted"
-            );
-        }
-
-        chatRepository.delete(chat);
-
-        logger.info(
-                "Chat permanently deleted | chatId: {}",
-                chatId
-        );
-    }
-
     // ================= MODERATE MESSAGE =================
     @Override
     public void moderateMessage(
@@ -440,10 +403,6 @@ public class AdminChatServiceImpl
             );
         }
 
-        message.setOriginalContent(
-                message.getContent()
-        );
-
         message.setDeletedByAdmin(true);
 
         message.setDeletedByAdminAt(
@@ -451,10 +410,6 @@ public class AdminChatServiceImpl
         );
 
         message.setDeletedForEveryone(false);
-
-        message.setContent(
-                "Message removed by admin"
-        );
 
         message.setRestoreRequested(false);
 
@@ -530,14 +485,6 @@ public class AdminChatServiceImpl
 
         message.setRestoreRequestedAt(null);
 
-        message.setContent(
-                message.getOriginalContent()
-        );
-
-        message.setOriginalContent(null);
-
-        message.setOriginalMediaUrl(null);
-
         messageRepository.save(message);
 
         notificationService.createSystemNotification(
@@ -593,37 +540,6 @@ public class AdminChatServiceImpl
         logger.info("Your Restore message is rejected by admin " +
                 "with MessageId: {}",messageId);
 
-    }
-
-    // ================= PERMANENTLY DELETE MESSAGE =================
-    @Override
-    public void permanentlyDeleteMessage(
-            Long messageId
-    ) {
-
-        User admin =
-                authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        Message message =
-                messageAccessValidator.getMessage(messageId);
-
-        if (Boolean.FALSE.equals(message.getDeletedByAdmin())) {
-
-            logger.warn("Only moderated messages can be permanently deleted");
-
-            throw new OperationFailException(
-                    "Only moderated messages can be permanently deleted"
-            );
-        }
-
-        messageRepository.delete(message);
-
-        logger.info(
-                "Message permanently deleted | messageId: {}",
-                messageId
-        );
     }
 
     // ================= DTO MAPPERS =================

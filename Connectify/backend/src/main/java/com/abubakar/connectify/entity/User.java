@@ -190,20 +190,144 @@ public class User extends BaseEntity implements UserDetails {
 
     private LocalDateTime lastSeenAt;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Post> posts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<SavedPost> savedPosts = new ArrayList<>();
-
-    @JsonIgnore
     @OneToMany(
-            mappedBy = "reportedUser",
+            mappedBy = "user",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
-    private List<Report> reports = new ArrayList<>();
+    private List<Post> posts = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<SavedPost> savedPosts = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Comment> comments =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Like> likes =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Story> stories =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "sender",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Message> messages =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ChatParticipant> chatParticipants =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "receiver",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Notification> receivedNotifications =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "sender",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Notification> sentNotifications =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "deletedForUsers")
+    private List<Message> deletedMessages =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "reportedBy",
+            fetch = FetchType.LAZY
+    )
+    private List<Report> submittedReports =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "reportedUser",
+            fetch = FetchType.LAZY
+    )
+    private List<Report> reportsAgainstUser =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "resolvedBy",
+            fetch = FetchType.LAZY
+    )
+    private List<Report> resolvedReports =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            fetch = FetchType.LAZY
+    )
+    private List<StoryReaction> storyReactions =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "sender",
+            fetch = FetchType.LAZY
+    )
+    private List<StoryReply> storyReplies =
+            new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "viewer",
+            fetch = FetchType.LAZY
+    )
+    private List<StoryView> storyViews =
+            new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

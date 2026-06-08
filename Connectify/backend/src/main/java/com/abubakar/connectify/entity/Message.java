@@ -91,12 +91,6 @@ public class Message extends BaseEntity {
 
     private LocalDateTime deletedByAdminAt;
 
-    // ORIGINAL DATA BACKUP FOR RESTORE
-    @Column(columnDefinition = "TEXT")
-    private String originalContent;
-
-    private String originalMediaUrl;
-
     // ================= RESTORE REQUEST =================
 
     @Builder.Default

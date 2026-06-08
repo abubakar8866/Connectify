@@ -59,5 +59,11 @@ public interface PostService {
             Long postId
     );
 
+    // ================= Deleted POST =================
+    public CursorPageResponse<PostResponse> getDeletedPosts(
+            Long cursor,
+            int size
+    );
+
 }
 

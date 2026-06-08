@@ -35,10 +35,5 @@ public interface AdminStoryService {
             Long storyId
     );
 
-    // HARD DELETE
-    void permanentlyDeleteStory(
-            Long storyId
-    );
-
 }
 

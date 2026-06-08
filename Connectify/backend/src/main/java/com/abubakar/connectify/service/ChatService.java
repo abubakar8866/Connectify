@@ -53,5 +53,9 @@ public interface ChatService {
             Long chatId
     );
 
+    void restoreChat(
+            Long chatId
+    );
+
 }
 

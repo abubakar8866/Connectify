@@ -48,5 +48,11 @@ public interface StoryService {
             Long storyId
     );
 
+    // ================= GET DELETED STORIES =================
+    CursorPageResponse<StoryResponse> getDeletedStories(
+            Long cursor,
+            int size
+    );
+
 }
 

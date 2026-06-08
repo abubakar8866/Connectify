@@ -43,10 +43,5 @@ public interface AdminUserService {
             Long userId
     );
 
-    // HARD DELETE
-    void permanentlyDeleteUser(
-            Long userId
-    );
-
 }
 

@@ -183,26 +183,5 @@ public class AdminStoryController {
         );
     }
 
-    // ================= HARD DELETE STORY =================
-    @DeleteMapping("/{storyId}/permanent")
-    public ResponseEntity<String>
-    permanentlyDeleteStory(
-            @PathVariable Long storyId
-    ) {
-
-        logger.info(
-                "Admin permanently delete story API called | storyId: {}",
-                storyId
-        );
-
-        adminStoryService.permanentlyDeleteStory(
-                storyId
-        );
-
-        return ResponseEntity.ok(
-                "Story permanently deleted successfully"
-        );
-    }
-
 }
 

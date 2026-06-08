@@ -69,7 +69,7 @@ public class AdminReportServiceImpl
     @Autowired
     private ReportAccessValidator reportAccessValidator;
 
-    // ================= GET PENDING REPORTS =================
+    // ================= GET REPORTS =================
     @Override
     public CursorPageResponse<AdminReportResponse>
     getReports(
@@ -151,7 +151,7 @@ public class AdminReportServiceImpl
         );
     }
 
-    // ================= GET REPORT DETAILS =================
+    // ================= GET Single REPORT =================
     @Override
     public AdminReportResponse getReportDetails(
             Long reportId
@@ -220,11 +220,6 @@ public class AdminReportServiceImpl
                 request.getAdminAction()
         );
 
-        applyAdminAction(
-                report,
-                request.getAdminAction()
-        );
-
         report.setAdminNote(
                 request.getAdminNote()
         );
@@ -235,6 +230,11 @@ public class AdminReportServiceImpl
 
         report.setResolvedAt(
                 LocalDateTime.now()
+        );
+
+        applyAdminAction(
+                report,
+                request.getAdminAction()
         );
 
         reportRepository.save(
@@ -328,44 +328,6 @@ public class AdminReportServiceImpl
 
     }
 
-    // ================= DELETE REPORT =================
-    @Override
-    public void deleteReport(
-            Long reportId
-    ) {
-
-        User admin =
-                authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(
-                admin
-        );
-
-        logger.info(
-                "Delete report request | reportId: {}",
-                reportId
-        );
-
-        Report report =
-                reportAccessValidator
-                        .getReport(reportId);
-
-        reportRepository.delete(
-                report
-        );
-
-        logger.info(
-                """
-                Report deleted successfully
-                | reportId: {}
-                | adminId: {}
-                """,
-                reportId,
-                admin.getId()
-        );
-
-    }
-
     // ================= PRIVATE METHODS =================
 
     private void applyAdminAction(
@@ -381,10 +343,6 @@ public class AdminReportServiceImpl
 
             case HIDE_CONTENT:
                 hideTarget(report);
-                break;
-
-            case DELETE_CONTENT:
-                deleteTarget(report);
                 break;
 
             case BAN_USER:
@@ -423,39 +381,8 @@ public class AdminReportServiceImpl
         if(report.getChat() != null){
             report.getChat().setDeletedByAdmin(true);
             report.getChat().setDeletedByAdminAt(LocalDateTime.now());
-            messageRepository.save(report.getMessage());
+            chatRepository.save(report.getChat());
         }
-    }
-
-    private void deleteTarget(
-            Report report
-    ) {
-
-        if (report.getPost() != null) {
-            Post deletePost = report.getPost();
-            postRepository.delete(deletePost);
-        }
-
-        if (report.getComment() != null) {
-            Comment deleteComment = report.getComment();
-            commentRepository.delete(deleteComment);
-        }
-
-        if (report.getStory() != null) {
-            Story deleteStory = report.getStory();
-            storyRepository.delete(deleteStory);
-        }
-
-        if(report.getMessage() != null){
-            Message deleteMessage = report.getMessage();
-            messageRepository.delete(deleteMessage);
-        }
-
-        if(report.getChat() != null){
-            Chat deleteChat = report.getChat();
-            chatRepository.delete(deleteChat);
-        }
-
     }
 
     private void banTargetUser(
@@ -496,6 +423,18 @@ public class AdminReportServiceImpl
                 .reportedUserId(
                         report.getReportedUser() != null
                                 ? report.getReportedUser().getId()
+                                : null
+                )
+
+                .reportedName(
+                        report.getReportedUser() != null
+                            ? report.getReportedUser().getName()
+                                : null
+                )
+
+                .reportedUserName(
+                        report.getReportedUser() != null
+                                ? report.getReportedUser().getUname()
                                 : null
                 )
 

@@ -13,6 +13,10 @@ public class ChatResponse {
 
     private Long otherUserId;
 
+    private Boolean deletedByAdmin;
+
+    private Boolean restoreRequested;
+
     private String username;
 
     private String profileImageUrl;

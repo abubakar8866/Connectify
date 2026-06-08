@@ -101,5 +101,21 @@ public class Post extends BaseEntity {
     )
     private List<Report> reports = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "post",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Comment> comments =
+            new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "post",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<SavedPost> savedPosts =
+            new ArrayList<>();
+
 }
 

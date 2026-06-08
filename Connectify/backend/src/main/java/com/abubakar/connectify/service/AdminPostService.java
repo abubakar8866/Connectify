@@ -26,10 +26,5 @@ public interface AdminPostService {
             Long postId
     );
 
-    // HARD DELETE
-    void permanentlyDeletePost(
-            Long postId
-    );
-
 }
 

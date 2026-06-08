@@ -204,25 +204,5 @@ public class AdminUserController {
         );
     }
 
-    // ================= HARD DELETE USER =================
-    @DeleteMapping("/{userId}/permanent")
-    public ResponseEntity<String> permanentlyDeleteUser(
-            @PathVariable Long userId
-    ) {
-
-        logger.info(
-                "Admin permanently delete user API called | userId: {}",
-                userId
-        );
-
-        adminUserService.permanentlyDeleteUser(
-                userId
-        );
-
-        return ResponseEntity.ok(
-                "User permanently deleted successfully"
-        );
-    }
-
 }
 

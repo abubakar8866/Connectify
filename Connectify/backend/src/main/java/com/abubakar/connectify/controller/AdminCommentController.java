@@ -140,28 +140,5 @@ public class AdminCommentController {
         );
     }
 
-    // ================= HARD DELETE =================
-    @DeleteMapping("/{commentId}")
-    public ResponseEntity<String>
-    permanentlyDeleteComment(
-
-            @PathVariable Long commentId
-    ) {
-
-        logger.info(
-                "API request received | permanentlyDeleteComment | commentId: {}",
-                commentId
-        );
-
-        adminCommentService
-                .permanentlyDeleteComment(
-                        commentId
-                );
-
-        return ResponseEntity.ok(
-                "Comment permanently deleted"
-        );
-    }
-
 }
 

@@ -781,6 +781,73 @@ public class StoryServiceImpl implements StoryService {
 
     }
 
+    // ================= GET DELETED STORIES =================
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<StoryResponse> getDeletedStories(
+            Long cursor,
+            int size
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching deleted stories | userId: {} | cursor: {} | size: {}",
+                currentUser.getId(),
+                cursor,
+                size
+        );
+
+        logger.debug(
+                "Validating story owner account status | userId: {}",
+                currentUser.getId()
+        );
+
+        userAccessValidator.getValidUser(
+                currentUser.getId()
+        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Story> stories;
+
+        if (cursor == null) {
+
+            stories =
+                    storyRepository
+                            .findByUserAndDeletedTrueOrderByIdDesc(
+                                    currentUser,
+                                    pageable
+                            );
+
+        } else {
+
+            stories =
+                    storyRepository
+                            .findByUserAndDeletedTrueAndIdLessThanOrderByIdDesc(
+                                    currentUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        logger.info(
+                "Deleted stories fetched successfully | userId: {} | count: {}",
+                currentUser.getId(),
+                stories.size()
+        );
+
+        return buildStoryResponse(
+                stories,
+                size,
+                currentUser
+        );
+    }
+
     // ================= PRIVATE METHODS =================
     private StoryResponse mapToResponse(
             Story story,

@@ -29,9 +29,5 @@ public interface AdminReportService {
             RejectReportRequest request
     );
 
-    void deleteReport(
-            Long reportId
-    );
-
 }
 

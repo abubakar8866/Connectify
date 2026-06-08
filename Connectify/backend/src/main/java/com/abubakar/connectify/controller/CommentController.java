@@ -136,5 +136,40 @@ public class CommentController {
         );
     }
 
+    // ================= GET DELETED COMMENTS =================
+    @GetMapping("/deleted")
+    public ResponseEntity<
+            CursorPageResponse<CommentResponse>>
+    getDeletedComments(
+
+            @RequestParam(
+                    required = false
+            )
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        logger.info(
+                "Get deleted comments API called | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        CursorPageResponse<CommentResponse> response =
+                commentService.getDeletedComments(
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
 }
 

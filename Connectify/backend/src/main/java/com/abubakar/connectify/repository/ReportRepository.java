@@ -39,29 +39,40 @@ public interface ReportRepository
             List<Long> postIds
     );
 
-    boolean existsByReportedByAndPost(
+    boolean existsByReportedByAndPostAndStatus(
             User reportedBy,
-            Post post
+            Post post,
+            ReportStatus status
     );
 
-    boolean existsByReportedByAndComment(
+    boolean existsByReportedByAndCommentAndStatus(
             User reportedBy,
-            Comment comment
+            Comment comment,
+            ReportStatus status
     );
 
-    boolean existsByReportedByAndStory(
+    boolean existsByReportedByAndReportedUserAndStatus(
             User reportedBy,
-            Story story
+            User reportedUser,
+            ReportStatus status
     );
 
-    boolean existsByReportedByAndChat(
+    boolean existsByReportedByAndStoryAndStatus(
             User reportedBy,
-            Chat chat
+            Story story,
+            ReportStatus status
     );
 
-    boolean existsByReportedByAndMessage(
+    boolean existsByReportedByAndChatAndStatus(
             User reportedBy,
-            Message message
+            Chat chat,
+            ReportStatus status
+    );
+
+    boolean existsByReportedByAndMessageAndStatus(
+            User reportedBy,
+            Message message,
+            ReportStatus status
     );
 
     @Query("""
@@ -75,10 +86,16 @@ public interface ReportRepository
             Long reportId
     );
 
-    boolean existsByReportedByAndReportedUserAndStatus(
-            User reportedBy,
-            User reportedUser,
-            ReportStatus status
+    List<Report> findByReportedUser(
+            User user
+    );
+
+    List<Report> findByReportedBy(
+            User user
+    );
+
+    List<Report> findByResolvedBy(
+            User user
     );
 
 }

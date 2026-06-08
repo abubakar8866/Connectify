@@ -725,6 +725,79 @@ public class PostServiceImpl implements PostService {
         );
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PostResponse> getDeletedPosts(
+            Long cursor,
+            int size
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching deleted posts | userId: {} | cursor: {} | size: {}",
+                currentUser.getId(),
+                cursor,
+                size
+        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Post> posts;
+
+        if (cursor == null) {
+
+            posts =
+                    postRepository.findDeletedPosts(
+                            currentUser,
+                            pageable
+                    );
+
+        } else {
+
+            posts =
+                    postRepository.findDeletedPostsWithCursor(
+                            currentUser,
+                            cursor,
+                            pageable
+                    );
+        }
+
+        logger.info(
+                "Deleted posts fetched successfully | userId: {} | count: {}",
+                currentUser.getId(),
+                posts.size()
+        );
+
+        List<Long> postIds =
+                posts.stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Set<Long> likedPostIds =
+                postIds.isEmpty()
+                        ? Set.of()
+                        : likeRepository.findLikedPostIdsByUserAndPostIds(
+                        currentUser,
+                        postIds
+                );
+
+        return CursorPaginationUtil.buildResponse(
+                posts,
+                size,
+                Post::getId,
+                post -> mapToResponse(
+                        post,
+                        likedPostIds,
+                        currentUser
+                )
+        );
+    }
+
     //private method
     private PostResponse mapToResponse(
             Post post,

@@ -212,6 +212,10 @@ public class AdminPostServiceImpl
 
         if (post.getDeleted()) {
 
+            logger.warn(
+                    "Post already moderated"
+            );
+
             throw new OperationFailException(
                     "Post already moderated"
             );
@@ -235,7 +239,7 @@ public class AdminPostServiceImpl
 
         postRepository.save(post);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
 
                 post.getUser().getId(),
 
@@ -243,11 +247,7 @@ public class AdminPostServiceImpl
 
                 "Your post was removed by admin.",
 
-                NotificationType.POST_REMOVED,
-
-                post.getId(),
-
-                null
+                NotificationType.POST_REMOVED
         );
 
         logger.info(
@@ -309,13 +309,11 @@ public class AdminPostServiceImpl
 
         postRepository.save(post);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 post.getUser().getId(),
                 admin.getId(),
                 "Post restored successfully by Admin.",
-                NotificationType.POST_RESTORED,
-                post.getId(),
-                null
+                NotificationType.POST_RESTORED
         );
 
         logger.info(
@@ -344,13 +342,13 @@ public class AdminPostServiceImpl
         if (!post.getDeleted()) {
 
             logger.warn(
-                    "Reject restore failed | postId: {} | reason: Post is not deleted",
-                    postId
+                    "Post is already active then rejection failed"
             );
 
             throw new OperationFailException(
-                    "Post is not deleted."
+                    "Post is already active"
             );
+
         }
 
         if (!post.getRestoreRequested()) {
@@ -368,84 +366,15 @@ public class AdminPostServiceImpl
 
         postRepository.save(post);
 
-        notificationService.createNotification(
+        notificationService.createSystemNotification(
                 post.getUser().getId(),
                 admin.getId(),
                 "Your post restore request was rejected by admin.",
-                NotificationType.POST_RESTORE_REJECTED,
-                post.getId(),
-                null
+                NotificationType.POST_RESTORE_REJECTED
         );
 
         logger.info(
                 "Restore request rejected successfully | postId: {}",
-                postId
-        );
-    }
-
-    @Override
-    @Transactional
-    public void permanentlyDeletePost(
-            Long postId
-    ) {
-
-        User admin = authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        logger.info(
-                "Permanent post deletion requested | adminId: {} | postId: {}",
-                admin.getId(),
-                postId
-        );
-
-        Post post = postAccessValidator.getPost(postId);
-
-        // STORE FILE NAMES BEFORE DELETE
-        List<String> mediaFiles =
-                post.getMediaList()
-                        .stream()
-                        .map(Media::getUrl)
-                        .toList();
-
-        // REMOVE NOTIFICATIONS REFERENCING THIS POST
-        notificationRepository.deleteByPost(post);
-
-        // HARD DELETE FROM DATABASE
-        postRepository.delete(post);
-
-        // EXECUTE DELETE NOW (FK ISSUES SURFACE HERE)
-        postRepository.flush();
-
-        logger.debug(
-                "Post deleted from database | postId: {}",
-                postId
-        );
-
-        // DELETE FILES ONLY AFTER DB DELETE SUCCESS
-        for (String fileName : mediaFiles) {
-
-            fileService.deleteFile(
-                    fileName,
-                    "posts"
-            );
-        }
-
-        logger.debug(
-                "Deleted {} media files from storage | postId: {}",
-                mediaFiles.size(),
-                postId
-        );
-
-        notificationService.createSystemNotification(
-                post.getUser().getId(),
-                admin.getId(),
-                "Your post was permanently removed due to policy violation.",
-                NotificationType.POST_REMOVED
-        );
-
-        logger.info(
-                "Post permanently deleted successfully | postId: {}",
                 postId
         );
     }

@@ -322,5 +322,20 @@ public class ChatController {
         );
     }
 
+    // ================= RESTORE CHAT ONLY WHEN USER DELETE CHAT =================
+    @PostMapping("/{chatId}/restore-me")
+    public ResponseEntity<String> restoreChat(
+            @PathVariable Long chatId
+    ) {
+
+        chatService.restoreChat(
+                chatId
+        );
+
+        return ResponseEntity.ok(
+                        "Chat restored successfully"
+        );
+    }
+
 }
 

@@ -249,45 +249,5 @@ public class AdminChatController {
         );
     }
 
-    // ================= HARD DELETE CHAT =================
-    @DeleteMapping("/{chatId}/permanent")
-    public ResponseEntity<String> permanentlyDeleteChat(
-            @PathVariable Long chatId
-    ) {
-
-        logger.info(
-                "Admin permanently delete chat API called | chatId: {}",
-                chatId
-        );
-
-        adminChatService.permanentlyDeleteChat(
-                chatId
-        );
-
-        return ResponseEntity.ok(
-                "Chat permanently deleted successfully"
-        );
-    }
-
-    // ================= HARD DELETE MESSAGE =================
-    @DeleteMapping("/messages/{messageId}/permanent")
-    public ResponseEntity<String> permanentlyDeleteMessage(
-            @PathVariable Long messageId
-    ) {
-
-        logger.info(
-                "Admin permanently delete message API called | messageId: {}",
-                messageId
-        );
-
-        adminChatService.permanentlyDeleteMessage(
-                messageId
-        );
-
-        return ResponseEntity.ok(
-                "Message permanently deleted successfully"
-        );
-    }
-
 }
 

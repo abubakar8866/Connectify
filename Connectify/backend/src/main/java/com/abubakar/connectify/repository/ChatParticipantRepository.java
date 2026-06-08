@@ -33,8 +33,6 @@ public interface ChatParticipantRepository
         FROM ChatParticipant cp
         JOIN cp.chat c
         WHERE cp.user = :user
-        AND cp.deleted = false
-        AND c.deletedByAdmin = false
         ORDER BY c.lastMessageAt DESC
     """)
     List<Long> findChatParticipantIds(
@@ -47,8 +45,6 @@ public interface ChatParticipantRepository
         FROM ChatParticipant cp
         JOIN cp.chat c
         WHERE cp.user = :user
-        AND cp.deleted = false
-        AND c.deletedByAdmin = false
         AND c.id < :chatId
         ORDER BY c.lastMessageAt DESC
     """)

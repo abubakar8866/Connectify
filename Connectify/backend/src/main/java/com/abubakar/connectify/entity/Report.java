@@ -46,19 +46,28 @@ public class Report extends BaseEntity {
     private String adminNote;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resolved_by_id")
+    @JoinColumn(
+            name = "resolved_by_id",
+            nullable = true
+    )
     private User resolvedBy;
 
     private LocalDateTime resolvedAt;
 
     // USER WHO REPORTED
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reported_by_id")
+    @JoinColumn(
+            name = "reported_by_id",
+            nullable = true
+    )
     private User reportedBy;
 
     // REPORTED USER
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reported_user_id")
+    @JoinColumn(
+            name = "reported_user_id",
+            nullable = true
+    )
     private User reportedUser;
 
     // REPORTED POST

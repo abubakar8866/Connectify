@@ -28,8 +28,6 @@ public interface MessageRepository
         LEFT JOIN FETCH m.replyToMessage rm
         LEFT JOIN FETCH rm.sender
         WHERE m.chat = :chat
-        AND m.deletedByAdmin = false
-        AND m.chat.deletedByAdmin = false
     
         AND EXISTS (
             SELECT 1
@@ -60,8 +58,6 @@ public interface MessageRepository
         LEFT JOIN FETCH rm.sender
         WHERE m.chat = :chat
         AND m.id < :cursor
-        AND m.deletedByAdmin = false
-        AND m.chat.deletedByAdmin = false
     
         AND EXISTS (
             SELECT 1

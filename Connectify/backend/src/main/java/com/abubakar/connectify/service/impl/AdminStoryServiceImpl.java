@@ -200,12 +200,16 @@ public class AdminStoryServiceImpl implements AdminStoryService {
 
         if (!story.getDeleted()) {
 
+            logger.warn("Story is not deleted");
+
             throw new OperationFailException(
                     "Story is not deleted"
             );
         }
 
         if (!story.getRestoreRequested()) {
+
+            logger.warn("Restore request not found");
 
             throw new OperationFailException(
                     "Restore request not found"
@@ -260,7 +264,18 @@ public class AdminStoryServiceImpl implements AdminStoryService {
                         storyId
                 );
 
+        if (!story.getDeleted()) {
+
+            logger.warn("Rejection Fail, Story is not deleted");
+
+            throw new OperationFailException(
+                    "Story is not deleted"
+            );
+        }
+
         if (!story.getRestoreRequested()) {
+
+            logger.warn("Rejection Fail because Restore request not found");
 
             throw new OperationFailException(
                     "Restore request not found"
@@ -284,50 +299,6 @@ public class AdminStoryServiceImpl implements AdminStoryService {
                 storyId
         );
 
-    }
-
-    @Override
-    public void permanentlyDeleteStory(
-            Long storyId
-    ) {
-
-        logger.info(
-                "Admin permanently deleting story | storyId: {}",
-                storyId
-        );
-
-        validateAdminAccess();
-
-        Story story =
-                storyAccessValidator.getStory(
-                        storyId
-                );
-
-        if (
-                story.getMediaUrl() != null
-                        &&
-                        !story.getMediaUrl().isBlank()
-        ) {
-
-            fileService.deleteFile(
-                    story.getMediaUrl(),
-                    "stories"
-            );
-        }
-
-        notificationService.createSystemNotification(
-                story.getUser().getId(),
-                authUtil.getCurrentUser().getId(),
-                "Your story was permanently deleted by admin.",
-                NotificationType.STORY_REMOVED
-        );
-
-        storyRepository.delete(story);
-
-        logger.info(
-                "Story permanently deleted successfully | storyId: {}",
-                storyId
-        );
     }
 
     // ================= EXPIRE STORY =================

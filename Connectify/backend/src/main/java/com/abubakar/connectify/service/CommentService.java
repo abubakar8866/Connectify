@@ -22,5 +22,11 @@ public interface CommentService {
             Long commentId
     );
 
+    // ================= GET DELETED COMMENTS =================
+    CursorPageResponse<CommentResponse> getDeletedComments(
+            Long cursor,
+            int size
+    );
+
 }
 

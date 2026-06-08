@@ -34,6 +34,10 @@ public class AdminReportResponse {
 
     private Long reportedUserId;
 
+    private String reportedName;
+
+    private String reportedUserName;
+
     private Long postId;
 
     private Long commentId;

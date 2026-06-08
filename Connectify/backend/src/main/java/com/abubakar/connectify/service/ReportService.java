@@ -1,9 +1,17 @@
 package com.abubakar.connectify.service;
 
 import com.abubakar.connectify.dto.request.CreateReportRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.ReportResponse;
+import com.abubakar.connectify.enums.ReportStatus;
 
 public interface ReportService {
+
+    CursorPageResponse<ReportResponse> getMyReports(
+            ReportStatus status,
+            Long cursor,
+            int size
+    );
 
     ReportResponse reportPost(
             Long postId,

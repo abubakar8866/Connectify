@@ -79,7 +79,10 @@ public class Config {
 						.requestMatchers(HttpMethod.GET, "/api/v1/likes/**").permitAll()
 
 						// ADMIN ONLY
-						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+						.requestMatchers(
+								"/api/v1/admin/**",
+								"/api/v1/auth/create-admin"
+						).hasRole("ADMIN")
 
 						// EVERYTHING ELSE
 						.anyRequest().authenticated()

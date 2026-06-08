@@ -129,6 +129,10 @@ public class CommentServiceImpl implements CommentService {
             comment.setParentComment(parentComment);
         }
 
+        post.setCommentCount(
+                post.getCommentCount() + 1
+        );
+
         Comment savedComment = commentRepository.save(comment);
 
         // NORMAL COMMENT NOTIFICATION
@@ -202,6 +206,33 @@ public class CommentServiceImpl implements CommentService {
                 commentId,
                 authUtil.getCurrentUser().getId()
         );
+
+        Long existingParentId =
+                comment.getParentComment() != null
+                        ? comment.getParentComment().getId()
+                        : null;
+
+        if (!java.util.Objects.equals(
+                existingParentId,
+                request.getParentCommentId()
+        )) {
+
+            logger.warn(
+                    """
+                    Parent comment modification attempt
+                    | commentId: {}
+                    | existingParentId: {}
+                    | requestedParentId: {}
+                    """,
+                    commentId,
+                    existingParentId,
+                    request.getParentCommentId()
+            );
+
+            throw new OperationFailException(
+                    "Parent comment cannot be changed"
+            );
+        }
 
         comment.setContent(request.getContent().trim());
 
@@ -310,6 +341,75 @@ public class CommentServiceImpl implements CommentService {
         logger.info(
                 "Comment restore request submitted successfully | commentId: {}",
                 commentId
+        );
+    }
+
+    // ================= GET DELETED COMMENTS =================
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<CommentResponse>
+    getDeletedComments(
+            Long cursor,
+            int size
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                "Fetching deleted comments | userId: {} | cursor: {} | size: {}",
+                currentUser.getId(),
+                cursor,
+                size
+        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        List<Comment> comments;
+
+        if (cursor == null) {
+
+            comments =
+                    commentRepository
+                            .findByUserAndDeletedTrueOrderByIdDesc(
+                                    currentUser,
+                                    pageable
+                            );
+
+        } else {
+
+            comments =
+                    commentRepository
+                            .findByUserAndDeletedTrueAndIdLessThanOrderByIdDesc(
+                                    currentUser,
+                                    cursor,
+                                    pageable
+                            );
+        }
+
+        logger.info(
+                "Deleted comments fetched successfully | userId: {} | count: {}",
+                currentUser.getId(),
+                comments.size()
+        );
+
+        CommentMappingData mappingData =
+                prepareCommentMappingData(
+                        comments
+                );
+
+        return CursorPaginationUtil.buildResponse(
+                comments,
+                size,
+                Comment::getId,
+                comment -> mapToResponse(
+                        comment,
+                        mappingData,
+                        0
+                )
         );
     }
 

@@ -33,18 +33,6 @@ public class ChatAccessValidator {
 
         Chat chat = getChat(chatId);
 
-        if (Boolean.TRUE.equals(chat.getDeletedByAdmin())) {
-
-            logger.warn(
-                    "Chat access denied | admin deleted | chatId: {}",
-                    chatId
-            );
-
-            throw new OperationFailException(
-                    "Chat is unavailable"
-            );
-        }
-
         if (Boolean.FALSE.equals(chat.getIsActive())) {
 
             logger.warn(

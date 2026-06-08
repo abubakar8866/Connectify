@@ -135,25 +135,5 @@ public class AdminPostController {
         );
     }
 
-    // ================= HARD DELETE =================
-    @DeleteMapping("/{postId}/permanent")
-    public ResponseEntity<String> permanentlyDeletePost(
-            @PathVariable Long postId
-    ) {
-
-        logger.info(
-                "Admin permanently delete post API called | postId: {}",
-                postId
-        );
-
-        adminPostService.permanentlyDeletePost(
-                postId
-        );
-
-        return ResponseEntity.ok(
-                "Post permanently deleted successfully"
-        );
-    }
-
 }
 

@@ -35,10 +35,6 @@ public interface AdminChatService {
 
     void rejectMessageRestore(Long messageId);
 
-    // HARD DELETE
-    void permanentlyDeleteChat(Long chatId);
-
-    void permanentlyDeleteMessage(Long messageId);
 
 }
 

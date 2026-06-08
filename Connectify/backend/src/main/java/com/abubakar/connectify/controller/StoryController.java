@@ -278,5 +278,40 @@ public class StoryController {
         );
     }
 
+    // ================= GET DELETED STORIES =================
+    @GetMapping("/deleted")
+    public ResponseEntity<
+                    CursorPageResponse<StoryResponse>
+            > getDeletedStories(
+
+            @RequestParam(
+                    required = false
+            )
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        logger.info(
+                "Get deleted stories API called | cursor: {} | size: {}",
+                cursor,
+                size
+        );
+
+        CursorPageResponse<StoryResponse> response =
+                storyService.getDeletedStories(
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
+
 }
 

@@ -116,5 +116,31 @@ public interface PostRepository extends JpaRepository<Post, Long>,
             Pageable pageable
     );
 
+    @Query("""
+        SELECT p
+        FROM Post p
+        WHERE p.user = :user
+        AND p.deleted = true
+        ORDER BY p.id DESC
+    """)
+    List<Post> findDeletedPosts(
+            User user,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT p
+        FROM Post p
+        WHERE p.user = :user
+        AND p.deleted = true
+        AND p.id < :cursor
+        ORDER BY p.id DESC
+    """)
+    List<Post> findDeletedPostsWithCursor(
+            User user,
+            Long cursor,
+            Pageable pageable
+    );
+
 }
 

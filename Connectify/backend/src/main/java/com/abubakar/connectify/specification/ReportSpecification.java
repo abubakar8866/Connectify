@@ -159,5 +159,55 @@ public class ReportSpecification {
         };
     }
 
+    public static Specification<Report> searchUserReports(
+            Long userId,
+            ReportStatus status,
+            Long cursor
+    ) {
+
+        return (root, query, cb) -> {
+
+            List<Predicate> predicates =
+                    new ArrayList<>();
+
+            predicates.add(
+                    cb.equal(
+                            root.get("reportedBy").get("id"),
+                            userId
+                    )
+            );
+
+            if (status != null) {
+
+                predicates.add(
+                        cb.equal(
+                                root.get("status"),
+                                status
+                        )
+                );
+            }
+
+            if (cursor != null) {
+
+                predicates.add(
+                        cb.lessThan(
+                                root.get("id"),
+                                cursor
+                        )
+                );
+            }
+
+            query.orderBy(
+                    cb.desc(root.get("id"))
+            );
+
+            return cb.and(
+                    predicates.toArray(
+                            new Predicate[0]
+                    )
+            );
+        };
+    }
+
 }
 

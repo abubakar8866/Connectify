@@ -263,5 +263,30 @@ public class PostController {
         );
     }
 
+    @GetMapping("/deleted")
+    public ResponseEntity<
+            CursorPageResponse<PostResponse>> getDeletedPosts(
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(
+                    defaultValue =
+                            PaginationConstants.DEFAULT_PAGE_SIZE_STRING
+            )
+            int size
+    ) {
+
+        logger.info(
+                "Get deleted posts API called"
+        );
+
+        return ResponseEntity.ok(
+                        postService.getDeletedPosts(
+                                cursor,
+                                size
+                        )
+        );
+    }
+
 }
 

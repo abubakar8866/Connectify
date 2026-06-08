@@ -134,25 +134,5 @@ public class AdminReportController {
         );
     }
 
-    @DeleteMapping("/{reportId}")
-    public ResponseEntity<String>
-    deleteReport(
-            @PathVariable Long reportId
-    ) {
-
-        logger.info(
-                "API request received | delete report | reportId: {}",
-                reportId
-        );
-
-        adminReportService.deleteReport(
-                reportId
-        );
-
-        return ResponseEntity.ok(
-                "Report deleted successfully"
-        );
-    }
-
 }
 

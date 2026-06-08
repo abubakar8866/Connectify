@@ -16,6 +16,8 @@ public class ReportResponse {
 
     private String reportedByUsername;
 
+    private String reportedUsername;
+
     private Long postId;
 
     private Long commentId;

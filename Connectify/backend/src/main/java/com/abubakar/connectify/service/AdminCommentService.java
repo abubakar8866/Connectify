@@ -32,10 +32,5 @@ public interface AdminCommentService {
             Long commentId
     );
 
-    // HARD DELETE
-    void permanentlyDeleteComment(
-            Long commentId
-    );
-
 }
 

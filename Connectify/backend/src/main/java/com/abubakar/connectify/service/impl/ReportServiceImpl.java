@@ -1,6 +1,7 @@
 package com.abubakar.connectify.service.impl;
 
 import com.abubakar.connectify.dto.request.CreateReportRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.ReportResponse;
 import com.abubakar.connectify.entity.*;
 import com.abubakar.connectify.enums.NotificationType;
@@ -11,12 +12,15 @@ import com.abubakar.connectify.repository.*;
 import com.abubakar.connectify.service.NotificationService;
 import com.abubakar.connectify.service.ReportService;
 
+import com.abubakar.connectify.specification.ReportSpecification;
 import com.abubakar.connectify.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +67,71 @@ public class ReportServiceImpl implements ReportService {
     private MessageAccessValidator messageAccessValidator;
 
     @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<ReportResponse> getMyReports(
+            ReportStatus status,
+            Long cursor,
+            int size
+    ) {
+
+        User currentUser =
+                authUtil.getCurrentUser();
+
+        logger.info(
+                """
+                Fetching user reports
+                | userId: {}
+                | status: {}
+                | cursor: {}
+                | size: {}
+                """,
+                currentUser.getId(),
+                status,
+                cursor,
+                size
+        );
+
+        Pageable pageable =
+                PaginationUtil.createCursorPageable(
+                        size
+                );
+
+        Specification<Report> specification =
+                ReportSpecification.searchUserReports(
+                        currentUser.getId(),
+                        status,
+                        cursor
+                );
+
+        List<Report> reports =
+                reportRepository.findAll(
+                        specification,
+                        pageable
+                ).getContent();
+
+        logger.info(
+                """
+                User reports fetched successfully
+                | userId: {}
+                | fetchedCount: {}
+                | nextCursor: {}
+                """,
+                currentUser.getId(),
+                reports.size(),
+                reports.isEmpty()
+                        ? null
+                        : reports.getLast().getId()
+        );
+
+        return CursorPaginationUtil.buildResponse(
+                reports,
+                size,
+                Report::getId,
+                this::mapToResponse
+        );
+    }
+
+    @Override
     public ReportResponse reportPost(
             Long postId,
             CreateReportRequest request
@@ -100,9 +169,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndPost(
+                        .existsByReportedByAndPostAndStatus(
                                 currentUser,
-                                post
+                                post,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {
@@ -114,7 +184,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this post"
+                    "You already reported this post and your current report status: "+ReportStatus.PENDING
             );
         }
 
@@ -218,9 +288,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndComment(
+                        .existsByReportedByAndCommentAndStatus(
                                 currentUser,
-                                comment
+                                comment,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {
@@ -232,7 +303,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this comment"
+                    "You already reported this comment and your current report status: "+ReportStatus.PENDING
             );
         }
 
@@ -363,7 +434,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this user"
+                    "You already reported this user and your current report Status: "+ ReportStatus.PENDING
             );
         }
 
@@ -414,16 +485,17 @@ public class ReportServiceImpl implements ReportService {
 
             return mapToResponse(report);
 
-        } catch (DataIntegrityViolationException ex) {
+        }catch (DataIntegrityViolationException ex) {
 
-            logger.warn(
-                    "Duplicate user report prevented by database | reporterId: {} | userId: {}",
+            logger.error(
+                    "Database error while reporting user | reporterId: {} | userId: {}",
                     currentUser.getId(),
-                    userId
+                    userId,
+                    ex
             );
 
             throw new OperationFailException(
-                    "You already reported this user."
+                    "Unable to create report"
             );
         }
 
@@ -468,9 +540,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndChat(
+                        .existsByReportedByAndChatAndStatus(
                                 currentUser,
-                                chat
+                                chat,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {
@@ -482,7 +555,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this chat"
+                    "You already reported this chat and your current Report status: "+ ReportStatus.PENDING
             );
         }
 
@@ -594,9 +667,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndMessage(
+                        .existsByReportedByAndMessageAndStatus(
                                 currentUser,
-                                message
+                                message,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {
@@ -608,7 +682,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this message"
+                    "You already reported this message and your current Report Status: "+ReportStatus.PENDING
             );
         }
 
@@ -707,9 +781,10 @@ public class ReportServiceImpl implements ReportService {
 
         boolean alreadyReported =
                 reportRepository
-                        .existsByReportedByAndStory(
+                        .existsByReportedByAndStoryAndStatus(
                                 currentUser,
-                                story
+                                story,
+                                ReportStatus.PENDING
                         );
 
         if (alreadyReported) {
@@ -721,7 +796,7 @@ public class ReportServiceImpl implements ReportService {
             );
 
             throw new OperationFailException(
-                    "You already reported this story"
+                    "You already reported this story and your current report status: "+ReportStatus.PENDING
             );
         }
 
@@ -800,6 +875,12 @@ public class ReportServiceImpl implements ReportService {
                 .reportedByUsername(
                         report.getReportedBy()
                                 .getUname()
+                )
+
+                .reportedUsername(
+                        report.getReportedUser() != null
+                                ? report.getReportedUser().getUname()
+                                : null
                 )
 
                 .postId(

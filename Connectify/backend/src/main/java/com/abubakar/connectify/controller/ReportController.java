@@ -1,7 +1,9 @@
 package com.abubakar.connectify.controller;
 
 import com.abubakar.connectify.dto.request.CreateReportRequest;
+import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.dto.response.ReportResponse;
+import com.abubakar.connectify.enums.ReportStatus;
 import com.abubakar.connectify.service.ReportService;
 
 import jakarta.validation.Valid;
@@ -23,6 +25,45 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
+
+    @GetMapping("/my-reports")
+    public ResponseEntity<
+            CursorPageResponse<ReportResponse>
+            > getMyReports(
+
+            @RequestParam(required = false)
+            ReportStatus status,
+
+            @RequestParam(required = false)
+            Long cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        logger.info(
+                """
+                Get my reports API called
+                | status: {}
+                | cursor: {}
+                | size: {}
+                """,
+                status,
+                cursor,
+                size
+        );
+
+        CursorPageResponse<ReportResponse> response =
+                reportService.getMyReports(
+                        status,
+                        cursor,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                        response
+        );
+    }
 
     @PostMapping("/post/{postId}")
     public ResponseEntity<ReportResponse> reportPost(

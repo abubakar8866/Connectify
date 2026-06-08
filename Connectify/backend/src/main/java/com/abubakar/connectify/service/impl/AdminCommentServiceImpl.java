@@ -4,6 +4,7 @@ import com.abubakar.connectify.dto.request.CommentSearchRequest;
 import com.abubakar.connectify.dto.response.AdminCommentResponse;
 import com.abubakar.connectify.dto.response.CursorPageResponse;
 import com.abubakar.connectify.entity.Comment;
+import com.abubakar.connectify.entity.Post;
 import com.abubakar.connectify.entity.User;
 import com.abubakar.connectify.enums.NotificationType;
 import com.abubakar.connectify.exception.OperationFailException;
@@ -55,6 +56,9 @@ public class AdminCommentServiceImpl
 
     @Autowired
     private AdminValidator adminValidator;
+
+    @Autowired
+    private PostAccessValidator postAccessValidator;
 
     @Override
     public CursorPageResponse<AdminCommentResponse>
@@ -282,6 +286,16 @@ public class AdminCommentServiceImpl
                         commentId
                 );
 
+        if (!comment.getDeleted()) {
+
+            logger.warn("Rejection Failed because Comment is already active");
+
+            throw new OperationFailException(
+                    "Comment is already active"
+            );
+
+        }
+
         if (!comment.getRestoreRequested()) {
 
             logger.warn("No restore request found when calling rejecting restore comment.");
@@ -310,58 +324,6 @@ public class AdminCommentServiceImpl
         logger.info(
                 "Comment restore rejected successfully | commentId: {}",
                 commentId
-        );
-    }
-
-    // ================= HARD DELETE COMMENT =================
-    @Override
-    public void permanentlyDeleteComment(
-            Long commentId
-    ) {
-
-        logger.info(
-                "Permanently deleting comment | commentId: {}",
-                commentId
-        );
-
-        User admin =
-                authUtil.getCurrentUser();
-
-        adminValidator.validateAdmin(admin);
-
-        logger.info(
-                "Permanent delete request received | adminId: {} | commentId: {}",
-                admin.getId(),
-                commentId
-        );
-
-        Comment comment = commentAccessValidator.getComment(commentId);
-
-        notificationService.createSystemNotification(
-                comment.getUser().getId(),
-                admin.getId(),
-                "Your comment was permanently removed by admin.",
-                NotificationType.COMMENT
-        );
-
-        logger.debug(
-                "permanent delete notification sent successfully | receiverId: {} | commentId: {}",
-                comment.getUser().getId(),
-                comment.getId()
-        );
-
-        // remove all notifications referencing comment
-        notificationRepository.deleteByComment_Id(commentId);
-
-        // flush delete immediately
-        notificationRepository.flush();
-
-        commentRepository.delete(comment);
-
-        logger.info(
-                "Comment permanently deleted successfully | commentId: {} | deletedByAdminId: {}",
-                comment.getId(),
-                admin.getId()
         );
     }
 
